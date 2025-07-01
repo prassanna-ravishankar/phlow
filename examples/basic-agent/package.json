@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test": "node test.js",
+    "test": "node test-unit.js",
+    "test:integration": "node test.js",
     "build": "echo 'No build step required'",
     "clean": "rm -rf node_modules"
   },
