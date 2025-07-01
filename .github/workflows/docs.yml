@@ -37,7 +37,6 @@ jobs:
       - name: Install MkDocs and dependencies
         run: |
           pip install "mkdocs-material[imaging]"
-          pip install mkdocs-mermaid2-plugin
 
       - name: Build documentation with MkDocs
         run: mkdocs build

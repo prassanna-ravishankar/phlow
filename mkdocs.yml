@@ -9,15 +9,15 @@ theme:
   palette:
     # Primary colors
     - scheme: default
-      primary: indigo
-      accent: indigo
+      primary: blue grey
+      accent: blue
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     # Dark mode
     - scheme: slate
-      primary: indigo
-      accent: indigo
+      primary: blue grey
+      accent: blue
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
@@ -54,7 +54,11 @@ markdown_extensions:
       pygments_lang_class: true
   - pymdownx.inlinehilite
   - pymdownx.snippets
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
   - pymdownx.emoji:
@@ -74,7 +78,6 @@ markdown_extensions:
 plugins:
   - search
   - social
-  - mermaid2
 
 # Extra
 extra:

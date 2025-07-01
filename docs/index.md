@@ -1,57 +1,57 @@
 # Phlow - Agent-to-Agent Authentication Framework
 
 <div class="hero-section" markdown>
-The complete authentication framework for the agentic web.
+<img src="phlow-logo.png" alt="Phlow Logo" class="hero-logo">
+
+JWT-based authentication for AI agent networks using Supabase.
 
 [Get Started](getting-started.md){ .md-button .md-button--primary }
 [View on GitHub](https://github.com/prassanna-ravishankar/phlow){ .md-button }
 </div>
 
-## Why Choose Phlow?
+## Features
 
 <div class="grid cards" markdown>
 
--   :material-security: **Secure by Design**
+-   :material-security: **JWT Authentication**
 
     ---
 
-    JWT-based authentication with RS256 signatures, rate limiting, and comprehensive audit logging for enterprise-grade security.
+    RS256-signed JWT tokens for secure agent-to-agent communication with Supabase as the registry.
 
--   :rocket: **Multi-Language Support**
-
-    ---
-
-    Native libraries for JavaScript/TypeScript and Python with FastAPI integration. More languages coming soon.
-
--   :zap: **Supabase Integration**
+-   :simple-javascript: **JavaScript & Python**
 
     ---
 
-    Built-in Supabase support for agent registry, RLS policies, and scalable authentication infrastructure.
+    Libraries for JavaScript/TypeScript and Python. Additional language support planned.
 
--   :material-tools: **Developer Tools**
-
-    ---
-
-    CLI tools for project initialization, key generation, token testing, and local development server.
-
--   :material-sync: **Production Ready**
+-   :simple-supabase: **Supabase Integration**
 
     ---
 
-    Rate limiting, audit logging, health checks, and comprehensive error handling for production deployments.
+    Uses Supabase for agent registry and public key storage. Other auth backends planned.
 
--   :material-book-open: **Great DX**
+-   :material-console: **CLI Tools**
 
     ---
 
-    Comprehensive documentation, working examples, and TypeScript support for the best developer experience.
+    Command-line tools for project setup, key generation, and testing.
+
+-   :material-cog: **Middleware**
+
+    ---
+
+    Express.js and FastAPI middleware for easy integration into existing projects.
+
+-   :material-book: **Documentation**
+
+    ---
+
+    Working examples and comprehensive API documentation.
 
 </div>
 
 ## Quick Start
-
-Get started in minutes with Phlow. Our CLI handles key generation, Supabase setup, and project initialization.
 
 === "Installation"
 
@@ -77,42 +77,48 @@ Get started in minutes with Phlow. Our CLI handles key generation, Supabase setu
     phlow test-token --target my-agent
     ```
 
-## Features
+## Current State & Roadmap
 
-!!! tip "Enterprise Ready"
+!!! info "Current Implementation"
 
-    Phlow is designed for production use with comprehensive security features, monitoring, and scalability built-in.
+    Phlow currently uses **Supabase** for agent registry and authentication. Additional auth backends are planned for future releases.
 
-- **🔐 Secure Authentication**: RS256 JWT tokens with proper key management
-- **🚀 Multi-Language**: JavaScript/TypeScript and Python support
-- **⚡ Supabase Integration**: Built-in database and auth infrastructure
-- **🛠️ CLI Tools**: Complete development toolkit
-- **📊 Monitoring**: Built-in audit logging and health checks
-- **🔄 Scalable**: Designed for high-throughput agent networks
+**Available Now:**
+- ✅ JWT-based authentication with RS256 signatures
+- ✅ Supabase integration for agent registry
+- ✅ JavaScript/TypeScript and Python libraries
+- ✅ CLI tools for development
+- ✅ Express.js and FastAPI middleware
 
-## Architecture
+**Planned Features:**
+- 🔄 Additional auth backends (Auth0, custom databases)
+- 🔄 More language libraries (Go, Rust, Java)
+- 🔄 Advanced permission systems
+- 🔄 Agent discovery and routing
+
+## How It Works
 
 ```mermaid
 graph TB
-    A[Agent A] -->|JWT Token| R[Phlow Registry]
-    B[Agent B] -->|JWT Token| R
-    C[Agent C] -->|JWT Token| R
-    
-    R -->|Validate & Route| S[Supabase]
-    S -->|Auth Response| R
-    R -->|Authorized| A
-    R -->|Authorized| B
-    R -->|Authorized| C
-    
-    A <-->|Authenticated Communication| B
-    B <-->|Authenticated Communication| C
-    A <-->|Authenticated Communication| C
+    A[Agent A] -->|1. Generate JWT| A
+    A -->|2. Send Request + JWT| B[Agent B]
+    B -->|3. Lookup Public Key| S[Supabase Registry]
+    S -->|4. Return Public Key| B
+    B -->|5. Verify JWT Signature| B
+    B -->|6. Process Request| B
+    B -->|7. Send Response| A
 ```
 
-## Next Steps
+**Authentication Flow:**
 
-Ready to build your first agent? Check out our comprehensive guides:
+1. **Agent A** creates a JWT token signed with its private key
+2. **Agent A** sends a request to **Agent B** with the JWT in the Authorization header  
+3. **Agent B** looks up **Agent A's** public key from the Supabase registry
+4. **Agent B** verifies the JWT signature using **Agent A's** public key
+5. If valid, **Agent B** processes the request and sends a response
 
-- [Getting Started Guide](getting-started.md) - Set up your first Phlow agent
-- [API Reference](api-reference.md) - Complete API documentation
+## Documentation
+
+- [Getting Started Guide](getting-started.md) - Set up your first agent
+- [API Reference](api-reference.md) - Complete API documentation  
 - [Examples](examples/basic-agent.md) - Working code examples
