@@ -1,0 +1,31 @@
+{
+  "name": "phlow-basic-agent-example",
+  "version": "0.1.0",
+  "description": "Basic Phlow agent example with Supabase integration",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "node test.js",
+    "build": "echo 'No build step required'",
+    "clean": "rm -rf node_modules"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "dotenv": "^16.4.5",
+    "phlow-auth": "workspace:*"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  },
+  "keywords": [
+    "phlow",
+    "agent",
+    "example",
+    "supabase",
+    "authentication"
+  ],
+  "author": "Phlow Team",
+  "license": "MIT"
+}
