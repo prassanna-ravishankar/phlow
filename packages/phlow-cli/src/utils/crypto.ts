@@ -15,12 +15,13 @@ export function validateKeyPair(publicKey: string, privateKey: string): boolean 
     const privKey = forge.pki.privateKeyFromPem(privateKey);
     
     const testMessage = 'test-message';
-    const signature = privKey.sign(forge.md.sha256.create().update(testMessage).digest());
+    const md = forge.md.sha256.create();
+    md.update(testMessage);
+    const signature = privKey.sign(md);
     
-    return pubKey.verify(
-      forge.md.sha256.create().update(testMessage).digest().bytes(),
-      signature
-    );
+    const verifyMd = forge.md.sha256.create();
+    verifyMd.update(testMessage);
+    return pubKey.verify(verifyMd.digest().bytes(), signature);
   } catch {
     return false;
   }
