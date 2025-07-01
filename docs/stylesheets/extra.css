@@ -1,0 +1,196 @@
+/* Custom styling for Phlow documentation */
+
+/* Hero section styling */
+.hero-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 3rem 2rem;
+    margin: -1.5rem -1.5rem 2rem -1.5rem;
+    text-align: center;
+    border-radius: 0 0 12px 12px;
+}
+
+.hero-section p {
+    font-size: 1.25rem;
+    margin: 1rem 0 2rem 0;
+    opacity: 0.9;
+}
+
+.hero-section .md-button {
+    margin: 0.5rem;
+    font-weight: 600;
+}
+
+.hero-section .md-button--primary {
+    background-color: white;
+    color: #4c51bf;
+    border-color: white;
+}
+
+.hero-section .md-button--primary:hover {
+    background-color: #f7fafc;
+    color: #4c51bf;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Grid cards styling */
+.grid.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.grid.cards > ul > li {
+    background: var(--md-default-bg-color);
+    border: 1px solid var(--md-default-fg-color--lightest);
+    border-radius: 8px;
+    padding: 1.5rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+    list-style: none;
+}
+
+.grid.cards > ul > li:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Code block enhancements */
+.highlight pre {
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Tabbed content styling */
+.tabbed-set {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Admonition styling */
+.admonition {
+    border-radius: 8px;
+    border-left: 4px solid var(--md-accent-fg-color);
+}
+
+.admonition.tip {
+    border-left-color: #00c853;
+}
+
+.admonition.tip > .admonition-title {
+    background-color: rgba(0, 200, 83, 0.1);
+}
+
+/* Navigation enhancements */
+.md-nav__title {
+    font-weight: 600;
+}
+
+/* Footer customization */
+.md-footer {
+    background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+}
+
+/* Logo and branding */
+.md-header__button.md-logo img {
+    border-radius: 4px;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+    .hero-section {
+        padding: 2rem 1rem;
+        margin: -1rem -1rem 2rem -1rem;
+    }
+    
+    .hero-section p {
+        font-size: 1.1rem;
+    }
+    
+    .grid.cards {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .hero-section .md-button {
+        display: block;
+        margin: 0.5rem auto;
+        width: fit-content;
+    }
+}
+
+/* Dark mode adjustments */
+[data-md-color-scheme="slate"] .hero-section {
+    background: linear-gradient(135deg, #4c51bf 0%, #667eea 100%);
+}
+
+[data-md-color-scheme="slate"] .grid.cards > ul > li {
+    background: var(--md-code-bg-color);
+    border-color: var(--md-default-fg-color--lightest);
+}
+
+/* Animation for better UX */
+.md-button {
+    transition: all 0.2s ease;
+}
+
+.md-button:hover {
+    transform: translateY(-1px);
+}
+
+/* Mermaid diagram styling */
+.mermaid {
+    background: transparent;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+/* Custom scrollbar for code blocks */
+.highlight pre::-webkit-scrollbar {
+    height: 8px;
+}
+
+.highlight pre::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.highlight pre::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+}
+
+.highlight pre::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Enhanced navigation */
+.md-nav--primary .md-nav__title {
+    background: var(--md-primary-fg-color);
+    color: var(--md-primary-bg-color);
+}
+
+/* Table styling improvements */
+.md-typeset table:not([class]) {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.md-typeset table:not([class]) th {
+    background: var(--md-default-fg-color--lightest);
+    font-weight: 600;
+}
+
+/* Link styling */
+.md-typeset a {
+    text-decoration: none;
+    border-bottom: 1px dotted var(--md-accent-fg-color);
+    transition: border-bottom 0.2s;
+}
+
+.md-typeset a:hover {
+    border-bottom: 1px solid var(--md-accent-fg-color);
+}

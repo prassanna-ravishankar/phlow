@@ -29,81 +29,29 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      - name: Build documentation site
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install MkDocs and dependencies
         run: |
-          # Create docs site structure
-          mkdir -p docs-site
-          
-          # Copy documentation files
-          cp docs/*.md docs-site/
-          cp docs/phlow-logo.png docs-site/
-          cp README.md docs-site/
-          
-          # Create simple index.html
-          cat > docs-site/index.html << 'EOF'
-          <!DOCTYPE html>
-          <html lang="en">
-          <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>Phlow - Agent-to-Agent Authentication Framework</title>
-              <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown-light.min.css">
-              <link rel="icon" type="image/png" href="phlow-logo.png">
-              <style>
-                  body { 
-                      box-sizing: border-box; 
-                      min-width: 200px; 
-                      max-width: 980px; 
-                      margin: 0 auto; 
-                      padding: 45px; 
-                      background: #f6f8fa;
-                  }
-                  .markdown-body {
-                      background: white;
-                      padding: 30px;
-                      border-radius: 8px;
-                      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-                  }
-                  .nav {
-                      background: white;
-                      padding: 20px 30px;
-                      margin-bottom: 20px;
-                      border-radius: 8px;
-                      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-                  }
-                  .nav a {
-                      margin-right: 20px;
-                      text-decoration: none;
-                      color: #0366d6;
-                      font-weight: 500;
-                  }
-                  .nav a:hover { text-decoration: underline; }
-              </style>
-          </head>
-          <body>
-              <div class="nav">
-                  <a href="/">Home</a>
-                  <a href="getting-started.md">Getting Started</a>
-                  <a href="api-reference.md">API Reference</a>
-                  <a href="https://github.com/phlowai/phlow">GitHub</a>
-              </div>
-              <article class="markdown-body">
-                  <h1>Phlow Documentation</h1>
-                  <p>Welcome to the Phlow documentation site!</p>
-                  <ul>
-                      <li><a href="README.md">Project Overview</a></li>
-                      <li><a href="getting-started.md">Getting Started Guide</a></li>
-                      <li><a href="api-reference.md">API Reference</a></li>
-                  </ul>
-              </article>
-          </body>
-          </html>
-          EOF
+          pip install "mkdocs-material[imaging]"
+          pip install mkdocs-mermaid2-plugin
+
+      - name: Build documentation with MkDocs
+        run: mkdocs build
+
+      - name: Fix permissions
+        run: |
+          chmod -c -R +rX "site/" | while read line; do
+            echo "::warning title=Invalid file permissions automatically fixed::$line"
+          done
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs-site
+          path: site
 
   deploy-docs:
     name: Deploy Documentation

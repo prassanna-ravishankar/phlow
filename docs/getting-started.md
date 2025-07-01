@@ -359,10 +359,10 @@ const results = await testRunner.runAllScenarios();
 
 ## Next Steps
 
-- 📖 Read the [API Reference](./api-reference.md)
-- 🔍 Explore [Examples](../examples/)
-- 🧪 Run [Integration Tests](../tests/integration/)
-- 💬 Join [Discussions](https://github.com/phlowai/phlow/discussions)
+- 📖 Read the [API Reference](api-reference.md)
+- 🔍 Explore [Examples](examples/basic-agent.md)
+- 🧪 Run Integration Tests (see GitHub repository)
+- 💬 Join [Discussions](https://github.com/prassanna-ravishankar/phlow/discussions)
 
 ## Common Patterns
 
