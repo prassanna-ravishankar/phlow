@@ -5,6 +5,11 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+
 env:
   NODE_VERSION: '18'
   PYTHON_VERSION: '3.11'
@@ -41,19 +46,34 @@ jobs:
 
       - name: Update package versions
         run: |
-          # Update JavaScript package versions
-          npm version ${{ steps.version.outputs.VERSION }} --no-git-tag-version --workspaces
+          # Update JavaScript package versions individually
+          cd packages/phlow-auth-js
+          npm version ${{ steps.version.outputs.VERSION }} --no-git-tag-version
+          
+          cd ../phlow-cli
+          npm version ${{ steps.version.outputs.VERSION }} --no-git-tag-version
+          
+          cd ../phlow-dev  
+          npm version ${{ steps.version.outputs.VERSION }} --no-git-tag-version
           
           # Update Python package version
-          cd packages/phlow-auth-python
+          cd ../phlow-auth-python
           sed -i 's/version = "[^"]*"/version = "${{ steps.version.outputs.VERSION }}"/' pyproject.toml
+          
+          # Return to root
+          cd ../..
 
       - name: Publish to npm
         run: |
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-          npm publish --workspace packages/phlow-auth-js
-          npm publish --workspace packages/phlow-cli  
-          npm publish --workspace packages/phlow-dev
+          
+          # Build packages first
+          npm run build
+          
+          # Publish each package
+          cd packages/phlow-auth-js && npm publish --access public
+          cd ../phlow-cli && npm publish --access public
+          cd ../phlow-dev && npm publish --access public
 
       - name: Build and publish Python package
         run: |
@@ -63,12 +83,10 @@ jobs:
           python -m twine upload dist/* --username __token__ --password ${{ secrets.PYPI_API_TOKEN }}
 
       - name: Create GitHub Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          tag_name: v${{ steps.version.outputs.VERSION }}
+          name: Release v${{ steps.version.outputs.VERSION }}
           body: |
             ## Phlow ${{ steps.version.outputs.VERSION }}
             
@@ -83,3 +101,4 @@ jobs:
             Published to npm and PyPI.
           draft: false
           prerelease: false
+          generate_release_notes: true

@@ -6,6 +6,12 @@ on:
   #   branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
+  id-token: write
+
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 env:
@@ -67,12 +73,10 @@ jobs:
 
       - name: Create GitHub Release
         if: steps.changesets.outputs.published == 'true'
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.changesets.outputs.publishedPackages[0].version }}
-          release_name: Release v${{ steps.changesets.outputs.publishedPackages[0].version }}
+          tag_name: v${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}
+          name: Release v${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}
           body: |
             ## Changes
             
@@ -83,3 +87,4 @@ jobs:
             ${{ steps.changesets.outputs.publishedPackages }}
           draft: false
           prerelease: false
+          generate_release_notes: true
