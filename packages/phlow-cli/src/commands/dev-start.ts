@@ -103,18 +103,18 @@ This is a development setup for your Phlow agent.
 ## Getting Started
 
 1. Install dependencies:
-   \\`\\`\\`bash
+   \`\`\`bash
    npm install
-   \\`\\`\\`
+   \`\`\`
 
 2. Set up your Supabase database:
    - Run the SQL in \`supabase-schema.sql\` in your Supabase SQL editor
    - Update the \`.env\` file with your Supabase credentials
 
 3. Start the development server:
-   \\`\\`\\`bash
+   \`\`\`bash
    npm run dev
-   \\`\\`\\`
+   \`\`\`
 
 ## Endpoints
 
@@ -125,7 +125,7 @@ This is a development setup for your Phlow agent.
 
 Use the Phlow CLI to test authentication:
 
-\\`\\`\\`bash
+\`\`\`bash
 # Generate a test token
 phlow test-token --target ${config.agentCard.agentId}
 
@@ -133,7 +133,7 @@ phlow test-token --target ${config.agentCard.agentId}
 curl -H "Authorization: Bearer <token>" \\
      -H "X-Phlow-Agent-Id: <your-agent-id>" \\
      http://localhost:${options.port}/protected
-\\`\\`\\`
+\`\`\`
 
 ## Agent Details
 

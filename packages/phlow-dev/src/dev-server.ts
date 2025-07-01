@@ -31,7 +31,7 @@ export class DevServer {
     this.app.use(express.json());
     
     // Request logging
-    this.app.use((req, res, next) => {
+    this.app.use((req, _res, next) => {
       console.log(`${new Date().toISOString()} ${req.method} ${req.path}`);
       next();
     });
@@ -39,7 +39,7 @@ export class DevServer {
 
   private setupRoutes(): void {
     // Health check
-    this.app.get('/health', (req, res) => {
+    this.app.get('/health', (_req, res) => {
       res.json({
         status: 'ok',
         timestamp: new Date().toISOString(),
@@ -48,12 +48,12 @@ export class DevServer {
     });
 
     // Mock Supabase info
-    this.app.get('/mock/agents', (req, res) => {
+    this.app.get('/mock/agents', (_req, res) => {
       if (!this.mockSupabase) {
         return res.status(404).json({ error: 'Mock Supabase not initialized' });
       }
       
-      res.json({
+      return res.json({
         agents: this.mockSupabase.getAllAgents(),
       });
     });
@@ -66,7 +66,7 @@ export class DevServer {
       const agent = req.body as AgentCard;
       this.mockSupabase.addAgent(agent);
       
-      res.json({ success: true, agent });
+      return res.json({ success: true, agent });
     });
 
     // Test endpoints
@@ -77,7 +77,7 @@ export class DevServer {
 
   private setupTestEndpoints(): void {
     // Run all test scenarios
-    this.app.get('/test/scenarios', async (req, res) => {
+    this.app.get('/test/scenarios', async (_req, res) => {
       try {
         const results = await this.testRunner.runAllScenarios();
         const summary = {
@@ -86,12 +86,12 @@ export class DevServer {
           failed: Array.from(results.values()).filter(r => !r.success).length,
         };
         
-        res.json({
+        return res.json({
           summary,
           results: Object.fromEntries(results),
         });
       } catch (error: any) {
-        res.status(500).json({
+        return res.status(500).json({
           error: 'Failed to run test scenarios',
           message: error.message,
         });
@@ -112,7 +112,7 @@ export class DevServer {
 
       try {
         const result = await this.testRunner.runScenario(scenario);
-        res.json({
+        return res.json({
           scenario: {
             name: scenario.name,
             description: scenario.description,
@@ -120,7 +120,7 @@ export class DevServer {
           result,
         });
       } catch (error: any) {
-        res.status(500).json({
+        return res.status(500).json({
           error: 'Failed to run test scenario',
           message: error.message,
         });
@@ -128,8 +128,8 @@ export class DevServer {
     });
 
     // List available test scenarios
-    this.app.get('/test/scenarios-list', (req, res) => {
-      res.json({
+    this.app.get('/test/scenarios-list', (_req, res) => {
+      return res.json({
         scenarios: TEST_SCENARIOS.map(s => ({
           name: s.name,
           description: s.description,
@@ -149,7 +149,7 @@ export class DevServer {
 
   addPhlowMiddleware(middleware: PhlowMiddleware, path: string = '/protected'): void {
     this.app.get(path, middleware.authenticate(), (req: any, res) => {
-      res.json({
+      return res.json({
         message: 'Access granted!',
         agent: req.phlow.agent,
         claims: req.phlow.claims,

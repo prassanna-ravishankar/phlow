@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import { ConfigManager } from '../utils/config';
 import { generateToken } from 'phlow-auth';
+import jwt from 'jsonwebtoken';
 
 export function createTestTokenCommand(): Command {
   return new Command('test-token')
@@ -32,7 +33,6 @@ export function createTestTokenCommand(): Command {
             return;
           }
 
-          const jwt = require('jsonwebtoken');
           const decoded = jwt.decode(token);
           
           if (!decoded) {

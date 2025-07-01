@@ -29,7 +29,6 @@ export const TEST_SCENARIOS: TestScenario[] = [
     name: 'valid_jwt_authentication',
     description: 'Test successful JWT authentication between agents',
     setup: async () => {
-      const { generateKeyPair } = await import('node-forge');
       const forge = await import('node-forge');
 
       const sourceKeys = forge.pki.rsa.generateKeyPair(2048);

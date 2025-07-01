@@ -1,13 +1,14 @@
 """Type definitions for Phlow authentication."""
 
-from typing import Any, Dict, List, Optional, Union
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel
 
 
 class AgentCard(BaseModel):
     """Agent card containing identification and permission information."""
-    
+
     agent_id: str
     name: str
     description: Optional[str] = None
@@ -19,7 +20,7 @@ class AgentCard(BaseModel):
 
 class PhlowConfig(BaseModel):
     """Configuration for Phlow middleware."""
-    
+
     supabase_url: str
     supabase_anon_key: str
     agent_card: AgentCard
@@ -32,7 +33,7 @@ class PhlowConfig(BaseModel):
 
 class JWTClaims(BaseModel):
     """JWT token claims."""
-    
+
     sub: str  # subject (agent ID)
     iss: str  # issuer (agent ID)
     aud: str  # audience (target agent ID)
@@ -45,7 +46,7 @@ class JWTClaims(BaseModel):
 @dataclass
 class PhlowContext:
     """Context information for authenticated requests."""
-    
+
     agent: AgentCard
     token: str
     claims: JWTClaims
@@ -54,14 +55,14 @@ class PhlowContext:
 
 class VerifyOptions(BaseModel):
     """Options for token verification."""
-    
+
     required_permissions: Optional[List[str]] = None
     allow_expired: bool = False
 
 
 class AuditLog(BaseModel):
     """Audit log entry."""
-    
+
     timestamp: str
     event: str
     agent_id: str

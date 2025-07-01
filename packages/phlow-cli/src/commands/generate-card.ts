@@ -4,6 +4,7 @@ import ora from 'ora';
 import { createClient } from '@supabase/supabase-js';
 import { ConfigManager } from '../utils/config';
 import { SupabaseHelpers } from 'phlow-auth';
+import fs from 'fs-extra';
 
 export function createGenerateCardCommand(): Command {
   return new Command('generate-card')
@@ -36,7 +37,6 @@ export function createGenerateCardCommand(): Command {
         };
 
         if (options.output) {
-          const fs = require('fs-extra');
           await fs.writeJson(options.output, agentCardJson, { spaces: 2 });
           spinner.text = `Agent card saved to ${options.output}`;
         }

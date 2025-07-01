@@ -23,8 +23,8 @@ export class MockSupabase {
   from(table: string) {
     if (table === 'agent_cards') {
       return {
-        select: (columns: string) => ({
-          eq: (column: string, value: string) => ({
+        select: (_columns: string) => ({
+          eq: (_column: string, value: string) => ({
             single: () => {
               const agent = this.agents.get(value);
               return Promise.resolve({

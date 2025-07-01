@@ -42,7 +42,7 @@ export class PhlowMiddleware {
   }
 
   public authenticate(options?: VerifyOptions): MiddlewareFunction {
-    return async (req: any, res: any, next: (error?: any) => void) => {
+    return async (req: any, _res: any, next: (error?: any) => void) => {
       try {
         const agentId = this.extractAgentId(req);
         
@@ -202,7 +202,7 @@ export class PhlowMiddleware {
     return this.supabase;
   }
 
-  public getAgentCard() {
+  public getCurrentAgentCard() {
     return this.config.agentCard;
   }
 }
