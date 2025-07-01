@@ -14,7 +14,7 @@
   "dependencies": {
     "express": "^4.19.2",
     "dotenv": "^16.4.5",
-    "phlow-auth": "workspace:*"
+    "phlow-auth": "file:../../packages/phlow-auth-js"
   },
   "devDependencies": {
     "nodemon": "^3.1.0"

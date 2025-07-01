@@ -27,7 +27,7 @@
     "@supabase/supabase-js": "^2.43.1",
     "express": "^4.19.2",
     "cors": "^2.8.5",
-    "phlow-auth": "workspace:*"
+    "phlow-auth": "file:../phlow-auth-js"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
