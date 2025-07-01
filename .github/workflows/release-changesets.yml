@@ -1,8 +1,9 @@
-name: Release
+name: Release (Changesets)
 
 on:
-  push:
-    branches: [main]
+  # Disabled by default - enable if you want to use Changesets
+  # push:
+  #   branches: [main]
   workflow_dispatch:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}

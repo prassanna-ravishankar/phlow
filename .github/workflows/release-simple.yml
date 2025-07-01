@@ -1,0 +1,85 @@
+name: Release (Tag-based)
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  NODE_VERSION: '18'
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    environment: PROD
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build packages
+        run: npm run build
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Update package versions
+        run: |
+          # Update JavaScript package versions
+          npm version ${{ steps.version.outputs.VERSION }} --no-git-tag-version --workspaces
+          
+          # Update Python package version
+          cd packages/phlow-auth-python
+          sed -i 's/version = "[^"]*"/version = "${{ steps.version.outputs.VERSION }}"/' pyproject.toml
+
+      - name: Publish to npm
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+          npm publish --workspace packages/phlow-auth-js
+          npm publish --workspace packages/phlow-cli  
+          npm publish --workspace packages/phlow-dev
+
+      - name: Build and publish Python package
+        run: |
+          cd packages/phlow-auth-python
+          pip install build twine
+          python -m build
+          python -m twine upload dist/* --username __token__ --password ${{ secrets.PYPI_API_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            ## Phlow ${{ steps.version.outputs.VERSION }}
+            
+            ### JavaScript Packages
+            - phlow-auth-js@${{ steps.version.outputs.VERSION }}
+            - phlow-cli@${{ steps.version.outputs.VERSION }}
+            - phlow-dev@${{ steps.version.outputs.VERSION }}
+            
+            ### Python Package
+            - phlow-auth@${{ steps.version.outputs.VERSION }}
+            
+            Published to npm and PyPI.
+          draft: false
+          prerelease: false
