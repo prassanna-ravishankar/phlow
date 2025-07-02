@@ -1,18 +1,14 @@
+// Core middleware
 export { PhlowMiddleware } from './middleware';
+
+// JWT utilities
+export { generateToken, verifyToken, decodeToken } from './jwt';
+
+// Supabase helpers
 export { SupabaseHelpers } from './supabase-helpers';
-export {
-  generateToken,
-  verifyToken,
-  decodeToken,
-  generateTokenPair,
-  isTokenExpired,
-} from './jwt';
-export {
-  PhlowError,
-  AuthenticationError,
-  AuthorizationError,
-  ConfigurationError,
-  TokenError,
-  RateLimitError,
-} from './errors';
+
+// Errors
+export { PhlowError, AuthenticationError, ConfigurationError } from './errors';
+
+// Types
 export * from './types';

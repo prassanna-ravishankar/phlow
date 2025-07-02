@@ -1,32 +1,16 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { PhlowConfig, PhlowContext, VerifyOptions, MiddlewareFunction } from './types';
-import { verifyToken, isTokenExpired } from './jwt';
-import { AuthenticationError, AuthorizationError, ConfigurationError } from './errors';
-import { RateLimiter } from './rate-limiter';
-import { AuditLogger } from './audit';
+import { PhlowConfig, PhlowContext, MiddlewareFunction } from './types';
+import { verifyToken } from './jwt';
+import { AuthenticationError, ConfigurationError } from './errors';
 
 export class PhlowMiddleware {
   private supabase: SupabaseClient;
   private config: PhlowConfig;
-  private rateLimiter?: RateLimiter;
-  private auditLogger?: AuditLogger;
 
   constructor(config: PhlowConfig) {
     this.validateConfig(config);
     this.config = config;
-    
     this.supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
-
-    if (config.options?.rateLimiting) {
-      this.rateLimiter = new RateLimiter(
-        config.options.rateLimiting.maxRequests,
-        config.options.rateLimiting.windowMs
-      );
-    }
-
-    if (config.options?.enableAudit) {
-      this.auditLogger = new AuditLogger(this.supabase);
-    }
   }
 
   private validateConfig(config: PhlowConfig): void {
@@ -41,69 +25,34 @@ export class PhlowMiddleware {
     }
   }
 
-  public authenticate(options?: VerifyOptions): MiddlewareFunction {
+  public authenticate(): MiddlewareFunction {
     return async (req: any, _res: any, next: (error?: any) => void) => {
       try {
-        const agentId = this.extractAgentId(req);
-        
-        if (this.rateLimiter && !this.rateLimiter.isAllowed(agentId)) {
-          await this.auditLogger?.log({
-            timestamp: new Date(),
-            event: 'auth_failure',
-            agentId,
-            details: { reason: 'rate_limit_exceeded' },
-          });
-          throw new AuthenticationError('Rate limit exceeded', 'RATE_LIMIT');
+        // Extract agent ID from header
+        const agentId = req.headers?.['x-phlow-agent-id'] || req.headers?.['X-Phlow-Agent-Id'];
+        if (!agentId) {
+          throw new AuthenticationError('Agent ID not provided', 'AGENT_ID_MISSING');
         }
 
+        // Extract JWT token
         const token = this.extractToken(req);
         if (!token) {
-          await this.auditLogger?.log({
-            timestamp: new Date(),
-            event: 'auth_failure',
-            agentId: 'unknown',
-            details: { reason: 'missing_token' },
-          });
           throw new AuthenticationError('No token provided', 'TOKEN_MISSING');
         }
 
+        // Get remote agent's public key
         const remoteAgent = await this.getAgentCard(agentId);
         if (!remoteAgent) {
-          await this.auditLogger?.log({
-            timestamp: new Date(),
-            event: 'auth_failure',
-            agentId,
-            details: { reason: 'agent_not_found' },
-          });
           throw new AuthenticationError('Agent not found', 'AGENT_NOT_FOUND');
         }
 
+        // Verify JWT signature
         const claims = verifyToken(token, remoteAgent.publicKey, {
           audience: this.config.agentCard.agentId,
           issuer: agentId,
-          ignoreExpiration: options?.allowExpired,
         });
 
-        if (options?.requiredPermissions) {
-          const hasPermissions = options.requiredPermissions.every(perm =>
-            claims.permissions.includes(perm)
-          );
-          
-          if (!hasPermissions) {
-            await this.auditLogger?.log({
-              timestamp: new Date(),
-              event: 'permission_denied',
-              agentId,
-              targetAgentId: this.config.agentCard.agentId,
-              details: { 
-                required: options.requiredPermissions,
-                provided: claims.permissions,
-              },
-            });
-            throw new AuthorizationError('Insufficient permissions', 'INSUFFICIENT_PERMISSIONS');
-          }
-        }
-
+        // Create context for downstream handlers
         const context: PhlowContext = {
           agent: remoteAgent,
           token,
@@ -112,14 +61,6 @@ export class PhlowMiddleware {
         };
 
         (req as any).phlow = context;
-
-        await this.auditLogger?.log({
-          timestamp: new Date(),
-          event: 'auth_success',
-          agentId,
-          targetAgentId: this.config.agentCard.agentId,
-        });
-
         next();
       } catch (error) {
         next(error);
@@ -127,32 +68,6 @@ export class PhlowMiddleware {
     };
   }
 
-  public refreshTokenIfNeeded(): MiddlewareFunction {
-    return async (req: any, res: any, next: (error?: any) => void) => {
-      try {
-        const context = (req as any).phlow as PhlowContext;
-        if (!context) {
-          return next();
-        }
-
-        const threshold = this.config.options?.refreshThreshold || 300;
-        if (isTokenExpired(context.token, threshold)) {
-          await this.auditLogger?.log({
-            timestamp: new Date(),
-            event: 'token_refresh',
-            agentId: context.agent.agentId,
-            targetAgentId: this.config.agentCard.agentId,
-          });
-          
-          res.setHeader('X-Phlow-Token-Refresh', 'true');
-        }
-
-        next();
-      } catch (error) {
-        next(error);
-      }
-    };
-  }
 
   private extractToken(req: any): string | null {
     const authHeader = req.headers?.authorization || req.headers?.Authorization;
@@ -162,16 +77,8 @@ export class PhlowMiddleware {
     return null;
   }
 
-  private extractAgentId(req: any): string {
-    const agentId = req.headers?.['x-phlow-agent-id'] || 
-                    req.headers?.['X-Phlow-Agent-Id'];
-    if (!agentId) {
-      throw new AuthenticationError('Agent ID not provided', 'AGENT_ID_MISSING');
-    }
-    return agentId;
-  }
 
-  private async getAgentCard(agentId: string): Promise<any> {
+  private async getAgentCard(agentId: string): Promise<AgentCard | null> {
     try {
       const { data, error } = await this.supabase
         .from('agent_cards')
@@ -183,13 +90,22 @@ export class PhlowMiddleware {
         return null;
       }
 
+      // Map from database to A2A-compatible AgentCard format
       return {
         agentId: data.agent_id,
         name: data.name,
         description: data.description,
-        permissions: data.permissions || [],
         publicKey: data.public_key,
-        endpoints: data.endpoints,
+        serviceUrl: data.service_url,
+        schemaVersion: data.schema_version || '0.1.0',
+        skills: data.skills || [],
+        securitySchemes: data.security_schemes || {
+          'phlow-jwt': {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT'
+          }
+        },
         metadata: data.metadata,
       };
     } catch (error) {
@@ -204,5 +120,33 @@ export class PhlowMiddleware {
 
   public getCurrentAgentCard() {
     return this.config.agentCard;
+  }
+
+  // A2A-compatible well-known endpoint handler
+  public wellKnownHandler(): MiddlewareFunction {
+    return (_req: any, res: any) => {
+      const agentCard = {
+        schemaVersion: this.config.agentCard.schemaVersion || '0.1.0',
+        name: this.config.agentCard.name,
+        description: this.config.agentCard.description,
+        serviceUrl: this.config.agentCard.serviceUrl,
+        skills: this.config.agentCard.skills || [],
+        securitySchemes: this.config.agentCard.securitySchemes || {
+          'phlow-jwt': {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT'
+          }
+        },
+        metadata: {
+          ...this.config.agentCard.metadata,
+          publicKey: this.config.agentCard.publicKey,
+          agentId: this.config.agentCard.agentId,
+        }
+      };
+
+      res.setHeader('Content-Type', 'application/json');
+      res.json(agentCard);
+    };
   }
 }

@@ -1,15 +1,19 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 
+// A2A-compatible AgentCard format
 export interface AgentCard {
   agentId: string;
   name: string;
   description?: string;
-  permissions: string[];
   publicKey: string;
-  endpoints?: {
-    auth?: string;
-    api?: string;
-  };
+  serviceUrl?: string;
+  // A2A compatibility fields
+  schemaVersion?: string;
+  skills?: Array<{
+    name: string;
+    description?: string;
+  }>;
+  securitySchemes?: Record<string, any>;
   metadata?: Record<string, any>;
 }
 
@@ -18,15 +22,6 @@ export interface PhlowConfig {
   supabaseAnonKey: string;
   agentCard: AgentCard;
   privateKey: string;
-  options?: {
-    tokenExpiry?: string;
-    refreshThreshold?: number;
-    enableAudit?: boolean;
-    rateLimiting?: {
-      maxRequests: number;
-      windowMs: number;
-    };
-  };
 }
 
 export interface PhlowContext {
@@ -37,26 +32,14 @@ export interface PhlowContext {
 }
 
 export interface JWTClaims {
-  sub: string;
-  iss: string;
-  aud: string;
-  exp: number;
-  iat: number;
-  permissions: string[];
+  sub: string;    // Subject (agent being authenticated)
+  iss: string;    // Issuer (agent making the request)
+  aud: string;    // Audience (target agent)
+  exp: number;    // Expiration timestamp
+  iat: number;    // Issued at timestamp
+  // A2A-compatible fields
+  skills?: string[];
   metadata?: Record<string, any>;
-}
-
-export interface VerifyOptions {
-  requiredPermissions?: string[];
-  allowExpired?: boolean;
-}
-
-export interface AuditLog {
-  timestamp: Date;
-  event: 'auth_success' | 'auth_failure' | 'token_refresh' | 'permission_denied';
-  agentId: string;
-  targetAgentId?: string;
-  details?: Record<string, any>;
 }
 
 export type MiddlewareFunction = (
@@ -64,8 +47,3 @@ export type MiddlewareFunction = (
   res: any,
   next: (error?: any) => void
 ) => void | Promise<void>;
-
-export interface TokenPair {
-  accessToken: string;
-  refreshToken?: string;
-}

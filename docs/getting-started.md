@@ -1,126 +1,141 @@
 # Getting Started with Phlow
 
-Phlow is an Agent-to-Agent (A2A) authentication framework that makes it easy to secure communication between AI agents using JWT tokens and Supabase.
+Phlow provides simple JWT authentication for AI agent networks, fully compatible with the [A2A Protocol](https://a2aproject.github.io/A2A/latest/specification/) ecosystem. Build secure, discoverable agents that seamlessly integrate with the growing A2A network.
 
 ## Quick Start
 
-### 1. Installation
+### 1. Install Phlow
 
-Choose your language:
-
-**JavaScript/TypeScript:**
 ```bash
+# JavaScript/TypeScript
 npm install phlow-auth
-```
 
-**Python:**
-```bash
+# Python
 pip install phlow-auth
-```
 
-**CLI Tools:**
-```bash
+# CLI Tools (optional)
 npm install -g phlow-cli
 ```
 
-### 2. Setup Supabase
+### 2. Setup Agent Registry
 
-1. Create a new Supabase project at [supabase.com](https://supabase.com)
-2. In the SQL Editor, run the following schema:
+1. Create a Supabase project at [supabase.com](https://supabase.com)
+2. Run the [A2A-compatible agent registry schema](database-schema.sql):
 
 ```sql
--- Agent Cards table
 CREATE TABLE agent_cards (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   agent_id TEXT UNIQUE NOT NULL,
   name TEXT NOT NULL,
   description TEXT,
-  permissions TEXT[] DEFAULT '{}',
   public_key TEXT NOT NULL,
-  endpoints JSONB DEFAULT '{}',
+  -- A2A Protocol fields
+  schema_version TEXT DEFAULT '0.1.0',
+  service_url TEXT,
+  skills JSONB DEFAULT '[]',
+  security_schemes JSONB DEFAULT '{"phlow-jwt": {"type": "http", "scheme": "bearer"}}',
   metadata JSONB DEFAULT '{}',
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Audit logs table
-CREATE TABLE phlow_audit_logs (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
-  event TEXT NOT NULL,
-  agent_id TEXT NOT NULL,
-  target_agent_id TEXT,
-  details JSONB DEFAULT '{}',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-
--- Enable RLS
-ALTER TABLE agent_cards ENABLE ROW LEVEL SECURITY;
-ALTER TABLE phlow_audit_logs ENABLE ROW LEVEL SECURITY;
-
--- Basic policies
-CREATE POLICY agent_cards_read ON agent_cards FOR SELECT USING (true);
-CREATE POLICY agent_cards_own ON agent_cards FOR ALL USING (agent_id = auth.jwt() ->> 'sub');
-CREATE POLICY audit_logs_own ON phlow_audit_logs FOR ALL USING (
-  agent_id = auth.jwt() ->> 'sub' OR target_agent_id = auth.jwt() ->> 'sub'
-);
 ```
 
-3. Get your project URL and anon key from Settings → API
+3. Get your credentials from Settings → API
 
-### 3. Initialize Your Agent
+### 3. Generate RSA Keys
 
-**Using CLI (Recommended):**
 ```bash
-# Initialize a new Phlow project
-phlow init
+# Using CLI
+phlow-cli generate-keys
 
-# Generate and register agent card
-phlow generate-card
-
-# Start development environment
-phlow dev-start
+# Or using OpenSSL
+openssl genrsa -out private.pem 2048
+openssl rsa -in private.pem -pubout -out public.pem
 ```
 
-**Manual Setup:**
-```javascript
-// JavaScript/TypeScript
-import { PhlowMiddleware, generateToken } from 'phlow-auth';
+### 4. Create Your A2A-Compatible Agent
 
+```javascript
+import { PhlowMiddleware } from 'phlow-auth';
+import express from 'express';
+
+const app = express();
+app.use(express.json());
+
+// Initialize with A2A Protocol AgentCard
 const phlow = new PhlowMiddleware({
-  supabaseUrl: 'https://your-project.supabase.co',
-  supabaseAnonKey: 'your-anon-key',
+  supabaseUrl: process.env.SUPABASE_URL,
+  supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
   agentCard: {
     agentId: 'my-agent',
-    name: 'My Agent',
-    permissions: ['read:data', 'write:data'],
-    publicKey: '-----BEGIN PUBLIC KEY-----\\n...\\n-----END PUBLIC KEY-----',
+    name: 'My AI Agent',
+    description: 'An example AI agent',
+    publicKey: process.env.PUBLIC_KEY,
+    serviceUrl: 'https://my-agent.example.com',
+    skills: [
+      { name: 'chat', description: 'Natural language conversation' },
+      { name: 'analyze', description: 'Data analysis' }
+    ]
   },
-  privateKey: '-----BEGIN RSA PRIVATE KEY-----\\n...\\n-----END RSA PRIVATE KEY-----',
-  options: {
-    enableAudit: true,
-  },
+  privateKey: process.env.PRIVATE_KEY
 });
+
+// A2A Protocol: Expose agent discovery endpoint
+app.get('/.well-known/agent.json', phlow.wellKnownHandler());
+
+// Protected endpoint
+app.post('/chat', phlow.authenticate(), (req, res) => {
+  const { message } = req.body;
+  const { agent, claims } = req.phlow;
+  
+  res.json({
+    reply: `Hello from ${agent.name}!`,
+    skills: claims.skills
+  });
+});
+
+app.listen(3000);
 ```
 
-```python
-# Python
-from phlow_auth import PhlowMiddleware, PhlowConfig, AgentCard
+### 5. Test A2A Agent Discovery
 
-config = PhlowConfig(
-    supabase_url="https://your-project.supabase.co",
-    supabase_anon_key="your-anon-key",
-    agent_card=AgentCard(
-        agent_id="my-agent",
-        name="My Agent",
-        permissions=["read:data", "write:data"],
-        public_key="-----BEGIN PUBLIC KEY-----\\n...\\n-----END PUBLIC KEY-----",
-    ),
-    private_key="-----BEGIN RSA PRIVATE KEY-----\\n...\\n-----END RSA PRIVATE KEY-----",
-    enable_audit=True,
-)
+Verify your agent follows A2A Protocol discovery standards:
 
-phlow = PhlowMiddleware(config)
+```bash
+# View your agent's capabilities
+curl http://localhost:3000/.well-known/agent.json
+
+# Expected A2A Protocol AgentCard response:
+{
+  "schemaVersion": "0.1.0",
+  "name": "My AI Agent",
+  "description": "An example AI agent",
+  "serviceUrl": "https://my-agent.example.com",
+  "skills": [
+    { "name": "chat", "description": "Natural language conversation" },
+    { "name": "analyze", "description": "Data analysis" }
+  ],
+  "securitySchemes": {
+    "phlow-jwt": {
+      "type": "http",
+      "scheme": "bearer",
+      "bearerFormat": "JWT"
+    }
+  }
+}
+```
+
+### 6. Test Authentication
+
+```bash
+# Generate a test token (using another agent's credentials)
+npx phlow-cli test-token --target my-agent
+
+# Use the token to call your agent
+curl -X POST http://localhost:3000/chat \
+  -H "Authorization: Bearer <jwt-token>" \
+  -H "X-Phlow-Agent-Id: test-agent" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Hello!"}'
 ```
 
 ### 4. Protect Your Endpoints
@@ -203,19 +218,27 @@ response = requests.get(
 
 ## Core Concepts
 
-### Agent Cards
-Agent cards contain identity and permission information:
+### A2A Protocol AgentCards
+AgentCards follow the A2A Protocol specification and contain identity, capabilities, and permission information:
 
 ```javascript
+// A2A Protocol-compatible AgentCard
 const agentCard = {
   agentId: 'unique-agent-identifier',
   name: 'Human-readable name',
   description: 'Optional description',
-  permissions: ['read:data', 'write:data', 'admin:users'],
   publicKey: 'RSA public key in PEM format',
-  endpoints: {
-    api: 'http://agent-url:3000',
-    health: 'http://agent-url:3000/health',
+  serviceUrl: 'https://agent-url.com',
+  skills: [
+    { name: 'chat', description: 'Natural language conversation' },
+    { name: 'analyze', description: 'Data analysis capabilities' }
+  ],
+  securitySchemes: {
+    'phlow-jwt': {
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT'
+    }
   },
   metadata: {
     environment: 'production',
