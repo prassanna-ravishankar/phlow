@@ -218,7 +218,7 @@ export const TEST_SCENARIOS: TestScenario[] = [
       const limitedAgent: AgentCard = {
         agentId: 'test-limited-agent',
         name: 'Test Limited Agent',
-        permissions: ['read:data'], // Only read permission
+        skills: [{ name: 'read:data' }], // Only read permission
         publicKey: forge.pki.publicKeyToPem(keys.publicKey),
       };
 
@@ -240,8 +240,8 @@ export const TEST_SCENARIOS: TestScenario[] = [
         const claims = verifyToken(token, context.sourceAgent.publicKey);
 
         // Check if agent has write permission (should not)
-        const hasWritePermission = claims.permissions.includes('write:data');
-        const hasReadPermission = claims.permissions.includes('read:data');
+        const hasWritePermission = (claims.skills || []).includes('write:data');
+        const hasReadPermission = (claims.skills || []).includes('read:data');
 
         return {
           success: hasReadPermission && !hasWritePermission,
@@ -249,7 +249,7 @@ export const TEST_SCENARIOS: TestScenario[] = [
             ? 'Permission validation successful'
             : 'Permission validation failed',
           data: {
-            permissions: claims.permissions,
+            skills: (claims.skills || []),
             hasRead: hasReadPermission,
             hasWrite: hasWritePermission,
           },

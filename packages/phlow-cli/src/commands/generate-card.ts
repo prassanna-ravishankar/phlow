@@ -65,7 +65,7 @@ export function createGenerateCardCommand(): Command {
         if (config.agentCard.description) {
           console.log(chalk.gray(`   Description: ${config.agentCard.description}`));
         }
-        console.log(chalk.gray(`   Permissions: ${config.agentCard.permissions.join(', ')}`));
+        console.log(chalk.gray(`   Permissions: ${(config.agentCard.permissions || []).join(', ')}`));
         
         if (options.output) {
           console.log(chalk.blue(`\\n💾 Card saved to: ${options.output}`));

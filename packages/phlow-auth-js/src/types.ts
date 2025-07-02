@@ -14,6 +14,8 @@ export interface AgentCard {
     description?: string;
   }>;
   securitySchemes?: Record<string, any>;
+  permissions?: string[];
+  endpoints?: Record<string, any>;
   metadata?: Record<string, any>;
 }
 

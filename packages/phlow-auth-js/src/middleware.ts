@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { PhlowConfig, PhlowContext, MiddlewareFunction } from './types';
+import { PhlowConfig, PhlowContext, MiddlewareFunction, AgentCard } from './types';
 import { verifyToken } from './jwt';
 import { AuthenticationError, ConfigurationError } from './errors';
 

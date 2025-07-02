@@ -58,7 +58,7 @@ export function createDevStartCommand(): Command {
             AGENT_ID: config.agentCard.agentId,
             AGENT_NAME: config.agentCard.name,
             AGENT_DESCRIPTION: config.agentCard.description || 'Development agent',
-            AGENT_PERMISSIONS: JSON.stringify(config.agentCard.permissions),
+            AGENT_PERMISSIONS: JSON.stringify(config.agentCard.permissions || []),
           }
         );
 
@@ -139,7 +139,7 @@ curl -H "Authorization: Bearer <token>" \\
 
 - **Agent ID**: ${config.agentCard.agentId}
 - **Name**: ${config.agentCard.name}
-- **Permissions**: ${config.agentCard.permissions.join(', ')}
+- **Permissions**: ${(config.agentCard.permissions || []).join(', ')}
 `;
 
         await fs.writeFile(path.join(devDir, 'README.md'), readme);
