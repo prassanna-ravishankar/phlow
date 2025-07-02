@@ -9,6 +9,108 @@ JWT-based authentication for AI agent networks using Supabase.
 [View on GitHub](https://github.com/prassanna-ravishankar/phlow){ .md-button }
 </div>
 
+## 🎭 The Power of Agent Cards
+
+Agent Cards transform AI agents into self-describing, discoverable services. Any agent can learn what another agent can do and how to interact with it - automatically.
+
+### Create a Specialized Agent in Seconds
+
+=== "JavaScript"
+
+    ```javascript
+    const dataAnalysisAgent = phlowAuth({
+      agentCard: {
+        name: "DataWizard",
+        description: "AI agent specialized in data analysis",
+        skills: ["data-analysis", "visualization", "statistical-modeling"],
+        endpoints: {
+          analyze: { method: "POST", path: "/analyze" }
+        }
+      }
+    });
+
+    // That's it! Your agent now:
+    // ✓ Describes its capabilities at /.well-known/agent.json
+    // ✓ Authenticates incoming agent requests
+    // ✓ Is discoverable by other agents
+    ```
+
+=== "Python"
+
+    ```python
+    phlow = PhlowAuth(
+        agent_card={
+            "name": "DataWizard",
+            "description": "AI agent specialized in data analysis",
+            "skills": ["data-analysis", "visualization", "statistical-modeling"],
+            "endpoints": {
+                "analyze": {"method": "POST", "path": "/analyze"}
+            }
+        }
+    )
+    ```
+
+### Discover and Use Other Agents
+
+=== "JavaScript"
+
+    ```javascript
+    // Discover what an agent can do
+    const agentCard = await researchAgent.discoverAgent('https://data-wizard.ai');
+    console.log(`Skills: ${agentCard.skills.join(', ')}`);
+
+    // Use it - authentication handled automatically
+    const response = await researchAgent.callAgent('https://data-wizard.ai/analyze', {
+      dataset: datasetUrl,
+      analysis_type: 'regression'
+    });
+    ```
+
+=== "Python"
+
+    ```python
+    # Discover what an agent can do
+    agent_card = await phlow.discover_agent('https://data-wizard.ai')
+    print(f"Skills: {', '.join(agent_card['skills'])}")
+
+    # Use it - authentication handled automatically
+    response = await phlow.call_agent(
+        'https://data-wizard.ai/analyze',
+        json={'dataset': dataset_url, 'analysis_type': 'regression'}
+    )
+    ```
+
+<div class="grid cards" markdown>
+
+-   :material-robot: **Self-Describing**
+
+    ---
+
+    Other agents instantly know your capabilities through standardized Agent Cards
+
+-   :material-shield-check: **Auto-Authenticated**
+
+    ---
+
+    Secure agent-to-agent communication with zero boilerplate
+
+-   :material-magnify: **Discoverable**
+
+    ---
+
+    Find and understand other agents programmatically
+
+-   :material-connection: **Collaborative**
+
+    ---
+
+    Call other agents' endpoints with automatic authentication
+
+</div>
+
+**No manual API documentation. No authentication boilerplate. No discovery protocols.**  
+Just agents that understand each other.
+
 ## Features
 
 <div class="grid cards" markdown>
