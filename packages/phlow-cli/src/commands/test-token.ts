@@ -65,7 +65,7 @@ export function createTestTokenCommand(): Command {
         console.log(chalk.gray(`  Issuer: ${config.agentCard.agentId}`));
         console.log(chalk.gray(`  Audience: ${options.target}`));
         console.log(chalk.gray(`  Expires: ${options.expires}`));
-        console.log(chalk.gray(`  Permissions: ${config.agentCard.permissions.join(', ')}`));
+        console.log(chalk.gray(`  Permissions: ${(config.agentCard.permissions || []).join(', ')}`));
 
       } catch (error: any) {
         console.error(chalk.red('❌ Failed to generate test token:'), error.message);
