@@ -20,87 +20,26 @@ Phlow is the JWT authentication foundation for the [A2A Protocol](https://a2apro
 
 ```bash
 npm install phlow-auth
-```
-
-```javascript
-import { PhlowMiddleware } from 'phlow-auth';
-
-const phlow = new PhlowMiddleware({
-  supabaseUrl: process.env.SUPABASE_URL,
-  supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
-  agentCard: {
-    agentId: 'my-agent',
-    name: 'My Agent',
-    description: 'A simple AI agent',
-    publicKey: process.env.PUBLIC_KEY,
-    serviceUrl: 'https://my-agent.com',
-    skills: [
-      { name: 'chat', description: 'Natural language chat' },
-      { name: 'analyze', description: 'Data analysis' }
-    ]
-  },
-  privateKey: process.env.PRIVATE_KEY
-});
-
-// A2A Protocol: Expose agent capabilities
-app.get('/.well-known/agent.json', phlow.wellKnownHandler());
-
-// Authenticate agent-to-agent requests
-app.post('/api/chat', phlow.authenticate(), (req, res) => {
-  res.json({ 
-    message: 'Hello from ' + req.phlow.agent.name,
-    skills: req.phlow.claims.skills 
-  });
-});
-```
-
-### Python
-
-```bash
+# or
 pip install phlow-auth
 ```
 
-```python
-from fastapi import FastAPI, Depends
-from phlow_auth import PhlowMiddleware, PhlowConfig, AgentCard
-from phlow_auth.integrations.fastapi import create_phlow_dependency
+```javascript
+// Protect your endpoints in one line
+app.post('/api/chat', phlow.authenticate(), (req, res) => {
+  res.json({ 
+    message: 'Hello from ' + req.phlow.agent.name,
+    permissions: req.phlow.claims.permissions 
+  });
+});
 
-# Configure Phlow
-config = PhlowConfig(
-    supabase_url=os.getenv("SUPABASE_URL"),
-    supabase_anon_key=os.getenv("SUPABASE_ANON_KEY"),
-    agent_card=AgentCard(
-        agent_id="my-agent",
-        name="My Agent", 
-        permissions=["read:data", "write:data"],
-        public_key=os.getenv("AGENT_PUBLIC_KEY"),
-    ),
-    private_key=os.getenv("AGENT_PRIVATE_KEY"),
-)
-
-phlow = PhlowMiddleware(config)
-auth_required = create_phlow_dependency(phlow)
-
-@app.get("/protected")
-async def protected_endpoint(context = Depends(auth_required)):
-    return {"message": "Authenticated!", "agent": context.agent.name}
+// Call other agents securely
+const response = await phlow.callAgent('https://other-agent.ai/analyze', {
+  dataset: 'sales-2024.csv'
+});
 ```
 
-### CLI Tools
-
-```bash
-# Install CLI globally
-npm install -g phlow-cli
-
-# Initialize new project
-phlow init
-
-# Generate and register agent card
-phlow generate-card
-
-# Start development environment
-phlow dev-start
-```
+[Full Setup Guide →](docs/getting-started.md)
 
 ## 🚀 Features
 
@@ -111,80 +50,6 @@ phlow dev-start
 - **🌐 Multi-Language** - JavaScript/TypeScript and Python
 - **🛠️ CLI Tools** - Quick setup and testing
 
-## 🎭 The Power of Agent Cards
-
-Agent Cards transform AI agents into self-describing, discoverable services. Any agent can learn what another agent can do and how to interact with it - automatically.
-
-### Create a Specialized Agent
-
-**JavaScript**
-```javascript
-const dataAnalysisAgent = phlowAuth({
-  agentCard: {
-    name: "DataWizard",
-    description: "AI agent specialized in data analysis",
-    skills: ["data-analysis", "visualization", "statistical-modeling"],
-    endpoints: {
-      analyze: { method: "POST", path: "/analyze" }
-    }
-  }
-});
-
-// That's it! Your agent now:
-// ✓ Describes its capabilities at /.well-known/agent.json
-// ✓ Authenticates incoming agent requests
-// ✓ Is discoverable by other agents
-```
-
-**Python**
-```python
-phlow = PhlowAuth(
-    agent_card={
-        "name": "DataWizard",
-        "description": "AI agent specialized in data analysis",
-        "skills": ["data-analysis", "visualization", "statistical-modeling"],
-        "endpoints": {
-            "analyze": {"method": "POST", "path": "/analyze"}
-        }
-    }
-)
-```
-
-### Discover and Use Other Agents
-
-**JavaScript**
-```javascript
-// Discover what an agent can do
-const agentCard = await researchAgent.discoverAgent('https://data-wizard.ai');
-console.log(`Skills: ${agentCard.skills.join(', ')}`);
-
-// Use it - authentication handled automatically
-const response = await researchAgent.callAgent('https://data-wizard.ai/analyze', {
-  dataset: datasetUrl,
-  analysis_type: 'regression'
-});
-```
-
-**Python**
-```python
-# Discover what an agent can do
-agent_card = await phlow.discover_agent('https://data-wizard.ai')
-print(f"Skills: {', '.join(agent_card['skills'])}")
-
-# Use it - authentication handled automatically
-response = await phlow.call_agent(
-    'https://data-wizard.ai/analyze',
-    json={'dataset': dataset_url, 'analysis_type': 'regression'}
-)
-```
-
-With just a few lines of code, your agents can:
-- **Self-Describe** - Other agents instantly know their capabilities
-- **Authenticate** - Secure agent-to-agent communication out of the box
-- **Discover** - Find and understand other agents programmatically
-- **Collaborate** - Call other agents' endpoints with automatic auth
-
-No manual API documentation. No authentication boilerplate. No discovery protocols. Just agents that understand each other.
 
 ## How It Works
 
@@ -223,86 +88,28 @@ phlow/
 Phlow implements key aspects of the [A2A Protocol](https://a2aproject.github.io/A2A/latest/specification/):
 
 ### ✅ A2A Protocol Compliance
+
 - **AgentCard Format** - Complete A2A specification compatibility
 - **Well-Known Discovery** - Standard `/.well-known/agent.json` endpoint  
 - **JWT Security Schemes** - Seamless A2A authentication integration
 - **Skills & Capabilities** - Native A2A agent skill declaration
 
 ### 🔄 A2A Protocol Roadmap
+
 - **JSON-RPC 2.0 Messages** - Full A2A message format support
 - **Task Management** - A2A stateful task operations  
 - **Server-Sent Events** - A2A real-time streaming protocol
 
 See [A2A Protocol Integration Guide](docs/a2a-compatibility.md) for complete specifications.
 
-## 🛠️ Example: A2A Protocol Agent
-
-```javascript
-// 1. Configure agent with A2A Protocol AgentCard
-const agentCard = {
-  agentId: 'weather-agent',
-  name: 'Weather Information Agent',
-  description: 'Provides weather data and forecasts',
-  publicKey: process.env.PUBLIC_KEY,
-  serviceUrl: 'https://weather-agent.example.com',
-  skills: [
-    { name: 'current-weather', description: 'Get current weather' },
-    { name: 'forecast', description: 'Get weather forecast' }
-  ]
-};
-
-// 2. Initialize Phlow
-const phlow = new PhlowMiddleware({
-  supabaseUrl: process.env.SUPABASE_URL,
-  supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
-  agentCard,
-  privateKey: process.env.PRIVATE_KEY
-});
-
-// 3. A2A Protocol: Expose AgentCard for discovery
-app.get('/.well-known/agent.json', phlow.wellKnownHandler());
-
-// 4. Protect your endpoints
-app.post('/weather/current', phlow.authenticate(), async (req, res) => {
-  const { location } = req.body;
-  const weather = await getWeather(location);
-  res.json({ location, weather, agent: 'weather-agent' });
-});
-```
 
 ## 🔧 Setup
 
-### 1. A2A Agent Registry Schema
+1. **Install**: `npm install phlow-auth` or `pip install phlow-auth`
+2. **Configure**: Set up Supabase and environment variables
+3. **Generate Keys**: `npx phlow-cli generate-keys`
 
-Use the provided [A2A Protocol agent registry schema](docs/database-schema.sql) in Supabase:
-
-```sql
-CREATE TABLE agent_cards (
-  agent_id TEXT UNIQUE NOT NULL,
-  name TEXT NOT NULL,
-  public_key TEXT NOT NULL,
-  -- A2A Protocol specification fields
-  service_url TEXT,
-  skills JSONB DEFAULT '[]',
-  security_schemes JSONB,
-  metadata JSONB DEFAULT '{}'
-);
-```
-
-### 2. Environment Variables
-
-```bash
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
-PUBLIC_KEY="-----BEGIN PUBLIC KEY-----..."
-PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----..."
-```
-
-### 3. Generate Keys
-
-```bash
-npx phlow-cli generate-keys
-```
+[Detailed Setup Instructions →](docs/getting-started.md)
 
 ## 📚 Documentation
 
@@ -320,6 +127,7 @@ npx phlow-cli generate-keys
 ## Contributing
 
 Pull requests welcome! Focus areas:
+
 - A2A Protocol compatibility improvements
 - Additional language libraries
 - Documentation and examples

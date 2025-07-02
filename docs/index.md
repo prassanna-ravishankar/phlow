@@ -9,107 +9,115 @@ JWT-based authentication for AI agent networks using Supabase.
 [View on GitHub](https://github.com/prassanna-ravishankar/phlow){ .md-button }
 </div>
 
-## 🎭 The Power of Agent Cards
+## 🔐 Zero-Config Agent Authentication
 
-Agent Cards transform AI agents into self-describing, discoverable services. Any agent can learn what another agent can do and how to interact with it - automatically.
+Phlow makes secure agent-to-agent authentication effortless. Your agents authenticate each other automatically using JWT tokens and public key cryptography.
 
-### Create a Specialized Agent in Seconds
+### Protect Your Agent in One Line
 
 === "JavaScript"
 
     ```javascript
-    const dataAnalysisAgent = phlowAuth({
-      agentCard: {
-        name: "DataWizard",
-        description: "AI agent specialized in data analysis",
-        skills: ["data-analysis", "visualization", "statistical-modeling"],
-        endpoints: {
-          analyze: { method: "POST", path: "/analyze" }
-        }
+    // Your unprotected endpoint
+    app.post('/analyze', (req, res) => {
+      // Anyone can call this!
+    });
+
+    // Add Phlow = Instant authentication
+    app.post('/analyze', phlow.authenticate(), (req, res) => {
+      // Now only authenticated agents can access
+      console.log(`Request from: ${req.phlow.agent.name}`);
+      console.log(`Permissions: ${req.phlow.claims.permissions}`);
+    });
+    ```
+
+=== "Python"
+
+    ```python
+    # Your unprotected endpoint
+    @app.route('/analyze', methods=['POST'])
+    def analyze():
+        # Anyone can call this!
+        pass
+
+    # Add Phlow = Instant authentication
+    @app.route('/analyze', methods=['POST'])
+    @phlow.authenticate()
+    def analyze():
+        # Now only authenticated agents can access
+        print(f"Request from: {request.agent['name']}")
+        print(f"Permissions: {request.claims['permissions']}")
+    ```
+
+### Call Other Agents Securely
+
+=== "JavaScript"
+
+    ```javascript
+    // Without Phlow: Complex auth setup
+    const token = jwt.sign(payload, privateKey, { algorithm: 'RS256' });
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'X-Agent-ID': agentId
       }
     });
 
-    // That's it! Your agent now:
-    // ✓ Describes its capabilities at /.well-known/agent.json
-    // ✓ Authenticates incoming agent requests
-    // ✓ Is discoverable by other agents
-    ```
-
-=== "Python"
-
-    ```python
-    phlow = PhlowAuth(
-        agent_card={
-            "name": "DataWizard",
-            "description": "AI agent specialized in data analysis",
-            "skills": ["data-analysis", "visualization", "statistical-modeling"],
-            "endpoints": {
-                "analyze": {"method": "POST", "path": "/analyze"}
-            }
-        }
-    )
-    ```
-
-### Discover and Use Other Agents
-
-=== "JavaScript"
-
-    ```javascript
-    // Discover what an agent can do
-    const agentCard = await researchAgent.discoverAgent('https://data-wizard.ai');
-    console.log(`Skills: ${agentCard.skills.join(', ')}`);
-
-    // Use it - authentication handled automatically
-    const response = await researchAgent.callAgent('https://data-wizard.ai/analyze', {
-      dataset: datasetUrl,
-      analysis_type: 'regression'
+    // With Phlow: Authentication handled automatically
+    const response = await phlow.callAgent('https://data-agent.ai/analyze', {
+      dataset: 'sales-2024.csv'
     });
     ```
 
 === "Python"
 
     ```python
-    # Discover what an agent can do
-    agent_card = await phlow.discover_agent('https://data-wizard.ai')
-    print(f"Skills: {', '.join(agent_card['skills'])}")
+    # Without Phlow: Complex auth setup
+    token = jwt.encode(payload, private_key, algorithm='RS256')
+    response = requests.post(url, 
+        headers={
+            'Authorization': f'Bearer {token}',
+            'X-Agent-ID': agent_id
+        }
+    )
 
-    # Use it - authentication handled automatically
-    response = await phlow.call_agent(
-        'https://data-wizard.ai/analyze',
-        json={'dataset': dataset_url, 'analysis_type': 'regression'}
+    # With Phlow: Authentication handled automatically
+    response = await phlow.call_agent('https://data-agent.ai/analyze', 
+        json={'dataset': 'sales-2024.csv'}
     )
     ```
 
 <div class="grid cards" markdown>
 
--   :material-robot: **Self-Describing**
+-   :material-shield-lock: **JWT + RSA Security**
 
     ---
 
-    Other agents instantly know your capabilities through standardized Agent Cards
+    Industry-standard RS256 signed tokens with automatic key management
 
--   :material-shield-check: **Auto-Authenticated**
-
-    ---
-
-    Secure agent-to-agent communication with zero boilerplate
-
--   :material-magnify: **Discoverable**
+-   :material-clock-fast: **Zero Configuration**
 
     ---
 
-    Find and understand other agents programmatically
+    Authentication works out of the box - no complex setup required
 
--   :material-connection: **Collaborative**
+-   :material-database: **Supabase Registry**
 
     ---
 
-    Call other agents' endpoints with automatic authentication
+    Agent public keys stored securely and retrieved automatically
+
+-   :material-check-all: **Permission System**
+
+    ---
+
+    Fine-grained access control with JWT claims and permissions
 
 </div>
 
-**No manual API documentation. No authentication boilerplate. No discovery protocols.**  
-Just agents that understand each other.
+**No token generation. No key management. No auth headers.**
+
+Just secure agent communication that works.
 
 ## Features
 
@@ -186,6 +194,7 @@ Just agents that understand each other.
     Phlow is inspired by the [A2A Protocol specification](https://a2aproject.github.io/A2A/latest/specification/) and aims to provide A2A-compatible authentication as a foundation for agent networks.
 
 **Current Features:**
+
 - ✅ JWT-based authentication (compatible with A2A security schemes)
 - ✅ Agent registry via Supabase (similar to A2A AgentCards)
 - ✅ JavaScript/TypeScript and Python libraries
@@ -193,6 +202,7 @@ Just agents that understand each other.
 - ✅ CLI tools for development and testing
 
 **A2A Compatibility Roadmap:**
+
 - 🔄 **AgentCard standard**: Implement A2A-compatible AgentCard format
 - 🔄 **JSON-RPC 2.0**: Add JSON-RPC support alongside REST APIs  
 - 🔄 **Well-known endpoints**: Support `/.well-known/agent.json` discovery
@@ -204,14 +214,17 @@ Just agents that understand each other.
 ## How It Works
 
 ```mermaid
-graph TB
-    A[Agent A] -->|1. Generate JWT| A
-    A -->|2. Send Request + JWT| B[Agent B]
-    B -->|3. Lookup Public Key| S[Supabase Registry]
-    S -->|4. Return Public Key| B
-    B -->|5. Verify JWT Signature| B
-    B -->|6. Process Request| B
-    B -->|7. Send Response| A
+sequenceDiagram
+    participant A as Agent A
+    participant B as Agent B
+    participant S as Supabase Registry
+    
+    A->>A: Generate JWT with private key
+    A->>B: Send request + JWT + Agent ID
+    B->>S: Lookup Agent A's public key
+    S->>B: Return public key
+    B->>B: Verify JWT signature
+    B->>A: Return authenticated response
 ```
 
 **Authentication Flow:**
