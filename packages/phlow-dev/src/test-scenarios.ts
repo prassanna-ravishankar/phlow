@@ -218,7 +218,7 @@ export const TEST_SCENARIOS: TestScenario[] = [
       const limitedAgent: AgentCard = {
         agentId: 'test-limited-agent',
         name: 'Test Limited Agent',
-        permissions: ['read:data'], // Only read permission
+        skills: [{ name: 'read:data' }], // Only read permission
         publicKey: forge.pki.publicKeyToPem(keys.publicKey),
       };
 
@@ -249,7 +249,7 @@ export const TEST_SCENARIOS: TestScenario[] = [
             ? 'Permission validation successful'
             : 'Permission validation failed',
           data: {
-            permissions: (claims.skills || []),
+            skills: (claims.skills || []),
             hasRead: hasReadPermission,
             hasWrite: hasWritePermission,
           },
