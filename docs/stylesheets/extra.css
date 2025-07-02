@@ -162,6 +162,78 @@
     color: var(--md-primary-bg-color);
 }
 
+/* Ensure sidebar navigation is always visible */
+@media screen and (min-width: 76.25em) {
+    .md-nav--primary .md-nav__list {
+        display: block !important;
+    }
+    
+    .md-nav--primary {
+        display: block !important;
+        visibility: visible !important;
+    }
+}
+
+/* Force navigation sections to stay expanded */
+.md-nav__item--nested > .md-nav {
+    display: block !important;
+}
+
+/* Developer Guide section highlighting */
+.md-nav__item--nested > .md-nav__link[title="Developer Guide"] {
+    font-weight: 600;
+    color: var(--md-accent-fg-color);
+}
+
+/* Keep navigation sections expanded by default */
+.md-nav__item--section {
+    display: block;
+}
+
+.md-nav__item--section > .md-nav {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+
+/* Sticky navigation for better UX */
+@media screen and (min-width: 76.25em) {
+    .md-sidebar--primary {
+        position: sticky;
+        top: 2.4rem;
+        height: calc(100vh - 4.8rem);
+        overflow-y: auto;
+    }
+}
+
+/* Navigation breadcrumb enhancement */
+.md-nav__path {
+    display: block !important;
+    font-size: 0.9rem;
+    opacity: 0.7;
+    margin-bottom: 0.5rem;
+}
+
+/* Current page highlighting in navigation */
+.md-nav__item--active > .md-nav__link {
+    background: var(--md-accent-fg-color--transparent);
+    color: var(--md-accent-fg-color);
+    font-weight: 600;
+    border-radius: 4px;
+}
+
+/* Mobile navigation improvements */
+@media screen and (max-width: 76.25em) {
+    .md-nav--primary {
+        background: var(--md-default-bg-color);
+    }
+    
+    .md-nav__item--section > .md-nav__link {
+        background: var(--md-default-fg-color--lightest);
+        font-weight: 600;
+    }
+}
+
 /* Table styling improvements */
 .md-typeset table:not([class]) {
     border-radius: 8px;

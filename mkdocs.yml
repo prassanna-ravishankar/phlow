@@ -23,16 +23,20 @@ theme:
         name: Switch to light mode
   
   features:
-    - navigation.tabs
     - navigation.sections
     - navigation.expand
     - navigation.path
+    - navigation.indexes
     - navigation.top
+    - navigation.tracking
     - search.highlight
     - search.share
+    - search.suggest
     - toc.integrate
+    - toc.follow
     - content.code.copy
     - content.code.annotate
+    - content.tabs.link
 
   logo: phlow-logo.png
   favicon: phlow-logo.png
@@ -41,6 +45,16 @@ theme:
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
+  - Developer Guide:
+    - Overview: dev-guide/index.md
+    - Architecture: dev-guide/architecture.md
+    - Codebase Structure: dev-guide/codebase-structure.md
+    - Local Development: dev-guide/local-development.md
+    - JavaScript Implementation: dev-guide/javascript-implementation.md
+    - Python Implementation: dev-guide/python-implementation.md
+    - Database Schema: dev-guide/database-schema.md
+    - Testing Strategy: dev-guide/testing-strategy.md
+    - Troubleshooting: dev-guide/troubleshooting.md
   - A2A Compatibility: a2a-compatibility.md
   - API Reference: api-reference.md
   - Examples:
