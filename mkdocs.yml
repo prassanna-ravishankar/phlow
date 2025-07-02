@@ -41,6 +41,7 @@ theme:
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
+  - A2A Compatibility: a2a-compatibility.md
   - API Reference: api-reference.md
   - Examples:
     - Basic Agent: examples/basic-agent.md

@@ -3,19 +3,19 @@
   
   # Phlow: Agent-to-Agent Authentication Framework
   
-  *The complete authentication solution for the agentic web*
+  *JWT-based authentication for AI agent networks using Supabase*
 </div>
 
 [![npm version](https://img.shields.io/npm/v/phlow-auth.svg)](https://www.npmjs.com/package/phlow-auth)
 [![PyPI version](https://img.shields.io/pypi/v/phlow-auth.svg)](https://pypi.org/project/phlow-auth/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://img.shields.io/github/workflow/status/phlowai/phlow/CI)](https://github.com/phlowai/phlow/actions)
+[![Build Status](https://img.shields.io/github/workflow/status/prassanna-ravishankar/phlow/CI)](https://github.com/prassanna-ravishankar/phlow/actions)
 
 ## 🎯 What is Phlow?
 
-Phlow is a comprehensive Agent-to-Agent (A2A) authentication framework that makes securing communication between AI agents as simple as adding middleware. Built on JWT tokens and integrated with Supabase, Phlow provides enterprise-ready authentication with zero custom auth logic.
+Phlow provides JWT-based authentication for AI agent networks, inspired by the [A2A Protocol specification](https://a2aproject.github.io/A2A/latest/specification/). Built with Supabase as the agent registry, Phlow makes securing agent-to-agent communication straightforward with minimal setup.
 
-**Transform A2A agent authentication from "build your own JWT validation" to "npm install phlow-auth && go"**
+**Current**: JWT authentication with Supabase • **Future**: Full A2A Protocol compatibility
 
 ## ⚡ Quick Start
 
@@ -96,15 +96,20 @@ phlow dev-start
 
 ## 🚀 Key Features
 
-- **🔐 JWT-based Authentication** - RS256 signed tokens with full verification
-- **🗃️ Supabase Integration** - Built-in agent registry and audit logging
-- **🛡️ Permission-Based Access Control** - Granular permissions system
-- **⚡ Rate Limiting** - Built-in protection against abuse
-- **📊 Audit Logging** - Complete authentication event tracking
-- **🔄 Token Refresh** - Automatic token refresh handling
-- **🌐 Multi-Language Support** - JavaScript/TypeScript and Python
-- **🧪 Local Development** - Complete local testing environment
-- **📖 Comprehensive Documentation** - Full API reference and guides
+### Current Implementation
+- **🔐 JWT Authentication** - RS256 signed tokens for secure agent communication
+- **🗃️ Supabase Integration** - Agent registry and public key storage
+- **🌐 Multi-Language Support** - JavaScript/TypeScript and Python libraries
+- **🛠️ CLI Tools** - Project setup, key generation, and testing utilities
+- **📊 Audit Logging** - Authentication event tracking
+- **🧪 Local Development** - Complete testing environment
+
+### A2A Protocol Roadmap
+- **🔄 AgentCard Standard** - A2A-compatible agent discovery format
+- **🔄 JSON-RPC 2.0** - Standard A2A communication protocol
+- **🔄 Task Management** - Stateful task delegation between agents
+- **🔄 Streaming Support** - Real-time communication via Server-Sent Events
+- **🔄 Multiple Auth Schemes** - OAuth 2.0, OpenID Connect, API keys
 
 ## 🏗️ Architecture
 
@@ -275,6 +280,7 @@ ALTER TABLE phlow_audit_logs ENABLE ROW LEVEL SECURITY;
 ## 📚 Documentation
 
 - **[Getting Started Guide](docs/getting-started.md)** - Complete setup walkthrough
+- **[A2A Compatibility](docs/a2a-compatibility.md)** - A2A Protocol integration roadmap
 - **[API Reference](docs/api-reference.md)** - Detailed API documentation
 - **[JavaScript Library](packages/phlow-auth-js/README.md)** - JS/TS specific docs
 - **[Python Library](packages/phlow-auth-python/README.md)** - Python specific docs
@@ -333,7 +339,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ```bash
 # Clone the repository
-git clone https://github.com/phlowai/phlow.git
+git clone https://github.com/prassanna-ravishankar/phlow.git
 cd phlow
 
 # Install dependencies
@@ -346,26 +352,30 @@ npm test
 npm run build
 ```
 
-## 📈 Roadmap
+## 📈 A2A Compatibility Roadmap
 
-### Current Status: ✅ Complete Implementation
+### Phase 1: Foundation ✅ (Current)
+- [x] JWT-based authentication with RS256 signatures
+- [x] Agent registry via Supabase
+- [x] JavaScript/TypeScript and Python libraries
+- [x] CLI tools for development and testing
+- [x] Express.js and FastAPI middleware
 
-- [x] Core JavaScript/TypeScript library
-- [x] Python library with FastAPI integration
-- [x] CLI tools for development
-- [x] Local development environment
-- [x] Comprehensive examples
-- [x] Integration test suites
-- [x] Complete documentation
+### Phase 2: A2A Standards 🔄 (In Progress)
+- [ ] **AgentCard Standard** - A2A-compatible agent discovery format
+- [ ] **Well-known Endpoints** - Support `/.well-known/agent.json` discovery
+- [ ] **JSON-RPC 2.0** - Standard A2A communication protocol alongside REST
 
-### Future Enhancements
+### Phase 3: Advanced Features 🔄 (Planned)
+- [ ] **Task Management** - Stateful task delegation and state tracking
+- [ ] **Streaming Support** - Server-Sent Events for real-time updates
+- [ ] **Multiple Auth Schemes** - OAuth 2.0, OpenID Connect, API keys
+- [ ] **Enhanced Security** - TLS 1.3+ requirements and credential management
 
-- [ ] Go library implementation
-- [ ] Rust library implementation  
-- [ ] Advanced monitoring and metrics
-- [ ] Multi-tenant support
-- [ ] Official framework plugins
-- [ ] Enterprise features
+### Phase 4: Ecosystem Integration 🔄 (Future)
+- [ ] **A2A Registry Integration** - Connect with A2A agent registries
+- [ ] **Enhanced Interoperability** - Full A2A protocol compliance
+- [ ] **Community Tools** - Integration with A2A ecosystem tools
 
 ## 📊 Performance
 
@@ -378,9 +388,8 @@ npm run build
 ## 🆘 Support
 
 - 📖 **Documentation**: [docs/getting-started.md](docs/getting-started.md)
-- 🐛 **Issues**: [GitHub Issues](https://github.com/phlowai/phlow/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/phlowai/phlow/discussions)
-- 📧 **Email**: support@phlow.ai
+- 🐛 **Issues**: [GitHub Issues](https://github.com/prassanna-ravishankar/phlow/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/prassanna-ravishankar/phlow/discussions)
 
 ## 📄 License
 
@@ -388,12 +397,13 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
+- **[A2A Protocol](https://a2aproject.github.io/A2A/latest/specification/)** - For inspiring agent-to-agent communication standards
 - **Supabase** - For providing the authentication infrastructure
 - **JSON Web Tokens** - For the token specification
 - **Open Source Community** - For the amazing tools and libraries
 
 ---
 
-**Ready to build the authentication layer that makes the agentic web possible?** 🌊
+**Ready to build JWT authentication for your agent network?** 🌊
 
-[Get Started](docs/getting-started.md) | [View Examples](examples/) | [API Reference](docs/api-reference.md)
+[Get Started](docs/getting-started.md) | [A2A Compatibility](docs/a2a-compatibility.md) | [View Examples](examples/) | [API Reference](docs/api-reference.md)

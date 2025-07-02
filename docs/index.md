@@ -77,24 +77,27 @@ JWT-based authentication for AI agent networks using Supabase.
     phlow test-token --target my-agent
     ```
 
-## Current State & Roadmap
+## Current State & A2A Compatibility
 
-!!! info "Current Implementation"
+!!! info "A2A Protocol Inspiration"
 
-    Phlow currently uses **Supabase** for agent registry and authentication. Additional auth backends are planned for future releases.
+    Phlow is inspired by the [A2A Protocol specification](https://a2aproject.github.io/A2A/latest/specification/) and aims to provide A2A-compatible authentication as a foundation for agent networks.
 
-**Available Now:**
-- ✅ JWT-based authentication with RS256 signatures
-- ✅ Supabase integration for agent registry
+**Current Features:**
+- ✅ JWT-based authentication (compatible with A2A security schemes)
+- ✅ Agent registry via Supabase (similar to A2A AgentCards)
 - ✅ JavaScript/TypeScript and Python libraries
-- ✅ CLI tools for development
 - ✅ Express.js and FastAPI middleware
+- ✅ CLI tools for development and testing
 
-**Planned Features:**
-- 🔄 Additional auth backends (Auth0, custom databases)
-- 🔄 More language libraries (Go, Rust, Java)
-- 🔄 Advanced permission systems
-- 🔄 Agent discovery and routing
+**A2A Compatibility Roadmap:**
+- 🔄 **AgentCard standard**: Implement A2A-compatible AgentCard format
+- 🔄 **JSON-RPC 2.0**: Add JSON-RPC support alongside REST APIs  
+- 🔄 **Well-known endpoints**: Support `/.well-known/agent.json` discovery
+- 🔄 **Task management**: Add A2A task delegation and state management
+- 🔄 **Streaming support**: Implement Server-Sent Events for real-time updates
+- 🔄 **Multiple auth schemes**: Support OAuth 2.0, OpenID Connect, API keys
+- 🔄 **Enhanced security**: TLS 1.3+ requirements and credential management
 
 ## How It Works
 
