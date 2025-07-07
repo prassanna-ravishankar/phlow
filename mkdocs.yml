@@ -1,74 +1,39 @@
-site_name: Phlow - Agent-to-Agent Authentication Framework
-site_description: The complete authentication framework for the agentic web
+site_name: Phlow
+site_description: A2A Protocol extension with Supabase superpowers
 site_url: https://prassanna-ravishankar.github.io/phlow/
 repo_url: https://github.com/prassanna-ravishankar/phlow
 repo_name: prassanna-ravishankar/phlow
 
 theme:
   name: material
-  palette:
-    # Primary colors
-    - scheme: default
-      primary: blue grey
-      accent: blue
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
-    # Dark mode
-    - scheme: slate
-      primary: blue grey
-      accent: blue
-      toggle:
-        icon: material/brightness-4
-        name: Switch to light mode
-  
   features:
     - navigation.sections
-    - navigation.expand
-    - navigation.path
-    - navigation.indexes
     - navigation.top
-    - navigation.tracking
     - search.highlight
-    - search.share
     - search.suggest
-    - toc.integrate
-    - toc.follow
     - content.code.copy
-    - content.code.annotate
     - content.tabs.link
 
-  logo: phlow-logo.png
-  favicon: phlow-logo.png
-
-# Navigation
 nav:
   - Home: index.md
-  - Getting Started: getting-started.md
-  - Developer Guide:
-    - Overview: dev-guide/index.md
-    - Architecture: dev-guide/architecture.md
-    - Codebase Structure: dev-guide/codebase-structure.md
-    - Local Development: dev-guide/local-development.md
-    - JavaScript Implementation: dev-guide/javascript-implementation.md
-    - Python Implementation: dev-guide/python-implementation.md
-    - Database Schema: dev-guide/database-schema.md
-    - Testing Strategy: dev-guide/testing-strategy.md
-    - Troubleshooting: dev-guide/troubleshooting.md
-  - A2A Compatibility: a2a-compatibility.md
-  - API Reference: api-reference.md
+  - Quick Start: quickstart.md
+  - Guides:
+    - Installation: installation.md
+    - Configuration: configuration.md
+    - Authentication: guides/authentication.md
+    - Making Agent Calls: guides/agent-calls.md
+  - Concepts:
+    - How Phlow Works: concepts/how-it-works.md
+    - A2A Protocol Integration: concepts/a2a-integration.md
+  - Reference:
+    - JavaScript API: api/javascript.md
+    - Python API: api/python.md
   - Examples:
     - Basic Agent: examples/basic-agent.md
     - Multi-Agent Network: examples/multi-agent.md
 
-# Extensions
 markdown_extensions:
-  - pymdownx.highlight:
-      anchor_linenums: true
-      line_spans: __span
-      pygments_lang_class: true
-  - pymdownx.inlinehilite
-  - pymdownx.snippets
+  - pymdownx.highlight
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
@@ -76,38 +41,8 @@ markdown_extensions:
           format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
-  - pymdownx.emoji:
-      emoji_index: !!python/name:material.extensions.emoji.twemoji
-      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - admonition
-  - pymdownx.details
-  - pymdownx.tasklist:
-      custom_checkbox: true
-  - attr_list
-  - md_in_html
   - tables
-  - toc:
-      permalink: true
 
-# Plugins
 plugins:
   - search
-  - social
-
-# Extra
-extra:
-  homepage: https://prassanna-ravishankar.github.io/phlow/
-  social:
-    - icon: fontawesome/brands/github
-      link: https://github.com/prassanna-ravishankar/phlow
-    - icon: fontawesome/brands/npm
-      link: https://www.npmjs.com/search?q=phlow
-    - icon: fontawesome/brands/python
-      link: https://pypi.org/project/phlow-auth/
-
-# Custom CSS
-extra_css:
-  - stylesheets/extra.css
-
-# Copyright
-copyright: Copyright &copy; 2024 Phlow - Built with ❤️ for the agentic web
