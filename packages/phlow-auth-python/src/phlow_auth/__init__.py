@@ -1,6 +1,6 @@
 """Phlow Authentication Library for Python.
 
-Agent-to-Agent (A2A) authentication framework with Supabase integration.
+A2A Protocol extension with Supabase integration for enhanced agent authentication.
 """
 
 from .exceptions import (
@@ -11,22 +11,27 @@ from .exceptions import (
     RateLimitError,
     TokenError,
 )
-from .jwt_utils import decode_token, generate_token, is_token_expired, verify_token
 from .middleware import PhlowMiddleware
 from .supabase_helpers import SupabaseHelpers
-from .types import AgentCard, JWTClaims, PhlowConfig, PhlowContext
+from .types import PhlowConfig, PhlowContext, VerifyOptions, AuditLog
+
+# Re-export useful A2A types for convenience
+from a2a_sdk import (
+    AgentCard as A2AAgentCard,
+    A2AContext,
+    A2AServer,
+    A2AClient,
+    Task,
+    Message,
+)
 
 __version__ = "0.1.0"
 __all__ = [
     "PhlowMiddleware",
-    "generate_token",
-    "verify_token",
-    "decode_token",
-    "is_token_expired",
-    "AgentCard",
     "PhlowConfig",
-    "JWTClaims",
     "PhlowContext",
+    "VerifyOptions",
+    "AuditLog",
     "PhlowError",
     "AuthenticationError",
     "AuthorizationError",
@@ -34,4 +39,11 @@ __all__ = [
     "TokenError",
     "RateLimitError",
     "SupabaseHelpers",
+    # A2A re-exports
+    "A2AAgentCard",
+    "A2AContext",
+    "A2AServer",
+    "A2AClient",
+    "Task",
+    "Message",
 ]

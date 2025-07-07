@@ -1,7 +1,7 @@
 {
   "name": "phlow-auth",
   "version": "0.1.0",
-  "description": "Agent-to-Agent authentication middleware for JavaScript/TypeScript",
+  "description": "A2A Protocol extension with Supabase integration for enhanced agent authentication",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -24,8 +24,8 @@
     "clean": "rm -rf dist node_modules .turbo"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.43.1",
-    "jsonwebtoken": "^9.0.2"
+    "@a2a-js/sdk": "^1.0.0",
+    "@supabase/supabase-js": "^2.43.1"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",

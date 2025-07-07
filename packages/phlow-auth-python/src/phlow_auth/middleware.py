@@ -1,24 +1,17 @@
-"""Core middleware for Phlow authentication."""
+"""Phlow middleware - A2A Protocol extension with Supabase integration."""
 
-import asyncio
 from typing import Any, Dict, Optional
-
+from a2a_sdk import A2AServer, A2AContext, AgentCard as A2AAgentCard
 from supabase import Client, create_client
 
 from .audit import AuditLogger, create_audit_entry
-from .exceptions import (
-    AuthenticationError,
-    AuthorizationError,
-    ConfigurationError,
-    RateLimitError,
-)
-from .jwt_utils import decode_token, is_token_expired, verify_token
+from .exceptions import ConfigurationError, RateLimitError
 from .rate_limiter import RateLimiter
-from .types import AgentCard, PhlowConfig, PhlowContext, VerifyOptions
+from .types import PhlowConfig, PhlowContext
 
 
-class PhlowMiddleware:
-    """Core Phlow authentication middleware."""
+class PhlowMiddleware(A2AServer):
+    """Phlow middleware extending A2A Protocol with Supabase features."""
 
     def __init__(self, config: PhlowConfig):
         """Initialize Phlow middleware.
@@ -29,6 +22,13 @@ class PhlowMiddleware:
         Raises:
             ConfigurationError: If configuration is invalid
         """
+        # Initialize A2A server with agent card
+        super().__init__(
+            agent_card=config.agent_card,
+            private_key=config.private_key,
+            # A2A SDK handles JWT validation internally
+        )
+
         self._validate_config(config)
         self.config = config
 
@@ -41,13 +41,17 @@ class PhlowMiddleware:
         self.rate_limiter: Optional[RateLimiter] = None
         if config.rate_limiting:
             self.rate_limiter = RateLimiter(
-                config.rate_limiting["max_requests"], config.rate_limiting["window_ms"]
+                config.rate_limiting["max_requests"], 
+                config.rate_limiting["window_ms"]
             )
 
         # Initialize audit logger if enabled
         self.audit_logger: Optional[AuditLogger] = None
         if config.enable_audit:
             self.audit_logger = AuditLogger(self.supabase)
+
+        # Set up Supabase integration hooks
+        self._setup_supabase_hooks()
 
     def _validate_config(self, config: PhlowConfig) -> None:
         """Validate configuration.
@@ -61,33 +65,22 @@ class PhlowMiddleware:
         if not config.supabase_url or not config.supabase_anon_key:
             raise ConfigurationError("Supabase URL and anon key are required")
 
-        if not config.agent_card or not config.agent_card.agent_id:
-            raise ConfigurationError("Agent card with agent_id is required")
+    def _setup_supabase_hooks(self) -> None:
+        """Set up hooks for Supabase integration."""
+        # Override A2A's authentication hook
+        self.on_authenticated = self._on_authenticated
+        
+        # Override agent lookup to use Supabase
+        self.on_agent_lookup = self._get_agent_from_supabase
 
-        if not config.private_key:
-            raise ConfigurationError("Private key is required")
-
-    async def authenticate(
-        self, token: str, agent_id: str, options: Optional[VerifyOptions] = None
-    ) -> PhlowContext:
-        """Authenticate a request.
+    async def _on_authenticated(self, context: A2AContext) -> None:
+        """Handle successful authentication.
 
         Args:
-            token: JWT token to verify
-            agent_id: Agent ID from request headers
-            options: Verification options
-
-        Returns:
-            Authentication context
-
-        Raises:
-            AuthenticationError: If authentication fails
-            AuthorizationError: If authorization fails
-            RateLimitError: If rate limit is exceeded
+            context: A2A authentication context
         """
-        if options is None:
-            options = VerifyOptions()
-
+        agent_id = context.agent.metadata.get("agentId", "unknown")
+        
         # Check rate limiting
         if self.rate_limiter and not self.rate_limiter.is_allowed(agent_id):
             await self._log_audit(
@@ -95,112 +88,26 @@ class PhlowMiddleware:
             )
             raise RateLimitError("Rate limit exceeded")
 
-        # Get agent card from database
-        agent_card = await self._get_agent_card(agent_id)
-        if not agent_card:
-            await self._log_audit(
-                "auth_failure", agent_id, details={"reason": "agent_not_found"}
-            )
-            raise AuthenticationError("Agent not found", "AGENT_NOT_FOUND")
-
-        # Verify token
-        try:
-            claims = verify_token(
-                token,
-                agent_card.public_key,
-                audience=self.config.agent_card.agent_id,
-                issuer=agent_id,
-                ignore_expiration=options.allow_expired,
-            )
-        except Exception as e:
-            await self._log_audit("auth_failure", agent_id, details={"reason": str(e)})
-            raise
-
-        # Check permissions
-        if options.required_permissions:
-            missing_permissions = set(options.required_permissions) - set(
-                claims.permissions
-            )
-            if missing_permissions:
-                await self._log_audit(
-                    "permission_denied",
-                    agent_id,
-                    self.config.agent_card.agent_id,
-                    details={
-                        "required": options.required_permissions,
-                        "provided": claims.permissions,
-                        "missing": list(missing_permissions),
-                    },
-                )
-                raise AuthorizationError(
-                    "Insufficient permissions", "INSUFFICIENT_PERMISSIONS"
-                )
-
         # Log successful authentication
-        await self._log_audit("auth_success", agent_id, self.config.agent_card.agent_id)
+        if self.audit_logger:
+            await self._log_audit(
+                "auth_success", 
+                agent_id, 
+                self.config.agent_card.metadata.get("agentId")
+            )
 
-        # Create context
-        context = PhlowContext(
-            agent=agent_card,
-            token=token,
-            claims=claims,
-            supabase=self.supabase,
-        )
+        # Attach Supabase client to context
+        context.extensions = context.extensions or {}
+        context.extensions["supabase"] = self.supabase
 
-        return context
-
-    def authenticate_sync(
-        self, token: str, agent_id: str, options: Optional[VerifyOptions] = None
-    ) -> PhlowContext:
-        """Synchronous version of authenticate.
-
-        Args:
-            token: JWT token to verify
-            agent_id: Agent ID from request headers
-            options: Verification options
-
-        Returns:
-            Authentication context
-        """
-        # Create event loop if none exists
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
-        return loop.run_until_complete(self.authenticate(token, agent_id, options))
-
-    async def check_token_refresh(self, token: str) -> bool:
-        """Check if token needs refreshing.
-
-        Args:
-            token: JWT token to check
-
-        Returns:
-            True if token should be refreshed
-        """
-        threshold = self.config.refresh_threshold
-        needs_refresh = is_token_expired(token, threshold)
-
-        if needs_refresh:
-            # Log token refresh event
-            decoded = decode_token(token)
-            if decoded:
-                await self._log_audit(
-                    "token_refresh", decoded.iss, self.config.agent_card.agent_id
-                )
-
-        return needs_refresh
-
-    async def _get_agent_card(self, agent_id: str) -> Optional[AgentCard]:
-        """Get agent card from database.
+    async def _get_agent_from_supabase(self, agent_id: str) -> Optional[A2AAgentCard]:
+        """Get agent card from Supabase.
 
         Args:
             agent_id: Agent ID to look up
 
         Returns:
-            Agent card or None if not found
+            A2A-compliant agent card or None if not found
         """
         try:
             result = (
@@ -215,18 +122,49 @@ class PhlowMiddleware:
                 return None
 
             data = result.data
-            return AgentCard(
-                agent_id=data["agent_id"],
+            
+            # Return A2A-compliant agent card
+            return A2AAgentCard(
+                schema_version=data.get("schema_version", "1.0"),
                 name=data["name"],
                 description=data.get("description"),
-                permissions=data.get("permissions", []),
-                public_key=data["public_key"],
-                endpoints=data.get("endpoints"),
-                metadata=data.get("metadata"),
+                service_url=data.get("service_url"),
+                skills=data.get("skills", []),
+                security_schemes=data.get("security_schemes", {}),
+                metadata={
+                    **data.get("metadata", {}),
+                    "agentId": data["agent_id"],
+                    "publicKey": data["public_key"],
+                }
             )
 
         except Exception:
             return None
+
+    async def authenticate_with_context(
+        self, token: str, agent_id: str
+    ) -> PhlowContext:
+        """Authenticate and return Phlow context.
+
+        This method provides backward compatibility with existing Phlow code.
+
+        Args:
+            token: JWT token to verify
+            agent_id: Agent ID from request headers
+
+        Returns:
+            Phlow-specific authentication context
+        """
+        # Use A2A's authentication
+        a2a_context = await self.authenticate(token, agent_id)
+        
+        # Create Phlow context from A2A context
+        return PhlowContext(
+            agent=a2a_context.agent,
+            token=a2a_context.token,
+            claims=a2a_context.claims,
+            supabase=self.supabase,
+        )
 
     async def _log_audit(
         self,
@@ -257,10 +195,54 @@ class PhlowMiddleware:
         """
         return self.supabase
 
-    def get_agent_card(self) -> AgentCard:
-        """Get the current agent card.
+    def generate_rls_policy(self, agent_id: str, permissions: list[str]) -> str:
+        """Generate Row Level Security policy for Supabase.
+
+        Args:
+            agent_id: Agent ID for the policy
+            permissions: List of required permissions
 
         Returns:
-            Current agent card
+            SQL policy statement
         """
-        return self.config.agent_card
+        permission_checks = " OR ".join(
+            f"auth.jwt() ->> 'permissions' ? '{p}'" for p in permissions
+        )
+
+        return f"""
+        CREATE POLICY "{agent_id}_policy" ON your_table
+        FOR ALL
+        TO authenticated
+        USING (
+            auth.jwt() ->> 'sub' = '{agent_id}'
+            AND ({permission_checks})
+        );
+        """
+
+    async def register_agent(self, agent_card: A2AAgentCard) -> None:
+        """Register an agent in Supabase.
+
+        Args:
+            agent_card: A2A-compliant agent card to register
+        """
+        agent_id = agent_card.metadata.get("agentId")
+        if not agent_id:
+            raise ValueError("Agent ID is required in metadata")
+
+        data = {
+            "agent_id": agent_id,
+            "name": agent_card.name,
+            "description": agent_card.description,
+            "service_url": agent_card.service_url,
+            "schema_version": agent_card.schema_version,
+            "skills": agent_card.skills,
+            "security_schemes": agent_card.security_schemes,
+            "public_key": agent_card.metadata.get("publicKey"),
+            "metadata": agent_card.metadata,
+            "created_at": "now()",
+        }
+
+        result = self.supabase.table("agent_cards").upsert(data).execute()
+        
+        if result.error:
+            raise Exception(f"Failed to register agent: {result.error.message}")

@@ -1,84 +1,70 @@
+import { A2AServer, A2AContext, AgentCard as A2AAgentCard } from '@a2a-js/sdk';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { PhlowConfig, PhlowContext, MiddlewareFunction, AgentCard } from './types';
-import { verifyToken } from './jwt';
-import { AuthenticationError, ConfigurationError } from './errors';
+import { PhlowConfig, PhlowContext, MiddlewareFunction } from './types';
+import { ConfigurationError } from './errors';
 
-export class PhlowMiddleware {
+export class PhlowMiddleware extends A2AServer {
   private supabase: SupabaseClient;
   private config: PhlowConfig;
 
   constructor(config: PhlowConfig) {
+    // Initialize A2A server with agent card
+    super({
+      agentCard: config.agentCard as A2AAgentCard,
+      privateKey: config.privateKey,
+      // A2A SDK handles JWT validation internally
+    });
+
     this.validateConfig(config);
     this.config = config;
     this.supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
+
+    // Set up Supabase integration hooks
+    this.setupSupabaseHooks();
   }
 
   private validateConfig(config: PhlowConfig): void {
     if (!config.supabaseUrl || !config.supabaseAnonKey) {
       throw new ConfigurationError('Supabase URL and anon key are required');
     }
-    if (!config.agentCard || !config.agentCard.agentId) {
-      throw new ConfigurationError('Agent card with agentId is required');
-    }
-    if (!config.privateKey) {
-      throw new ConfigurationError('Private key is required');
-    }
   }
 
-  public authenticate(): MiddlewareFunction {
-    return async (req: any, _res: any, next: (error?: any) => void) => {
-      try {
-        // Extract agent ID from header
-        const agentId = req.headers?.['x-phlow-agent-id'] || req.headers?.['X-Phlow-Agent-Id'];
-        if (!agentId) {
-          throw new AuthenticationError('Agent ID not provided', 'AGENT_ID_MISSING');
-        }
-
-        // Extract JWT token
-        const token = this.extractToken(req);
-        if (!token) {
-          throw new AuthenticationError('No token provided', 'TOKEN_MISSING');
-        }
-
-        // Get remote agent's public key
-        const remoteAgent = await this.getAgentCard(agentId);
-        if (!remoteAgent) {
-          throw new AuthenticationError('Agent not found', 'AGENT_NOT_FOUND');
-        }
-
-        // Verify JWT signature
-        const claims = verifyToken(token, remoteAgent.publicKey, {
-          audience: this.config.agentCard.agentId,
-          issuer: agentId,
-        });
-
-        // Create context for downstream handlers
-        const context: PhlowContext = {
-          agent: remoteAgent,
-          token,
-          claims,
-          supabase: this.supabase,
-        };
-
-        (req as any).phlow = context;
-        next();
-      } catch (error) {
-        next(error);
+  private setupSupabaseHooks(): void {
+    // Override A2A's onAuthenticated hook to add Supabase features
+    this.on('authenticated', async (context: A2AContext) => {
+      // Log authentication event to Supabase
+      if (this.config.enableAuditLog) {
+        await this.logAuthEvent(context);
       }
-    };
+
+      // Attach Supabase client to context for downstream use
+      (context as any).supabase = this.supabase;
+    });
+
+    // Override agent card lookup to use Supabase
+    this.on('agentLookup', async (agentId: string) => {
+      return await this.getAgentCardFromSupabase(agentId);
+    });
   }
 
-
-  private extractToken(req: any): string | null {
-    const authHeader = req.headers?.authorization || req.headers?.Authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      return authHeader.substring(7);
+  private async logAuthEvent(context: A2AContext): Promise<void> {
+    try {
+      await this.supabase.from('auth_audit_log').insert({
+        agent_id: context.agent.metadata?.agentId,
+        timestamp: new Date().toISOString(),
+        event_type: 'authentication',
+        success: true,
+        metadata: {
+          skills: context.agent.skills,
+          service_url: context.agent.serviceUrl,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to log auth event:', error);
     }
-    return null;
   }
 
-
-  private async getAgentCard(agentId: string): Promise<AgentCard | null> {
+  private async getAgentCardFromSupabase(agentId: string): Promise<A2AAgentCard | null> {
     try {
       const { data, error } = await this.supabase
         .from('agent_cards')
@@ -90,23 +76,19 @@ export class PhlowMiddleware {
         return null;
       }
 
-      // Map from database to A2A-compatible AgentCard format
+      // Return A2A-compliant agent card
       return {
-        agentId: data.agent_id,
+        schemaVersion: data.schema_version || '1.0',
         name: data.name,
         description: data.description,
-        publicKey: data.public_key,
         serviceUrl: data.service_url,
-        schemaVersion: data.schema_version || '0.1.0',
         skills: data.skills || [],
-        securitySchemes: data.security_schemes || {
-          'phlow-jwt': {
-            type: 'http',
-            scheme: 'bearer',
-            bearerFormat: 'JWT'
-          }
+        securitySchemes: data.security_schemes || {},
+        metadata: {
+          ...data.metadata,
+          agentId: data.agent_id,
+          publicKey: data.public_key,
         },
-        metadata: data.metadata,
       };
     } catch (error) {
       console.error('Error fetching agent card:', error);
@@ -114,39 +96,76 @@ export class PhlowMiddleware {
     }
   }
 
+  // Phlow-specific middleware that wraps A2A authentication
+  public authenticate(): MiddlewareFunction {
+    return async (req: any, res: any, next: (error?: any) => void) => {
+      try {
+        // Let A2A SDK handle the authentication
+        const a2aMiddleware = this.getAuthMiddleware();
+        await a2aMiddleware(req, res, (err?: any) => {
+          if (err) {
+            return next(err);
+          }
+
+          // Add Phlow-specific context
+          const a2aContext = (req as any).a2a;
+          if (a2aContext) {
+            const phlowContext: PhlowContext = {
+              agent: a2aContext.agent,
+              token: a2aContext.token,
+              claims: a2aContext.claims,
+              supabase: this.supabase,
+            };
+            (req as any).phlow = phlowContext;
+          }
+
+          next();
+        });
+      } catch (error) {
+        next(error);
+      }
+    };
+  }
+
+  // Supabase-specific helpers
   public getSupabaseClient(): SupabaseClient {
     return this.supabase;
   }
 
-  public getCurrentAgentCard() {
-    return this.config.agentCard;
+  // RLS policy generator for Supabase
+  public generateRLSPolicy(agentId: string, permissions: string[]): string {
+    const permissionChecks = permissions
+      .map(p => `auth.jwt() ->> 'permissions' ? '${p}'`)
+      .join(' OR ');
+
+    return `
+      CREATE POLICY "${agentId}_policy" ON your_table
+      FOR ALL
+      TO authenticated
+      USING (
+        auth.jwt() ->> 'sub' = '${agentId}'
+        AND (${permissionChecks})
+      );
+    `;
   }
 
-  // A2A-compatible well-known endpoint handler
-  public wellKnownHandler(): MiddlewareFunction {
-    return (_req: any, res: any) => {
-      const agentCard = {
-        schemaVersion: this.config.agentCard.schemaVersion || '0.1.0',
-        name: this.config.agentCard.name,
-        description: this.config.agentCard.description,
-        serviceUrl: this.config.agentCard.serviceUrl,
-        skills: this.config.agentCard.skills || [],
-        securitySchemes: this.config.agentCard.securitySchemes || {
-          'phlow-jwt': {
-            type: 'http',
-            scheme: 'bearer',
-            bearerFormat: 'JWT'
-          }
-        },
-        metadata: {
-          ...this.config.agentCard.metadata,
-          publicKey: this.config.agentCard.publicKey,
-          agentId: this.config.agentCard.agentId,
-        }
-      };
+  // Helper to register agent in Supabase
+  public async registerAgent(agentCard: A2AAgentCard): Promise<void> {
+    const { error } = await this.supabase.from('agent_cards').upsert({
+      agent_id: agentCard.metadata?.agentId,
+      name: agentCard.name,
+      description: agentCard.description,
+      service_url: agentCard.serviceUrl,
+      schema_version: agentCard.schemaVersion,
+      skills: agentCard.skills,
+      security_schemes: agentCard.securitySchemes,
+      public_key: agentCard.metadata?.publicKey,
+      metadata: agentCard.metadata,
+      created_at: new Date().toISOString(),
+    });
 
-      res.setHeader('Content-Type', 'application/json');
-      res.json(agentCard);
-    };
+    if (error) {
+      throw new Error(`Failed to register agent: ${error.message}`);
+    }
   }
 }

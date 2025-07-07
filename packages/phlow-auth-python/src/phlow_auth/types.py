@@ -1,67 +1,91 @@
 """Type definitions for Phlow authentication."""
 
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
-
+from typing import Any, Dict, List, Optional, TypedDict
 from pydantic import BaseModel
+from a2a_sdk import AgentCard as A2AAgentCard
+from supabase import Client as SupabaseClient
 
 
-class AgentCard(BaseModel):
-    """Agent card containing identification and permission information."""
-
-    agent_id: str
-    name: str
-    description: Optional[str] = None
-    permissions: List[str] = []
-    public_key: str
-    endpoints: Optional[Dict[str, str]] = None
-    metadata: Optional[Dict[str, Any]] = None
+class RateLimitingConfig(TypedDict):
+    """Rate limiting configuration."""
+    
+    max_requests: int
+    window_ms: int
 
 
 class PhlowConfig(BaseModel):
-    """Configuration for Phlow middleware."""
-
+    """Phlow configuration."""
+    
+    # Supabase configuration
     supabase_url: str
     supabase_anon_key: str
-    agent_card: AgentCard
+    
+    # Agent configuration (A2A-compliant)
+    agent_card: A2AAgentCard
     private_key: str
-    token_expiry: str = "1h"
-    refresh_threshold: int = 300  # seconds
+    
+    # Phlow-specific options
     enable_audit: bool = False
-    rate_limiting: Optional[Dict[str, int]] = None
+    rate_limiting: Optional[RateLimitingConfig] = None
+    refresh_threshold: int = 300  # seconds
 
 
-class JWTClaims(BaseModel):
-    """JWT token claims."""
-
-    sub: str  # subject (agent ID)
-    iss: str  # issuer (agent ID)
-    aud: str  # audience (target agent ID)
-    exp: int  # expiration time
-    iat: int  # issued at
-    permissions: List[str] = []
-    metadata: Optional[Dict[str, Any]] = None
-
-
-@dataclass
-class PhlowContext:
-    """Context information for authenticated requests."""
-
-    agent: AgentCard
+class PhlowContext(BaseModel):
+    """Authentication context with Phlow extensions."""
+    
+    # From A2A authentication
+    agent: A2AAgentCard
     token: str
-    claims: JWTClaims
-    supabase: Any  # supabase client
+    claims: Dict[str, Any]
+    
+    # Phlow additions
+    supabase: SupabaseClient
+    
+    class Config:
+        """Pydantic configuration."""
+        
+        arbitrary_types_allowed = True
 
 
 class VerifyOptions(BaseModel):
-    """Options for token verification."""
+    """Options for token verification (kept for backward compatibility)."""
 
     required_permissions: Optional[List[str]] = None
     allow_expired: bool = False
 
 
+# Supabase-specific types
+class SupabaseAgentRecord(TypedDict):
+    """Agent record in Supabase."""
+    
+    agent_id: str
+    name: str
+    description: Optional[str]
+    service_url: Optional[str]
+    schema_version: str
+    skills: List[Dict[str, Any]]
+    security_schemes: Dict[str, Any]
+    public_key: str
+    metadata: Optional[Dict[str, Any]]
+    created_at: str
+    updated_at: Optional[str]
+
+
+class AuthAuditLog(TypedDict):
+    """Authentication audit log entry."""
+    
+    id: Optional[str]
+    agent_id: str
+    timestamp: str
+    event_type: str  # 'authentication', 'authorization', 'rate_limit'
+    success: bool
+    metadata: Optional[Dict[str, Any]]
+    error_code: Optional[str]
+    error_message: Optional[str]
+
+
 class AuditLog(BaseModel):
-    """Audit log entry."""
+    """Audit log entry (kept for backward compatibility)."""
 
     timestamp: str
     event: str

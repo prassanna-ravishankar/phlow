@@ -1,9 +1,9 @@
 <div align="center">
   <img src="docs/phlow-logo.png" alt="Phlow Logo" width="400">
   
-  # Phlow: A2A Protocol Authentication
+  # Phlow: A2A Protocol + Supabase
   
-  *The authentication foundation for the Agent-to-Agent Protocol ecosystem*
+  *A2A Protocol extension with Supabase superpowers for enhanced agent authentication*
 </div>
 
 [![npm version](https://img.shields.io/npm/v/phlow-auth.svg)](https://www.npmjs.com/package/phlow-auth)
@@ -12,9 +12,9 @@
 
 ## 🎯 What is Phlow?
 
-Phlow is the JWT authentication foundation for the [A2A Protocol](https://a2aproject.github.io/A2A/latest/specification/) ecosystem. It enables AI agents to securely authenticate with each other while maintaining full compatibility with A2A standards for discovery, capabilities, and communication.
+Phlow extends the official [A2A Protocol SDK](https://github.com/a2aproject/a2a-js) with Supabase integration, adding powerful features like audit logging, Row Level Security (RLS), and centralized agent registry. Built on top of the A2A SDK, Phlow lets you leverage the full A2A ecosystem while adding enterprise-grade features.
 
-**A2A Protocol Native • Secure • Developer-Friendly**
+**A2A SDK Extension • Supabase Powered • Production Ready**
 
 ## ⚡ Quick Start
 
@@ -25,17 +25,22 @@ pip install phlow-auth
 ```
 
 ```javascript
-// Protect your endpoints in one line
-app.post('/api/chat', phlow.authenticate(), (req, res) => {
-  res.json({ 
-    message: 'Hello from ' + req.phlow.agent.name,
-    permissions: req.phlow.claims.permissions 
-  });
+import { PhlowMiddleware } from 'phlow-auth';
+
+// Initialize with A2A agent card + Supabase
+const phlow = new PhlowMiddleware({
+  agentCard: myA2AAgentCard,  // Standard A2A format
+  privateKey: process.env.PRIVATE_KEY,
+  supabaseUrl: process.env.SUPABASE_URL,
+  supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
+  enableAuditLog: true  // Phlow enhancement
 });
 
-// Call other agents securely
-const response = await phlow.callAgent('https://other-agent.ai/analyze', {
-  dataset: 'sales-2024.csv'
+// Use A2A authentication with Supabase features
+app.post('/api/chat', phlow.authenticate(), (req, res) => {
+  // Access both A2A context and Supabase client
+  const { agent, supabase } = req.phlow;
+  res.json({ message: `Hello from ${agent.name}` });
 });
 ```
 
@@ -43,12 +48,12 @@ const response = await phlow.callAgent('https://other-agent.ai/analyze', {
 
 ## 🚀 Features
 
-- **🔐 Simple JWT Auth** - RS256 signed tokens, no complexity
-- **🤖 A2A Protocol Native** - Full AgentCard and discovery compliance
-- **🔍 Well-Known Endpoints** - Standard `/.well-known/agent.json` support
-- **🗃️ Supabase Registry** - Store agent public keys and metadata
-- **🌐 Multi-Language** - JavaScript/TypeScript and Python
-- **🛠️ CLI Tools** - Quick setup and testing
+- **🤖 Built on A2A SDK** - Full A2A Protocol compliance via official SDK
+- **🗃️ Supabase Integration** - Audit logs, RLS policies, agent registry
+- **🔍 Enhanced Discovery** - A2A discovery + centralized Supabase registry
+- **📊 Audit Trail** - Track all authentication events in Supabase
+- **🌐 Multi-Language** - JavaScript/TypeScript and Python extensions
+- **🛡️ RLS Helpers** - Generate Supabase Row Level Security policies
 
 
 ## How It Works
@@ -83,21 +88,25 @@ phlow/
     └── api-reference.md        # API documentation
 ```
 
-## A2A Protocol Compatibility
+## 🔗 A2A Protocol Integration
 
-Phlow implements key aspects of the [A2A Protocol](https://a2aproject.github.io/A2A/latest/specification/):
+Phlow extends the official [A2A SDK](https://github.com/a2aproject/a2a-js) rather than reimplementing it:
 
-### ✅ A2A Protocol Compliance
+### ✅ What A2A SDK Provides
 
-- **AgentCard Format** - Complete A2A specification compatibility
-- **Well-Known Discovery** - Standard `/.well-known/agent.json` endpoint  
-- **JWT Security Schemes** - Seamless A2A authentication integration
-- **Skills & Capabilities** - Native A2A agent skill declaration
+- **AgentCard Format** - Standard A2A agent metadata
+- **JWT Authentication** - A2A-compliant token validation
+- **Well-Known Discovery** - `/.well-known/agent.json` endpoint  
+- **JSON-RPC 2.0** - Message protocol implementation
+- **Task Management** - Stateful operations support
 
-### 🔄 A2A Protocol Roadmap
+### 🚀 What Phlow Adds
 
-- **JSON-RPC 2.0 Messages** - Full A2A message format support
-- **Task Management** - A2A stateful task operations  
+- **Supabase Integration** - Centralized agent registry
+- **Audit Logging** - Track all auth events in Supabase
+- **RLS Policy Generation** - Secure your Supabase tables
+- **Rate Limiting** - Built-in request throttling
+- **Multi-Framework** - Express, FastAPI, Flask support  
 - **Server-Sent Events** - A2A real-time streaming protocol
 
 See [A2A Protocol Integration Guide](docs/a2a-compatibility.md) for complete specifications.
