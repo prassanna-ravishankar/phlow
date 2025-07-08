@@ -3,6 +3,7 @@
 from typing import Any, Dict, List, Optional, TypedDict
 from pydantic import BaseModel
 from supabase import Client as SupabaseClient
+
 try:
     from a2a.client import A2AClient
     from a2a.types import AgentCard as A2AAgentCard
@@ -14,6 +15,7 @@ except ImportError:
 # AgentCard type definition (A2A-compliant)
 class AgentCard(BaseModel):
     """A2A-compliant Agent Card."""
+
     schema_version: str = "1.0"
     name: str
     description: str = ""
@@ -25,22 +27,22 @@ class AgentCard(BaseModel):
 
 class RateLimitingConfig(TypedDict):
     """Rate limiting configuration."""
-    
+
     max_requests: int
     window_ms: int
 
 
 class PhlowConfig(BaseModel):
     """Phlow configuration."""
-    
+
     # Supabase configuration
     supabase_url: str
     supabase_anon_key: str
-    
+
     # Agent configuration (A2A-compliant)
     agent_card: AgentCard
     private_key: str
-    
+
     # Phlow-specific options
     enable_audit: bool = False
     rate_limiting: Optional[RateLimitingConfig] = None
@@ -49,19 +51,19 @@ class PhlowConfig(BaseModel):
 
 class PhlowContext(BaseModel):
     """Authentication context with Phlow extensions."""
-    
+
     # From A2A authentication
     agent: AgentCard
     token: str
     claims: Dict[str, Any]
-    
+
     # Phlow additions
     supabase: SupabaseClient
     a2a_client: Optional[Any] = None  # A2AClient when available
-    
+
     class Config:
         """Pydantic configuration."""
-        
+
         arbitrary_types_allowed = True
 
 
@@ -75,7 +77,7 @@ class VerifyOptions(BaseModel):
 # Supabase-specific types
 class SupabaseAgentRecord(TypedDict):
     """Agent record in Supabase."""
-    
+
     agent_id: str
     name: str
     description: Optional[str]
@@ -91,7 +93,7 @@ class SupabaseAgentRecord(TypedDict):
 
 class AuthAuditLog(TypedDict):
     """Authentication audit log entry."""
-    
+
     id: Optional[str]
     agent_id: str
     timestamp: str

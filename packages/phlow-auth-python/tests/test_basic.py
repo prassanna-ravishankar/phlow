@@ -8,7 +8,7 @@ def test_agent_card_creation():
     """Test agent card creation."""
     card = AgentCard(
         name="Test Agent",
-        metadata={"agent_id": "test-agent", "public_key": "test-public-key"}
+        metadata={"agent_id": "test-agent", "public_key": "test-public-key"},
     )
 
     assert card.name == "Test Agent"
@@ -21,7 +21,7 @@ def test_phlow_config_creation():
     """Test Phlow config creation."""
     agent_card = AgentCard(
         name="Test Agent",
-        metadata={"agent_id": "test-agent", "public_key": "test-public-key"}
+        metadata={"agent_id": "test-agent", "public_key": "test-public-key"},
     )
 
     config = PhlowConfig(
