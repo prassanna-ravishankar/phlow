@@ -4,61 +4,79 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Phlow is an Agent-to-Agent (A2A) authentication framework that integrates with Supabase. It aims to become the de facto standard for authentication between AI agents, making agent auth as simple as adding middleware in a few lines of code.
+Phlow provides authentication and storage layers for the A2A (Agent-to-Agent) Protocol. While A2A handles agent communication, Phlow adds the missing pieces for production use: JWT-based authentication middleware, persistent agent registry in Supabase, and Row Level Security (RLS) policies.
 
 ## Project Status
 
-Currently in the **specification phase** - the codebase contains detailed plans but no implementation yet. The README.md contains the comprehensive specification for the project.
+Currently in **active development** - core packages are implemented with A2A SDK integration. The project provides production-ready authentication and storage extensions for A2A agents.
+
+## Value Proposition
+
+**What A2A Provides:**
+- Agent-to-agent communication protocol
+- Message passing and task management
+- Agent card format and discovery
+- JSON-RPC communication
+
+**What A2A Doesn't Provide:**
+- Authentication middleware
+- Agent verification/auth flows
+- Persistent agent storage
+- Access control mechanisms
+
+**What Phlow Adds:**
+- 🔐 **Authentication Middleware** - JWT-based auth for Express/FastAPI
+- 🗃️ **Persistent Agent Registry** - Store/retrieve agent cards in Supabase
+- 🛡️ **Row Level Security (RLS)** - Generate Supabase RLS policies for agent access
 
 ## Planned Architecture
 
-The project will use a middleware pattern:
+The project provides three core components:
 ```
-Client Agent → Phlow Middleware → Remote Agent + Supabase
+A2A Communication + Phlow Auth + Supabase Storage = Complete Agent Infrastructure
 ```
 
-Key components:
-- JWT-based authentication
-- Supabase integration for backend services
-- Row Level Security (RLS) helpers
-- Rate limiting and audit logging
+Focused scope:
+- **Authentication Middleware** - JWT verification for agent requests
+- **Agent Registry** - Persistent storage of agent cards in Supabase
+- **RLS Policies** - Generate access control policies for agent data
 
 ## Development Commands
 
-Since the project is not yet implemented, here are the planned development workflows:
-
-### Initial Setup (Future)
+### JavaScript Package
 ```bash
 # Install dependencies
-npm install  # for JS packages
-pip install -r requirements.txt  # for Python packages
+npm install
 
-# Start local development environment
-phlow dev-start  # Will start local Supabase instance
+# Build JavaScript package
+npm run build -w phlow-auth
+
+# Lint code (ALWAYS run before committing)
+npm run lint -w phlow-auth
+
+# Type checking (ALWAYS run before committing)
+npm run typecheck -w phlow-auth
+
+# Run tests (ALWAYS run before committing)
+npm run test -w phlow-auth
 ```
 
-### Testing (Future)
+### Python Package
 ```bash
-# Run integration tests
-npm test  # or yarn test
+# Install dependencies
+uv install
+
+# Run tests (ALWAYS run before committing)
+uv run pytest tests/
 
 # Run specific test file
-npm test -- path/to/test.spec.js
+uv run pytest tests/test_basic.py -v
 
-# Run e2e tests
-npm run test:e2e
-```
+# Lint code (ALWAYS run before committing)
+uv run ruff check src/
 
-### Building (Future)
-```bash
-# Build JavaScript package
-npm run build
-
-# Lint code
-npm run lint
-
-# Type checking
-npm run typecheck
+# Format code (ALWAYS run before committing)
+uv run ruff format src/
 ```
 
 ## Project Structure (Planned)
@@ -75,22 +93,26 @@ phlow/
 └── tests/                  # Integration and e2e tests
 ```
 
-## Implementation Phases
+## Implementation Status
 
-1. **Phase 1 (MVP)**: Core JavaScript middleware with Supabase integration
-2. **Phase 2 (Ecosystem)**: Python library, CLI tools, local dev environment
-3. **Phase 3 (Scale)**: Advanced features, community building
+- ✅ **JavaScript Package** - Core middleware with A2A integration
+- ✅ **Python Package** - Core middleware with A2A integration
+- ✅ **Supabase Integration** - Agent registry and RLS helpers
+- ✅ **Authentication** - JWT-based middleware for both platforms
+- 🚧 **CLI Tools** - Development utilities (in progress)
+- 🚧 **Documentation** - API reference and guides (in progress)
 
 ## Key Technical Decisions
 
-- **Primary Language**: TypeScript/JavaScript for initial implementation
+- **Focused Scope**: Authentication + Storage layer for A2A Protocol
+- **A2A Integration**: Extends official A2A SDKs rather than reimplementing
 - **Authentication**: JWT-based with Supabase backend
 - **Package Names**: `phlow-auth` (npm), `phlow_auth` (pip)
-- **CLI Tool**: `phlow` command for development and testing
+- **Platform Support**: JavaScript/TypeScript and Python
 
 ## A2A SDK Integration
 
-Phlow extends the A2A Protocol SDKs with Supabase integration. Here are the SDK locations and versions:
+Phlow extends the A2A Protocol SDKs with authentication and storage capabilities. Here are the SDK locations and versions:
 
 ### JavaScript SDK
 - **Package**: `a2a-js`
@@ -110,18 +132,57 @@ Phlow extends the A2A Protocol SDKs with Supabase integration. Here are the SDK 
 **JavaScript (a2a-js):**
 - `A2AClient` - For sending messages to other agents
 - `A2AServer` - For handling incoming A2A tasks
-- `A2ACardResolver` - For resolving agent cards from network
+- Used for communication while Phlow handles auth/storage
 
 **Python (a2a-sdk):**
 - `a2a.client.A2AClient` - For sending messages to other agents
 - `a2a.types.AgentCard` - Agent card type definition
 - `a2a.types.Message` - Message type definition
 - `a2a.types.Task` - Task type definition
+- Used for communication while Phlow handles auth/storage
 
 ## Important Context
 
 When implementing features, ensure they align with the project's core principles:
-- Simplicity: Authentication should be achievable in just a few lines of code
-- Developer Experience: Provide excellent local testing capabilities
-- Security: Follow JWT best practices and leverage Supabase's security features
-- Extensibility: Design for future protocol support beyond JWT
+- **Focused Scope**: Only authentication, agent registry, and RLS - no reimplementation of A2A communication
+- **Simplicity**: Authentication should be achievable in just a few lines of code
+- **A2A Compatibility**: Always extend A2A SDK, never replace it
+- **Security**: Follow JWT best practices and leverage Supabase's security features
+- **Production Ready**: Focus on features needed for production agent deployments
+
+## Feature Parity Requirement
+
+**CRITICAL**: Always maintain feature parity between JavaScript and Python packages.
+
+- **When adding a new feature**: Implement it in BOTH JavaScript and Python packages
+- **When fixing a bug**: Apply the fix to BOTH packages if applicable
+- **When updating APIs**: Update BOTH packages to maintain consistent interfaces
+- **When writing tests**: Write equivalent tests for BOTH packages
+
+### Feature Parity Checklist:
+- [ ] New method exists in both `PhlowMiddleware` classes
+- [ ] Method signatures are equivalent (accounting for language differences)
+- [ ] Both packages export the same types/interfaces
+- [ ] Error handling is consistent between packages
+- [ ] Documentation is updated for both packages
+- [ ] Tests cover the feature in both packages
+
+## Quality Assurance
+
+**ALWAYS run these commands before committing:**
+
+### JavaScript
+```bash
+npm run lint -w phlow-auth
+npm run typecheck -w phlow-auth
+npm run test -w phlow-auth
+```
+
+### Python
+```bash
+uv run pytest tests/
+uv run ruff check src/
+uv run ruff format src/
+```
+
+**If any command fails, fix the issues before committing.**

@@ -77,11 +77,11 @@ sequenceDiagram
 ```
 phlow/
 ├── packages/
-│   ├── phlow-auth-js/          # Core JavaScript library
-│   ├── phlow-auth-python/      # Core Python library  
-│   └── phlow-cli/              # CLI tools
+│   ├── phlow-auth-js/          # JWT auth middleware for JavaScript
+│   ├── phlow-auth-python/      # JWT auth middleware for Python
+│   └── phlow-cli/              # CLI tools (in progress)
 ├── examples/
-│   └── a2a-compatible-agent/   # A2A Protocol example
+│   └── a2a-compatible-agent/   # A2A + Phlow integration example
 └── docs/
     ├── getting-started.md      # Quick setup guide
     ├── a2a-compatibility.md    # A2A Protocol integration
@@ -95,19 +95,16 @@ Phlow extends the official [A2A SDK](https://github.com/a2aproject/a2a-js) rathe
 ### ✅ What A2A SDK Provides
 
 - **AgentCard Format** - Standard A2A agent metadata
-- **JWT Authentication** - A2A-compliant token validation
-- **Well-Known Discovery** - `/.well-known/agent.json` endpoint  
-- **JSON-RPC 2.0** - Message protocol implementation
-- **Task Management** - Stateful operations support
+- **Communication Protocol** - JSON-RPC messaging between agents
+- **Task Management** - Send messages, get tasks, cancel tasks
+- **Agent Discovery** - Basic agent card resolution
 
 ### 🚀 What Phlow Adds
 
-- **Supabase Integration** - Centralized agent registry
-- **Audit Logging** - Track all auth events in Supabase
-- **RLS Policy Generation** - Secure your Supabase tables
-- **Rate Limiting** - Built-in request throttling
-- **Multi-Framework** - Express, FastAPI, Flask support  
-- **Server-Sent Events** - A2A real-time streaming protocol
+- **JWT Authentication Middleware** - Express/FastAPI auth for agent requests
+- **Supabase Agent Registry** - Persistent storage for agent cards
+- **RLS Policy Generation** - Automated Supabase Row Level Security
+- **Multi-Language Support** - JavaScript/TypeScript and Python packages
 
 See [A2A Protocol Integration Guide](docs/a2a-compatibility.md) for complete specifications.
 
@@ -115,10 +112,37 @@ See [A2A Protocol Integration Guide](docs/a2a-compatibility.md) for complete spe
 ## 🔧 Setup
 
 1. **Install**: `npm install phlow-auth` or `pip install phlow-auth`
-2. **Configure**: Set up Supabase and environment variables
-3. **Generate Keys**: `npx phlow-cli generate-keys`
+2. **Configure**: Set up Supabase project and environment variables
+3. **Initialize**: Register your agent card in Supabase
+4. **Authenticate**: Add Phlow middleware to your A2A agent
 
 [Detailed Setup Instructions →](docs/getting-started.md)
+
+## 💡 Example: A2A Agent with Phlow Auth
+
+```javascript
+// A2A + Phlow Integration
+import { A2AServer } from 'a2a-js';
+import { PhlowMiddleware } from 'phlow-auth';
+
+// Initialize Phlow for authentication
+const phlow = new PhlowMiddleware({
+  agentCard: myAgentCard,
+  supabaseUrl: process.env.SUPABASE_URL,
+  supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
+  privateKey: process.env.PRIVATE_KEY
+});
+
+// Initialize A2A server for communication
+const a2aServer = new A2AServer(myAgentCard, async (task) => {
+  // Handle A2A tasks
+  return { role: 'agent', content: 'Task completed!' };
+});
+
+// Add Phlow auth middleware to Express
+app.use('/api/a2a', phlow.authenticate());
+app.use('/api/a2a', a2aServer.middleware());
+```
 
 ## 📚 Documentation
 
@@ -137,9 +161,12 @@ See [A2A Protocol Integration Guide](docs/a2a-compatibility.md) for complete spe
 
 Pull requests welcome! Focus areas:
 
-- A2A Protocol compatibility improvements
-- Additional language libraries
+- Authentication middleware improvements
+- Supabase integration enhancements
+- Additional language/framework support
 - Documentation and examples
+
+**Scope**: Please keep contributions focused on authentication, agent registry, and RLS. Communication features should be contributed to the [A2A Protocol](https://github.com/a2aproject) directly.
 
 ```bash
 git clone https://github.com/prassanna-ravishankar/phlow.git
