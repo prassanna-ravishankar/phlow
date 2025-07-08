@@ -1,5 +1,20 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { AgentCard as A2AAgentCard } from '@a2a-js/sdk';
+import { JwtPayload } from 'jsonwebtoken';
+
+// A2A-compliant AgentCard interface
+export interface AgentCard {
+  schemaVersion: string;
+  name: string;
+  description: string;
+  serviceUrl: string;
+  skills: string[];
+  securitySchemes: Record<string, unknown>;
+  metadata?: {
+    agentId?: string;
+    publicKey?: string;
+    [key: string]: unknown;
+  };
+}
 
 export interface PhlowConfig {
   // Supabase configuration
@@ -7,8 +22,9 @@ export interface PhlowConfig {
   supabaseAnonKey: string;
   
   // Agent configuration (A2A-compliant)
-  agentCard: A2AAgentCard;
+  agentCard: AgentCard;
   privateKey: string;
+  publicKey?: string;
   
   // Phlow-specific options
   enableAuditLog?: boolean;
@@ -18,24 +34,26 @@ export interface PhlowConfig {
 
 export interface PhlowContext {
   // From A2A authentication
-  agent: A2AAgentCard;
+  agent: AgentCard;
   token: string;
-  claims: any;
+  claims: JwtPayload;
   
   // Phlow additions
   supabase: SupabaseClient;
+  a2aClient?: unknown; // A2AClient when available
+  a2aServer?: unknown; // A2AServer when available
 }
 
 export interface RateLimitConfig {
   windowMs: number;
   maxRequests: number;
-  keyGenerator?: (req: any) => string;
+  keyGenerator?: (req: unknown) => string;
 }
 
 export type MiddlewareFunction = (
-  req: any,
-  res: any,
-  next: (error?: any) => void
+  req: unknown,
+  res: unknown,
+  next: (error?: unknown) => void
 ) => void | Promise<void>;
 
 // Supabase-specific types
@@ -45,10 +63,10 @@ export interface SupabaseAgentRecord {
   description?: string;
   service_url?: string;
   schema_version: string;
-  skills: any[];
-  security_schemes: Record<string, any>;
+  skills: string[];
+  security_schemes: Record<string, unknown>;
   public_key: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   created_at: string;
   updated_at?: string;
 }
@@ -59,7 +77,7 @@ export interface AuthAuditLog {
   timestamp: string;
   event_type: 'authentication' | 'authorization' | 'rate_limit';
   success: boolean;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   error_code?: string;
   error_message?: string;
 }

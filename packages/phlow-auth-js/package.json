@@ -24,8 +24,9 @@
     "clean": "rm -rf dist node_modules .turbo"
   },
   "dependencies": {
-    "@a2a-js/sdk": "^1.0.0",
-    "@supabase/supabase-js": "^2.43.1"
+    "a2a-js": "^0.2.0",
+    "@supabase/supabase-js": "^2.43.1",
+    "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",

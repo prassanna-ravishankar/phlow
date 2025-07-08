@@ -2,8 +2,25 @@
 
 from typing import Any, Dict, List, Optional, TypedDict
 from pydantic import BaseModel
-from a2a_sdk import AgentCard as A2AAgentCard
 from supabase import Client as SupabaseClient
+try:
+    from a2a.client import A2AClient
+    from a2a.types import AgentCard as A2AAgentCard
+except ImportError:
+    A2AClient = None
+    A2AAgentCard = None
+
+
+# AgentCard type definition (A2A-compliant)
+class AgentCard(BaseModel):
+    """A2A-compliant Agent Card."""
+    schema_version: str = "1.0"
+    name: str
+    description: str = ""
+    service_url: str = ""
+    skills: List[str] = []
+    security_schemes: Dict[str, Any] = {}
+    metadata: Optional[Dict[str, Any]] = None
 
 
 class RateLimitingConfig(TypedDict):
@@ -21,7 +38,7 @@ class PhlowConfig(BaseModel):
     supabase_anon_key: str
     
     # Agent configuration (A2A-compliant)
-    agent_card: A2AAgentCard
+    agent_card: AgentCard
     private_key: str
     
     # Phlow-specific options
@@ -34,12 +51,13 @@ class PhlowContext(BaseModel):
     """Authentication context with Phlow extensions."""
     
     # From A2A authentication
-    agent: A2AAgentCard
+    agent: AgentCard
     token: str
     claims: Dict[str, Any]
     
     # Phlow additions
     supabase: SupabaseClient
+    a2a_client: Optional[Any] = None  # A2AClient when available
     
     class Config:
         """Pydantic configuration."""

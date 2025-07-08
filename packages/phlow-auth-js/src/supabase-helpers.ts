@@ -12,12 +12,14 @@ export class SupabaseHelpers {
     const { error } = await this.supabase
       .from('agent_cards')
       .upsert({
-        agent_id: agentCard.agentId,
+        agent_id: agentCard.metadata?.agentId,
         name: agentCard.name,
         description: agentCard.description,
-        permissions: agentCard.permissions,
-        public_key: agentCard.publicKey,
-        endpoints: agentCard.endpoints,
+        service_url: agentCard.serviceUrl,
+        schema_version: agentCard.schemaVersion,
+        skills: agentCard.skills,
+        security_schemes: agentCard.securitySchemes,
+        public_key: agentCard.metadata?.publicKey,
         metadata: agentCard.metadata,
         updated_at: new Date().toISOString(),
       });
@@ -39,24 +41,28 @@ export class SupabaseHelpers {
     }
 
     return {
-      agentId: data.agent_id,
+      schemaVersion: data.schema_version || '1.0',
       name: data.name,
       description: data.description,
-      permissions: data.permissions || [],
-      publicKey: data.public_key,
-      endpoints: data.endpoints,
-      metadata: data.metadata,
+      serviceUrl: data.service_url,
+      skills: data.skills || [],
+      securitySchemes: data.security_schemes || {},
+      metadata: {
+        ...data.metadata,
+        agentId: data.agent_id,
+        publicKey: data.public_key,
+      },
     };
   }
 
   async listAgentCards(filters?: {
-    permissions?: string[];
-    metadata?: Record<string, any>;
+    skills?: string[];
+    metadata?: Record<string, unknown>;
   }): Promise<AgentCard[]> {
     let query = this.supabase.from('agent_cards').select('*');
 
-    if (filters?.permissions && filters.permissions.length > 0) {
-      query = query.contains('permissions', filters.permissions);
+    if (filters?.skills && filters.skills.length > 0) {
+      query = query.contains('skills', filters.skills);
     }
 
     if (filters?.metadata) {
@@ -72,13 +78,17 @@ export class SupabaseHelpers {
     }
 
     return (data || []).map(item => ({
-      agentId: item.agent_id,
+      schemaVersion: item.schema_version || '1.0',
       name: item.name,
       description: item.description,
-      permissions: item.permissions || [],
-      publicKey: item.public_key,
-      endpoints: item.endpoints,
-      metadata: item.metadata,
+      serviceUrl: item.service_url,
+      skills: item.skills || [],
+      securitySchemes: item.security_schemes || {},
+      metadata: {
+        ...item.metadata,
+        agentId: item.agent_id,
+        publicKey: item.public_key,
+      },
     }));
   }
 

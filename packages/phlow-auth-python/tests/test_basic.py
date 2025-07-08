@@ -7,19 +7,21 @@ from phlow_auth.types import AgentCard, PhlowConfig
 def test_agent_card_creation():
     """Test agent card creation."""
     card = AgentCard(
-        agent_id="test-agent", name="Test Agent", public_key="test-public-key"
+        name="Test Agent",
+        metadata={"agent_id": "test-agent", "public_key": "test-public-key"}
     )
 
-    assert card.agent_id == "test-agent"
     assert card.name == "Test Agent"
-    assert card.public_key == "test-public-key"
-    assert card.permissions == []
+    assert card.metadata["agent_id"] == "test-agent"
+    assert card.metadata["public_key"] == "test-public-key"
+    assert card.skills == []
 
 
 def test_phlow_config_creation():
     """Test Phlow config creation."""
     agent_card = AgentCard(
-        agent_id="test-agent", name="Test Agent", public_key="test-public-key"
+        name="Test Agent",
+        metadata={"agent_id": "test-agent", "public_key": "test-public-key"}
     )
 
     config = PhlowConfig(

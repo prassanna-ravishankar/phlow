@@ -13,17 +13,18 @@ from .exceptions import (
 )
 from .middleware import PhlowMiddleware
 from .supabase_helpers import SupabaseHelpers
-from .types import PhlowConfig, PhlowContext, VerifyOptions, AuditLog
+from .types import PhlowConfig, PhlowContext, VerifyOptions, AuditLog, AgentCard
 
-# Re-export useful A2A types for convenience
-from a2a_sdk import (
-    AgentCard as A2AAgentCard,
-    A2AContext,
-    A2AServer,
-    A2AClient,
-    Task,
-    Message,
-)
+# Placeholder functions for token operations
+def generate_token(agent_card: AgentCard, private_key: str) -> str:
+    """Generate a JWT token for the agent."""
+    # This would use PyJWT in real implementation
+    return "mock-token"
+
+def verify_token(token: str, public_key: str) -> dict:
+    """Verify a JWT token."""
+    # This would use PyJWT in real implementation
+    return {"sub": "agent-id", "exp": 1234567890}
 
 __version__ = "0.1.0"
 __all__ = [
@@ -39,11 +40,7 @@ __all__ = [
     "TokenError",
     "RateLimitError",
     "SupabaseHelpers",
-    # A2A re-exports
-    "A2AAgentCard",
-    "A2AContext",
-    "A2AServer",
-    "A2AClient",
-    "Task",
-    "Message",
+    "AgentCard",
+    "generate_token",
+    "verify_token",
 ]

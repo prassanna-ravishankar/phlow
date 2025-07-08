@@ -88,6 +88,36 @@ phlow/
 - **Package Names**: `phlow-auth` (npm), `phlow_auth` (pip)
 - **CLI Tool**: `phlow` command for development and testing
 
+## A2A SDK Integration
+
+Phlow extends the A2A Protocol SDKs with Supabase integration. Here are the SDK locations and versions:
+
+### JavaScript SDK
+- **Package**: `a2a-js`
+- **Version**: `0.2.0` (latest)
+- **Repository**: https://github.com/a2aproject/a2a-js
+- **NPM**: https://www.npmjs.com/package/a2a-js
+- **Documentation**: https://a2aproject.github.io/A2A/latest/sdk/javascript/
+
+### Python SDK
+- **Package**: `a2a-sdk`
+- **Version**: `0.2.11` (latest)
+- **Repository**: https://github.com/a2aproject/a2a-python
+- **Documentation**: https://a2aproject.github.io/A2A/latest/sdk/python/
+
+### Key Classes to Use
+
+**JavaScript (a2a-js):**
+- `A2AClient` - For sending messages to other agents
+- `A2AServer` - For handling incoming A2A tasks
+- `A2ACardResolver` - For resolving agent cards from network
+
+**Python (a2a-sdk):**
+- `a2a.client.A2AClient` - For sending messages to other agents
+- `a2a.types.AgentCard` - Agent card type definition
+- `a2a.types.Message` - Message type definition
+- `a2a.types.Task` - Task type definition
+
 ## Important Context
 
 When implementing features, ensure they align with the project's core principles:

@@ -7,7 +7,7 @@ name = "phlow-auth"
 version = "0.1.0"
 description = "A2A Protocol extension with Supabase integration for enhanced agent authentication"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 license = "MIT"
 authors = [
     { name = "Phlow Team" },
@@ -26,8 +26,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -36,10 +34,11 @@ classifiers = [
     "Topic :: Security",
 ]
 dependencies = [
-    "a2a-sdk>=1.0.0",
+    "a2a-sdk==0.2.11",
     "supabase>=2.0.0",
     "pydantic>=2.0.0",
     "typing-extensions>=4.0.0",
+    "pyjwt>=2.8.0",
 ]
 
 [project.optional-dependencies]
