@@ -42,11 +42,12 @@ class PhlowConfig(BaseModel):
     # Agent configuration (A2A-compliant)
     agent_card: AgentCard
     private_key: str
+    public_key: Optional[str] = None
 
     # Phlow-specific options
-    enable_audit: bool = False
-    rate_limiting: Optional[RateLimitingConfig] = None
-    refresh_threshold: int = 300  # seconds
+    enable_audit_log: bool = False
+    enable_rate_limiting: bool = False
+    rate_limit_config: Optional[RateLimitingConfig] = None
 
 
 class PhlowContext(BaseModel):

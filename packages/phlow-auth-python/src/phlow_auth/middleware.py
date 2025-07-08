@@ -80,6 +80,34 @@ class PhlowMiddleware:
         """Get the A2A client instance."""
         return self.a2a_client
 
+    def get_supabase_client(self):
+        """Get the Supabase client instance."""
+        return self.supabase
+
+    def generate_rls_policy(self, agent_id: str, permissions: list) -> str:
+        """Generate RLS policy for Supabase.
+
+        Args:
+            agent_id: Agent ID
+            permissions: List of required permissions
+
+        Returns:
+            SQL policy string
+        """
+        permission_checks = " OR ".join(
+            [f"auth.jwt() ->> 'permissions' ? '{p}'" for p in permissions]
+        )
+
+        return f"""
+            CREATE POLICY "{agent_id}_policy" ON your_table
+            FOR ALL
+            TO authenticated
+            USING (
+                auth.jwt() ->> 'sub' = '{agent_id}'
+                AND ({permission_checks})
+            );
+        """
+
     def generate_token(self, agent_card: AgentCard) -> str:
         """Generate JWT token for agent.
 
@@ -162,7 +190,7 @@ class PhlowMiddleware:
             success: Whether authentication succeeded
             metadata: Additional metadata
         """
-        if not self.config.enable_audit:
+        if not self.config.enable_audit_log:
             return
 
         try:
@@ -205,3 +233,26 @@ class PhlowMiddleware:
             ).execute()
         except Exception as e:
             raise ConfigurationError(f"Failed to register agent: {e}")
+
+    def authenticate(self):
+        """Return authentication middleware function.
+
+        For use with web frameworks like FastAPI or Flask.
+        This would need framework-specific implementation.
+        """
+
+        def middleware(request):
+            # This would be implemented for specific frameworks
+            # For now, return a placeholder
+            auth_header = getattr(request, "headers", {}).get("authorization", "")
+            if not auth_header.startswith("Bearer "):
+                raise AuthenticationError("Missing or invalid authorization header")
+
+            token = auth_header[7:]
+            context = self.verify_token(token)
+
+            # Attach context to request
+            request.phlow = context
+            return request
+
+        return middleware

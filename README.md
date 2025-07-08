@@ -24,18 +24,54 @@ npm install phlow-auth
 pip install phlow-auth
 ```
 
+### JavaScript Example
+
 ```javascript
 import { PhlowMiddleware } from 'phlow-auth';
 
-// Initialize with A2A agent card + Supabase
 const phlow = new PhlowMiddleware({
-  agentCard: myA2AAgentCard,  // Standard A2A format
+  agentCard: {
+    schemaVersion: '1.0',
+    name: 'My Agent',
+    description: 'Agent description', 
+    serviceUrl: 'https://my-agent.com',
+    skills: ['chat', 'analysis'],
+    securitySchemes: {},
+    metadata: {
+      agentId: 'my-agent-id',
+      publicKey: 'public-key-here'
+    }
+  },
   privateKey: process.env.PRIVATE_KEY,
   supabaseUrl: process.env.SUPABASE_URL,
-  supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
-  enableAuditLog: true  // Phlow enhancement
+  supabaseAnonKey: process.env.SUPABASE_ANON_KEY
 });
+```
 
+### Python Example
+
+```python
+from phlow_auth import PhlowMiddleware, AgentCard, PhlowConfig
+
+config = PhlowConfig(
+    agent_card=AgentCard(
+        name="My Agent",
+        description="Agent description",
+        service_url="https://my-agent.com", 
+        skills=["chat", "analysis"],
+        metadata={"agent_id": "my-agent-id", "public_key": "public-key-here"}
+    ),
+    private_key=os.environ["PRIVATE_KEY"],
+    supabase_url=os.environ["SUPABASE_URL"],
+    supabase_anon_key=os.environ["SUPABASE_ANON_KEY"]
+)
+
+phlow = PhlowMiddleware(config)
+```
+
+### Express.js Middleware
+
+```javascript
 // Use A2A authentication with Supabase features
 app.post('/api/chat', phlow.authenticate(), (req, res) => {
   // Access both A2A context and Supabase client
@@ -78,10 +114,7 @@ sequenceDiagram
 phlow/
 ├── packages/
 │   ├── phlow-auth-js/          # JWT auth middleware for JavaScript
-│   ├── phlow-auth-python/      # JWT auth middleware for Python
-│   └── phlow-cli/              # CLI tools (in progress)
-├── examples/
-│   └── a2a-compatible-agent/   # A2A + Phlow integration example
+│   └── phlow-auth-python/      # JWT auth middleware for Python
 └── docs/
     ├── getting-started.md      # Quick setup guide
     ├── a2a-compatibility.md    # A2A Protocol integration
@@ -122,26 +155,38 @@ See [A2A Protocol Integration Guide](docs/a2a-compatibility.md) for complete spe
 
 ```javascript
 // A2A + Phlow Integration
-import { A2AServer } from 'a2a-js';
 import { PhlowMiddleware } from 'phlow-auth';
+
+const agentCard = {
+  schemaVersion: '1.0',
+  name: 'My Agent',
+  description: 'A2A-compatible agent',
+  serviceUrl: 'https://my-agent.com',
+  skills: ['chat', 'analysis'],
+  securitySchemes: {},
+  metadata: {
+    agentId: 'my-agent-id',
+    publicKey: process.env.PUBLIC_KEY
+  }
+};
 
 // Initialize Phlow for authentication
 const phlow = new PhlowMiddleware({
-  agentCard: myAgentCard,
+  agentCard,
   supabaseUrl: process.env.SUPABASE_URL,
   supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
   privateKey: process.env.PRIVATE_KEY
 });
 
-// Initialize A2A server for communication
-const a2aServer = new A2AServer(myAgentCard, async (task) => {
-  // Handle A2A tasks
-  return { role: 'agent', content: 'Task completed!' };
-});
-
 // Add Phlow auth middleware to Express
 app.use('/api/a2a', phlow.authenticate());
-app.use('/api/a2a', a2aServer.middleware());
+
+// Handle A2A messages
+app.post('/api/a2a/message', async (req, res) => {
+  const { phlow } = req; // Contains agent, supabase, a2aClient
+  // Process A2A message using phlow context
+  res.json({ status: 'received' });
+});
 ```
 
 ## 📚 Documentation
