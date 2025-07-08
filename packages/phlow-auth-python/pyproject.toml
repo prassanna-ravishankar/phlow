@@ -34,11 +34,11 @@ classifiers = [
     "Topic :: Security",
 ]
 dependencies = [
-    "a2a-sdk==0.2.11",
     "supabase>=2.0.0",
     "pydantic>=2.0.0",
     "typing-extensions>=4.0.0",
     "pyjwt>=2.8.0",
+    "a2a-sdk>=0.2.11",
 ]
 
 [project.optional-dependencies]
