@@ -10,4 +10,6 @@ export default defineConfig({
   minify: false,
   target: 'es2022',
   external: ['@supabase/supabase-js', 'jsonwebtoken'],
+  // Bundle a2a-js since it's ESM-only
+  noExternal: ['a2a-js'],
 });
