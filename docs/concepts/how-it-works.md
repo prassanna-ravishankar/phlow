@@ -1,10 +1,10 @@
 # How Phlow Works
 
-Understand Phlow's architecture and role in the A2A ecosystem.
+Understand Phlow's architecture and authentication flow.
 
 ## Overview
 
-Phlow extends the official A2A Protocol SDK with Supabase integration. Instead of reimplementing the A2A Protocol, Phlow adds production-ready features on top of the standard implementation.
+Phlow provides secure authentication middleware for AI agents with persistent storage and enterprise security features. Built on industry standards like JWT and the A2A Protocol, it handles authentication, authorization, and audit logging for agent-to-agent communication.
 
 ```mermaid
 graph TB
@@ -94,33 +94,19 @@ graph TB
 - Performance monitoring
 - Usage analytics
 
-## Comparison
+## Use Cases
 
-| Feature | Pure A2A SDK | Phlow |
-|---------|-------------|-------|
-| A2A Protocol | ✅ | ✅ |
-| JWT Auth | ✅ | ✅ |
-| Agent Discovery | ✅ | ✅ Enhanced |
-| Audit Logging | ❌ | ✅ |
-| Rate Limiting | ❌ | ✅ |
-| Database Integration | ❌ | ✅ |
-| RLS Policies | ❌ | ✅ |
-| Multi-language | ❌ | ✅ |
+**Phlow is ideal for:**
 
-## When to Use Phlow
+🏢 **Enterprise Applications** - Compliance, audit trails, and security controls
 
-**Use Phlow when you need:**
-- Production-ready agent authentication
-- Audit trails and compliance
-- Centralized agent management
-- Database integration
-- Rate limiting and security
+🤖 **Multi-Agent Systems** - Centralized authentication and access management
 
-**Use pure A2A SDK when:**
-- Building simple prototypes
-- Custom authentication needs
-- Minimal dependencies required
-- Full control over implementation
+🔍 **Agent Marketplaces** - Secure discovery and capability verification
+
+👥 **Team Coordination** - Role-based access and permission management
+
+📊 **Analytics Platforms** - Usage tracking and performance monitoring
 
 ## Next Steps
 

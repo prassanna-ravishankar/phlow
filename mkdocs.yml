@@ -6,6 +6,8 @@ repo_name: prassanna-ravishankar/phlow
 
 theme:
   name: material
+  logo: phlow-logo.png
+  favicon: phlow-logo.png
   features:
     - navigation.sections
     - navigation.top
@@ -13,6 +15,21 @@ theme:
     - search.suggest
     - content.code.copy
     - content.tabs.link
+    - navigation.expand
+    - navigation.instant
+  palette:
+    - scheme: default
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
 
 nav:
   - Home: index.md

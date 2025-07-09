@@ -1,13 +1,17 @@
-# Phlow
+<div align="center">
+  <img src="phlow-logo.png" alt="Phlow Logo" width="300">
+</div>
 
-A2A Protocol extension with Supabase superpowers for enhanced agent authentication.
+# Secure Authentication for AI Agents
 
-[Quick Start](quickstart.md){ .md-button .md-button--primary }
-[GitHub](https://github.com/prassanna-ravishankar/phlow){ .md-button }
+Phlow provides production-ready authentication middleware for AI agents with persistent storage, audit logging, and fine-grained access controls.
+
+[Get Started](quickstart.md){ .md-button .md-button--primary }
+[View on GitHub](https://github.com/prassanna-ravishankar/phlow){ .md-button }
 
 ## What is Phlow?
 
-Phlow extends the official [A2A Protocol SDK](https://github.com/a2aproject/a2a-js) with Supabase integration. Instead of reimplementing the A2A Protocol, Phlow adds production-ready features like audit logging, Row Level Security, and centralized agent registry.
+Phlow is an authentication middleware that enables secure communication between AI agents. Built on industry standards like JWT tokens and the A2A Protocol, it provides everything you need for production agent deployments including persistent storage, audit trails, and access controls.
 
 ## Simple Integration
 
@@ -16,7 +20,18 @@ Phlow extends the official [A2A Protocol SDK](https://github.com/a2aproject/a2a-
     import { PhlowMiddleware } from 'phlow-auth';
 
     const phlow = new PhlowMiddleware({
-      agentCard: myA2AAgentCard,
+      agentCard: {
+        schemaVersion: '1.0',
+        name: 'My Agent',
+        description: 'AI assistant agent',
+        serviceUrl: 'https://my-agent.com',
+        skills: ['chat', 'analysis'],
+        securitySchemes: {},
+        metadata: {
+          agentId: 'my-agent-id',
+          publicKey: process.env.PUBLIC_KEY
+        }
+      },
       privateKey: process.env.PRIVATE_KEY,
       supabaseUrl: process.env.SUPABASE_URL,
       supabaseAnonKey: process.env.SUPABASE_ANON_KEY
@@ -30,15 +45,23 @@ Phlow extends the official [A2A Protocol SDK](https://github.com/a2aproject/a2a-
 
 === "Python"
     ```python
-    from phlow_auth import PhlowMiddleware
+    from phlow_auth import PhlowMiddleware, AgentCard, PhlowConfig
 
-    phlow = PhlowMiddleware({
-        'agent_card': my_a2a_agent_card,
-        'private_key': os.getenv('PRIVATE_KEY'),
-        'supabase_url': os.getenv('SUPABASE_URL'),
-        'supabase_anon_key': os.getenv('SUPABASE_ANON_KEY')
-    })
+    config = PhlowConfig(
+        agent_card=AgentCard(
+            name="My Agent",
+            description="AI assistant agent", 
+            service_url="https://my-agent.com",
+            skills=["chat", "analysis"],
+            metadata={"agent_id": "my-agent-id", "public_key": os.getenv("PUBLIC_KEY")}
+        ),
+        private_key=os.getenv("PRIVATE_KEY"),
+        supabase_url=os.getenv("SUPABASE_URL"),
+        supabase_anon_key=os.getenv("SUPABASE_ANON_KEY")
+    )
 
+    phlow = PhlowMiddleware(config)
+    
     @app.post("/api/analyze")
     @phlow.authenticate
     async def analyze(request: Request):
@@ -46,14 +69,19 @@ Phlow extends the official [A2A Protocol SDK](https://github.com/a2aproject/a2a-
         return {"message": f"Hello {agent.name}"}
     ```
 
-## Features
+## Key Features
 
-- **Built on A2A SDK** - Full A2A Protocol compliance via official SDK
-- **Supabase Integration** - Audit logs, RLS policies, agent registry
-- **Enhanced Discovery** - A2A discovery + centralized registry
-- **Audit Trail** - Track all authentication events
-- **Multi-language** - JavaScript/TypeScript and Python
-- **RLS Helpers** - Generate Row Level Security policies
+🔐 **JWT Authentication** - Secure agent-to-agent authentication
+
+📋 **Agent Registry** - Persistent storage of agent capabilities and metadata
+
+🛡️ **Access Controls** - Row Level Security policies for data protection
+
+📊 **Audit Logging** - Complete audit trail for security and compliance
+
+🌐 **Multi-Language** - JavaScript/TypeScript and Python support
+
+⚡ **Production Ready** - Rate limiting, monitoring, and error handling
 
 ## Architecture
 
@@ -77,15 +105,16 @@ graph TB
 3. **[Configuration](configuration.md)** - Learn the options
 4. **[Examples](examples/basic-agent.md)** - See working code
 
-## Why Phlow?
+## Why Choose Phlow?
 
-| Feature | A2A SDK | Phlow |
-|---------|---------|-------|
-| A2A Protocol | ✅ | ✅ |
-| JWT Auth | ✅ | ✅ |
-| Audit Logging | ❌ | ✅ |
-| Rate Limiting | ❌ | ✅ |
-| Database Integration | ❌ | ✅ |
-| RLS Policies | ❌ | ✅ |
+🔐 **Secure by Default** - Industry-standard JWT authentication with proper key management
 
-Phlow doesn't replace A2A - it extends it with production features.
+📋 **Persistent Storage** - Agent registry and session data stored in Supabase
+
+🛡️ **Access Controls** - Row Level Security policies for fine-grained permissions
+
+📊 **Audit Ready** - Complete audit trails for compliance and monitoring
+
+⚡ **Production Ready** - Rate limiting, error handling, and monitoring built-in
+
+🌐 **Multi-Language** - JavaScript/TypeScript and Python support
