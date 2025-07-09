@@ -18,13 +18,15 @@ theme:
     - navigation.expand
     - navigation.instant
   palette:
-    - scheme: default
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
       primary: blue
       accent: blue
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
-    - scheme: slate
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
       primary: blue
       accent: blue
       toggle:
@@ -34,6 +36,7 @@ theme:
 nav:
   - Home: index.md
   - Quick Start: quickstart.md
+  - Getting Started: getting-started.md
   - Guides:
     - Installation: installation.md
     - Configuration: configuration.md
@@ -44,7 +47,7 @@ nav:
     - A2A Protocol Integration: concepts/a2a-integration.md
   - Reference:
     - JavaScript API: api/javascript.md
-    - Python API: api/python.md
+    - API Reference: api-reference.md
   - Examples:
     - Basic Agent: examples/basic-agent.md
     - Multi-Agent Network: examples/multi-agent.md

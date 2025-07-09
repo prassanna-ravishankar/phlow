@@ -315,7 +315,7 @@ async def test_authentication(phlow_middleware):
 
 ```bash
 # Clone the repository
-git clone https://github.com/phlowai/phlow.git
+git clone https://github.com/prassanna-ravishankar/phlow.git
 cd phlow/packages/phlow-auth-python
 
 # Install development dependencies
@@ -341,6 +341,6 @@ MIT License - see LICENSE file for details.
 
 ## Support
 
-- 📖 Documentation: https://github.com/phlowai/phlow#readme
-- 🐛 Issues: https://github.com/phlowai/phlow/issues
-- 💬 Discussions: https://github.com/phlowai/phlow/discussions
+- 📖 Documentation: https://prassanna-ravishankar.github.io/phlow/
+- 🐛 Issues: https://github.com/prassanna-ravishankar/phlow/issues
+- 💬 Discussions: https://github.com/prassanna-ravishankar/phlow/discussions

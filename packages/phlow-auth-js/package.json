@@ -56,11 +56,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/phlowai/phlow.git",
+    "url": "https://github.com/prassanna-ravishankar/phlow.git",
     "directory": "packages/phlow-auth-js"
   },
   "bugs": {
-    "url": "https://github.com/phlowai/phlow/issues"
+    "url": "https://github.com/prassanna-ravishankar/phlow/issues"
   },
-  "homepage": "https://github.com/phlowai/phlow#readme"
+  "homepage": "https://prassanna-ravishankar.github.io/phlow/"
 }
