@@ -341,6 +341,6 @@ MIT License - see LICENSE file for details.
 
 ## Support
 
-- 📖 Documentation: https://prassanna-ravishankar.github.io/phlow/
+- 📖 Documentation: https://prassanna.io/phlow/
 - 🐛 Issues: https://github.com/prassanna-ravishankar/phlow/issues
 - 💬 Discussions: https://github.com/prassanna-ravishankar/phlow/discussions
