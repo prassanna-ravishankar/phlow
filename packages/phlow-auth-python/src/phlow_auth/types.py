@@ -1,9 +1,10 @@
 """Type definitions for Phlow authentication."""
 
-from typing import Any, Dict, List, Optional, TypedDict
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 from supabase import Client as SupabaseClient
+from typing_extensions import TypedDict
 
 try:
     from a2a.client import A2AClient
