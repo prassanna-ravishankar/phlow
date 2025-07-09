@@ -13,7 +13,7 @@ from .exceptions import (
 )
 from .middleware import PhlowMiddleware
 from .supabase_helpers import SupabaseHelpers
-from .types import PhlowConfig, PhlowContext, VerifyOptions, AuditLog, AgentCard
+from .types import AgentCard, AuditLog, PhlowConfig, PhlowContext, VerifyOptions
 
 
 # Placeholder functions for token operations

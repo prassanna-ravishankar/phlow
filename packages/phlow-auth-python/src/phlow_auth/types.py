@@ -1,6 +1,7 @@
 """Type definitions for Phlow authentication."""
 
 from typing import Any, Dict, List, Optional, TypedDict
+
 from pydantic import BaseModel
 from supabase import Client as SupabaseClient
 
@@ -62,10 +63,7 @@ class PhlowContext(BaseModel):
     supabase: SupabaseClient
     a2a_client: Optional[Any] = None  # A2AClient when available
 
-    class Config:
-        """Pydantic configuration."""
-
-        arbitrary_types_allowed = True
+    model_config = {"arbitrary_types_allowed": True}
 
 
 class VerifyOptions(BaseModel):

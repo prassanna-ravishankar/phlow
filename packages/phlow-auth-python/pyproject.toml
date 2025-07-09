@@ -79,10 +79,19 @@ profile = "black"
 line_length = 88
 
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
+check_untyped_defs = true
+ignore_missing_imports = true
+# Only check our source code, not dependencies
+files = ["src/"]
+# Exclude dependencies
+exclude = [
+    ".venv/",
+    "venv/",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

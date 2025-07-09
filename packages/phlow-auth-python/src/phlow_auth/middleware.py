@@ -1,14 +1,16 @@
 """Phlow middleware - A2A Protocol extension with Supabase integration."""
 
-from typing import Any, Dict, Optional
-from supabase import Client, create_client
-from a2a.client import A2AClient
-from a2a.types import AgentCard as A2AAgentCard, Message, Task
-import jwt
 import datetime
+from typing import Any, Dict, Optional
 
-from .exceptions import ConfigurationError, AuthenticationError
-from .types import PhlowConfig, PhlowContext, AgentCard
+import jwt
+from a2a.client import A2AClient
+from a2a.types import AgentCard as A2AAgentCard
+from a2a.types import Message, Task
+from supabase import create_client
+
+from .exceptions import AuthenticationError, ConfigurationError
+from .types import AgentCard, PhlowConfig, PhlowContext
 
 
 class PhlowMiddleware:
