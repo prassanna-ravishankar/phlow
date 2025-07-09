@@ -1,7 +1,7 @@
 {
   "name": "phlow-auth",
   "version": "0.1.0",
-  "description": "A2A Protocol extension with Supabase integration for enhanced agent authentication",
+  "description": "JWT authentication middleware for AI agents with Supabase integration",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -13,7 +13,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "scripts": {
     "build": "tsup",
@@ -52,7 +53,7 @@
     "middleware",
     "jwt"
   ],
-  "author": "Phlow Team",
+  "author": "Prassanna Ravishankar",
   "license": "MIT",
   "repository": {
     "type": "git",

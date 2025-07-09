@@ -5,12 +5,12 @@ build-backend = "hatchling.build"
 [project]
 name = "phlow-auth"
 version = "0.1.0"
-description = "A2A Protocol extension with Supabase integration for enhanced agent authentication"
+description = "JWT authentication middleware for AI agents with Supabase integration"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
 authors = [
-    { name = "Phlow Team" },
+    { name = "Prassanna Ravishankar" },
 ]
 keywords = [
     "phlow",
