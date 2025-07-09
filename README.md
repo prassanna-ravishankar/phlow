@@ -3,7 +3,7 @@
   
   # Phlow
   
-  **Authentication middleware for AI agents with persistent storage and security**
+  **JWT authentication middleware for AI agents with Supabase integration**
 </div>
 
 <div align="center">
@@ -16,9 +16,9 @@
 
 ## 🎯 What is Phlow?
 
-Phlow provides secure authentication middleware for AI agents, with persistent storage and enterprise security features. Built on the A2A Protocol with Supabase integration, it enables agents to authenticate and communicate securely while maintaining audit trails and access controls.
+Phlow is a simple authentication middleware that adds Supabase integration to the A2A Protocol. It provides JWT token verification, agent card storage, and basic middleware for web frameworks.
 
-**Secure Agent Auth • Persistent Storage • Production Ready**
+**A2A Protocol + Supabase • JWT Auth • Middleware**
 
 ## ⚡ Quick Start
 
@@ -88,12 +88,12 @@ app.post('/api/chat', phlow.authenticate(), (req, res) => {
 
 ## 🚀 Features
 
-- **🔐 JWT Authentication** - Secure agent-to-agent authentication with industry standards
-- **📋 Agent Registry** - Persistent storage and discovery of agent capabilities
-- **🛡️ Row Level Security** - Fine-grained data access controls in Supabase
-- **📊 Audit Logging** - Complete trail of authentication and access events
-- **🌐 Multi-Language** - JavaScript/TypeScript and Python support
-- **⚡ Production Ready** - Rate limiting, error handling, and monitoring
+- **🔐 JWT Authentication** - Verify A2A Protocol JWT tokens
+- **📋 Agent Storage** - Store and retrieve agent cards in Supabase
+- **🛡️ RLS Helpers** - Generate basic Supabase Row Level Security policies
+- **📊 Basic Audit** - Log authentication events to Supabase
+- **🌐 Multi-Language** - JavaScript/TypeScript and Python packages
+- **🔧 Middleware** - Express and FastAPI integration helpers
 
 
 ## How It Works
@@ -125,16 +125,16 @@ phlow/
     └── api-reference.md        # API documentation
 ```
 
-## 🏗️ Architecture
+## 🏗️ How It Works
 
-Phlow provides a secure authentication layer that integrates with your existing infrastructure:
+Phlow is a lightweight middleware that connects A2A Protocol JWT authentication with Supabase storage:
 
-- **Standards-Based** - Built on JWT tokens and A2A Protocol specifications
-- **Database Integration** - Supabase backend for persistent agent data
-- **Middleware Pattern** - Drop-in authentication for web frameworks
-- **Extensible** - Plugin architecture for custom authentication flows
+1. **JWT Verification** - Validates A2A Protocol tokens
+2. **Agent Lookup** - Retrieves agent cards from Supabase
+3. **Context Creation** - Provides agent info and Supabase client to your app
+4. **Basic Logging** - Optionally logs auth events
 
-See [Architecture Guide](docs/concepts/how-it-works.md) for technical details.
+See [Getting Started](docs/getting-started.md) for setup instructions.
 
 
 ## 🔧 Setup

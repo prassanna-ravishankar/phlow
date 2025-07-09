@@ -2,16 +2,16 @@
   <img src="phlow-logo.png" alt="Phlow Logo" width="300">
 </div>
 
-# Secure Authentication for AI Agents
+# JWT Authentication + Supabase for AI Agents
 
-Phlow provides production-ready authentication middleware for AI agents with persistent storage, audit logging, and fine-grained access controls.
+Phlow is a simple middleware that adds Supabase integration to A2A Protocol authentication. It handles JWT verification, agent storage, and provides basic middleware for web frameworks.
 
 [Get Started](quickstart.md){ .md-button .md-button--primary }
 [View on GitHub](https://github.com/prassanna-ravishankar/phlow){ .md-button }
 
 ## What is Phlow?
 
-Phlow is an authentication middleware that enables secure communication between AI agents. Built on industry standards like JWT tokens and the A2A Protocol, it provides everything you need for production agent deployments including persistent storage, audit trails, and access controls.
+Phlow extends A2A Protocol JWT authentication with Supabase storage. It verifies JWT tokens, stores agent cards in a database, and provides middleware helpers for Express and FastAPI applications.
 
 ## Simple Integration
 
@@ -71,17 +71,17 @@ Phlow is an authentication middleware that enables secure communication between 
 
 ## Key Features
 
-🔐 **JWT Authentication** - Secure agent-to-agent authentication
+🔐 **Token Verification** - Validate A2A Protocol JWT tokens
 
-📋 **Agent Registry** - Persistent storage of agent capabilities and metadata
+📋 **Agent Storage** - Store and retrieve agent cards from Supabase
 
-🛡️ **Access Controls** - Row Level Security policies for data protection
+🛡️ **RLS Policies** - Generate basic Row Level Security rules
 
-📊 **Audit Logging** - Complete audit trail for security and compliance
+📊 **Event Logging** - Basic authentication event tracking
 
-🌐 **Multi-Language** - JavaScript/TypeScript and Python support
+🔧 **Middleware** - Simple integration with web frameworks
 
-⚡ **Production Ready** - Rate limiting, monitoring, and error handling
+🌐 **Multi-Language** - JavaScript and Python packages
 
 ## Architecture
 
@@ -105,16 +105,16 @@ graph TB
 3. **[Configuration](configuration.md)** - Learn the options
 4. **[Examples](examples/basic-agent.md)** - See working code
 
-## Why Choose Phlow?
+## Why Use Phlow?
 
-🔐 **Secure by Default** - Industry-standard JWT authentication with proper key management
+🔐 **JWT Verification** - Validates A2A Protocol tokens
 
-📋 **Persistent Storage** - Agent registry and session data stored in Supabase
+📋 **Database Storage** - Store agent cards in Supabase
 
-🛡️ **Access Controls** - Row Level Security policies for fine-grained permissions
+🛡️ **RLS Helpers** - Generate basic security policies
 
-📊 **Audit Ready** - Complete audit trails for compliance and monitoring
+📊 **Simple Logging** - Track authentication events
 
-⚡ **Production Ready** - Rate limiting, error handling, and monitoring built-in
+🔧 **Easy Integration** - Middleware for Express and FastAPI
 
-🌐 **Multi-Language** - JavaScript/TypeScript and Python support
+🌐 **Multi-Language** - JavaScript and Python support

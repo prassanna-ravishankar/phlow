@@ -4,7 +4,7 @@ Understand Phlow's architecture and authentication flow.
 
 ## Overview
 
-Phlow provides secure authentication middleware for AI agents with persistent storage and enterprise security features. Built on industry standards like JWT and the A2A Protocol, it handles authentication, authorization, and audit logging for agent-to-agent communication.
+Phlow is a lightweight middleware that adds Supabase database integration to A2A Protocol JWT authentication. It provides token verification, agent card storage, and basic middleware helpers for web applications.
 
 ```mermaid
 graph TB
@@ -96,17 +96,17 @@ graph TB
 
 ## Use Cases
 
-**Phlow is ideal for:**
+**Phlow is useful for:**
 
-🏢 **Enterprise Applications** - Compliance, audit trails, and security controls
+🔧 **Web Applications** - Adding A2A auth to Express/FastAPI apps
 
-🤖 **Multi-Agent Systems** - Centralized authentication and access management
+📋 **Agent Storage** - Persisting agent cards in a database
 
-🔍 **Agent Marketplaces** - Secure discovery and capability verification
+🔐 **Token Verification** - Validating A2A Protocol JWTs
 
-👥 **Team Coordination** - Role-based access and permission management
+📊 **Basic Logging** - Tracking authentication events
 
-📊 **Analytics Platforms** - Usage tracking and performance monitoring
+🚪 **Prototyping** - Quick A2A + Supabase integration
 
 ## Next Steps
 
