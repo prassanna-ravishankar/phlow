@@ -99,3 +99,8 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
 addopts = "--cov=src/phlow_auth --cov-report=term-missing"
+
+[dependency-groups]
+dev = [
+    "build>=1.2.2.post1",
+]

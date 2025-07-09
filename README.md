@@ -16,9 +16,22 @@
 
 ## 🎯 What is Phlow?
 
-Phlow is a simple authentication middleware that adds Supabase integration to the A2A Protocol. It provides JWT token verification, agent card storage, and basic middleware for web frameworks.
+Phlow is authentication middleware for AI agents that's evolving into the **Agent Marketplace Platform** - enabling agents to discover, authenticate, and monetize their capabilities.
 
-**A2A Protocol + Supabase • JWT Auth • Middleware**
+**Current: A2A Protocol + Supabase • JWT Auth • Middleware**  
+**Vision: The "App Store for AI Agents"**
+
+### 🌟 Our Evolution Path
+
+```
+Phase 1: Authentication Middleware (Current)
+   ↓
+Phase 2: Agent Discovery & Registry  
+   ↓
+Phase 3: Agent Marketplace Platform
+```
+
+We're building the foundational trust layer that will enable agents to securely discover, interact with, and monetize their capabilities - creating the first true marketplace for AI agent services.
 
 ## ⚡ Quick Start
 
@@ -197,16 +210,45 @@ app.post('/api/a2a/message', async (req, res) => {
 | JavaScript/TypeScript | `phlow-auth` | Express.js, Node.js |
 | Python | `phlow-auth` | FastAPI, Flask |
 
+## 🚀 Roadmap & Vision
+
+### Phase 1: Authentication Middleware (Current)
+- ✅ JWT authentication for A2A Protocol
+- ✅ Agent card storage in Supabase  
+- ✅ Basic middleware for Express/FastAPI
+- 🔄 Enhanced security and testing
+
+### Phase 2: Agent Discovery & Registry (Next 6 months)
+- 🎯 Central agent registry with search capabilities
+- 🎯 Agent capability matching and discovery
+- 🎯 Enhanced agent profiles and metadata
+- 🎯 Agent network visualization
+
+### Phase 3: Agent Marketplace Platform (6-18 months)
+- 🎯 Agent monetization and billing
+- 🎯 Usage analytics and performance metrics
+- 🎯 Agent rating and reputation systems
+- 🎯 Developer tools and SDK ecosystem
+
+**Our North Star**: Create the first true marketplace where AI agents can discover, authenticate, and monetize their capabilities - making agent-to-agent commerce as simple as an API call.
+
 ## Contributing
 
-Pull requests welcome! Focus areas:
+Pull requests welcome! We're building towards our marketplace vision:
 
+**Current Focus Areas:**
 - Authentication middleware improvements
-- Supabase integration enhancements
-- Additional language/framework support
-- Documentation and examples
+- Supabase integration enhancements  
+- Agent registry and discovery features
+- Developer experience improvements
 
-**Scope**: Please keep contributions focused on authentication, agent registry, and RLS. Communication features should be contributed to the [A2A Protocol](https://github.com/a2aproject) directly.
+**Future Contribution Areas:**
+- Agent marketplace features
+- Monetization and billing systems
+- Analytics and metrics
+- Community tools and governance
+
+**Scope**: Please keep contributions focused on authentication, agent registry, discovery, and marketplace features. Communication protocols should be contributed to the [A2A Protocol](https://github.com/a2aproject) directly.
 
 ```bash
 git clone https://github.com/prassanna-ravishankar/phlow.git
