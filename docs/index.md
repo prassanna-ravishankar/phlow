@@ -2,90 +2,91 @@
   <img src="phlow-logo.png" alt="Phlow Logo" width="300">
 </div>
 
-# JWT Authentication + Supabase for AI Agents
+# A2A Protocol Framework for AI Agents
 
-Phlow is a simple middleware that adds Supabase integration to A2A Protocol authentication. It handles JWT verification, agent storage, and provides basic middleware for web frameworks.
+Phlow is a pure Python framework for building A2A (Agent-to-Agent) Protocol compliant AI agents. It provides authentication, agent discovery, multi-agent communication, and Supabase integration with real AI capabilities via Gemini API.
 
 [Get Started](quickstart.md){ .md-button .md-button--primary }
 [View on GitHub](https://github.com/prassanna-ravishankar/phlow){ .md-button }
 
 ## What is Phlow?
 
-Phlow extends A2A Protocol JWT authentication with Supabase storage. It verifies JWT tokens, stores agent cards in a database, and provides middleware helpers for Express and FastAPI applications.
+Phlow is a complete A2A Protocol implementation that enables autonomous AI agents to discover and communicate with each other. It includes JWT authentication, agent card discovery, real AI integration via Gemini, and comprehensive testing infrastructure.
 
 ## Simple Integration
 
 ```python
-from phlow import PhlowMiddleware, AgentCard, PhlowConfig
+from phlow import AgentCard, PhlowConfig
+from phlow.integrations.fastapi import FastAPIPhlowAuth
 
+# Configure your A2A agent
 config = PhlowConfig(
     agent_card=AgentCard(
         name="My Agent",
         description="AI assistant agent", 
         service_url="https://my-agent.com",
         skills=["chat", "analysis"],
-        metadata={"agent_id": "my-agent-id", "public_key": os.getenv("PUBLIC_KEY")}
+        metadata={"agent_id": "my-agent-id"}
     ),
     private_key=os.getenv("PRIVATE_KEY"),
     supabase_url=os.getenv("SUPABASE_URL"),
     supabase_anon_key=os.getenv("SUPABASE_ANON_KEY")
 )
 
-phlow = PhlowMiddleware(config)
+auth = FastAPIPhlowAuth(config)
     
 @app.post("/api/analyze")
-@phlow.authenticate
+@auth.require_agent_auth
 async def analyze(request: Request):
-    agent = request.phlow.agent
+    agent = request.state.agent
     return {"message": f"Hello {agent.name}"}
 ```
 
 ## Key Features
 
-🔐 **Token Verification** - Validate A2A Protocol JWT tokens
+🔐 **A2A Authentication** - JWT token verification with RSA keys
 
-📋 **Agent Storage** - Store and retrieve agent cards from Supabase
+🤖 **Agent Discovery** - `/.well-known/agent.json` endpoint compliance
 
-🛡️ **RLS Policies** - Generate basic Row Level Security rules
+🤝 **Multi-Agent Communication** - Agent-to-Agent task delegation
 
-📊 **Event Logging** - Basic authentication event tracking
+🧠 **AI Integration** - Gemini API for intelligent responses
 
-🔧 **Middleware** - Simple integration with web frameworks
+📊 **Supabase Integration** - Agent registry and audit logging
 
-🌐 **Multi-Language** - JavaScript and Python packages
+🧪 **Testing Infrastructure** - E2E tests with Docker auto-detection
 
 ## Architecture
 
 ```mermaid
 graph TB
-    A[Your Agent] --> B[Phlow Middleware]
-    B --> C[A2A Protocol SDK]
-    B --> D[Supabase Integration]
+    A[Your Agent] --> B[Phlow Framework]
+    B --> C[A2A Protocol]
+    B --> D[Supabase Backend]
+    B --> E[Gemini AI]
     
-    C --> E[JWT Authentication]
-    C --> F[Agent Discovery]
-    
-    D --> G[Audit Logging]
-    D --> H[Agent Registry]
+    C --> F[JWT Authentication]
+    C --> G[Agent Discovery]
+    C --> H[Multi-Agent Tasks]
 ```
 
 ## Getting Started
 
-1. **[Quick Start](quickstart.md)** - Get running in 5 minutes
-2. **[Installation](installation.md)** - Platform-specific setup  
-3. **[Configuration](configuration.md)** - Learn the options
-4. **[Examples](examples/basic-agent.md)** - See working code
+1. **[Quick Start](quickstart.md)** - Build your first A2A agent
+2. **[Installation](installation.md)** - Setup guide  
+3. **[Configuration](configuration.md)** - Environment variables
+4. **[Example Agent](examples/simple/)** - Working code
 
-## Why Use Phlow?
+## Development
 
-🔐 **JWT Verification** - Validates A2A Protocol tokens
+```bash
+# See all tasks
+uv run task --list
 
-📋 **Database Storage** - Store agent cards in Supabase
+# Run tests
+uv run task test-unit          # Unit tests
+uv run task test-e2e-multi     # Multi-agent E2E tests
 
-🛡️ **RLS Helpers** - Generate basic security policies
-
-📊 **Simple Logging** - Track authentication events
-
-🔧 **Easy Integration** - Middleware for Express and FastAPI
-
-🌐 **Multi-Language** - JavaScript and Python support
+# Code quality
+uv run task lint format type-check
+```
