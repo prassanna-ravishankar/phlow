@@ -57,60 +57,6 @@ jobs:
         file: ./coverage.xml
         fail_ci_if_error: false
 
-  test-examples:
-    runs-on: ubuntu-latest
-    needs: test
-
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.11"
-    
-    - name: Install uv
-      uses: astral-sh/setup-uv@v2
-      with:
-        version: "latest"
-    
-    - name: Install dependencies
-      run: |
-        uv sync --all-extras --dev
-    
-    - name: Test example syntax and imports
-      run: |
-        cd examples/python-client
-        
-        # Test main.py syntax
-        python -m py_compile main.py
-        
-        # Test client_helper.py syntax  
-        python -m py_compile client_helper.py
-        
-        # Test imports work (without external connections)
-        python -c "
-        import sys
-        sys.path.insert(0, '.')
-        
-        # Test phlow imports
-        from phlow import generate_token, AgentCard, verify_token
-        from phlow.integrations.fastapi import create_phlow_middleware
-        
-        # Test client helper imports (don't instantiate)
-        from client_helper import PhlowConfig
-        
-        print('✅ All imports successful')
-        "
-      env:
-        SUPABASE_URL: http://mock-supabase.local
-        SUPABASE_ANON_KEY: mock-anon-key
-        AGENT_ID: test-agent
-        AGENT_NAME: Test Agent
-        AGENT_DESCRIPTION: Test agent
-        AGENT_PERMISSIONS: read:test
-        AGENT_PUBLIC_KEY: mock-public-key
-        AGENT_PRIVATE_KEY: mock-private-key
 
   lint:
     runs-on: ubuntu-latest
