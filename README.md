@@ -180,7 +180,7 @@ async def handle_message(context: PhlowContext = Depends(auth_required)):
 ### Phase 1: Authentication Middleware (Current)
 - ✅ JWT authentication for A2A Protocol
 - ✅ Agent card storage in Supabase  
-- ✅ Basic middleware for Express/FastAPI
+- ✅ Basic middleware for FastAPI
 - 🔄 Enhanced security and testing
 
 ### Phase 2: Agent Discovery & Registry (Next 6 months)

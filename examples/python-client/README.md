@@ -125,7 +125,7 @@ docker run -p 8000:8000 --env-file .env python-phlow-agent
 
 ```python
 import requests
-from phlow_auth import generate_token
+from phlow import generate_token
 
 # Generate token
 token = generate_token(
@@ -208,7 +208,7 @@ The `client_helper.py` module provides utilities for Python clients:
 
 ```python
 from client_helper import PhlowClient, PhlowClientConfig, AgentDiscovery
-from phlow_auth import AgentCard
+from phlow import AgentCard
 
 # Create client configuration
 config = PhlowClientConfig(
@@ -266,7 +266,7 @@ for result in results:
 The agent uses FastAPI's dependency injection system for authentication:
 
 ```python
-from phlow_auth.integrations.fastapi import create_phlow_dependency
+from phlow.integrations.fastapi import create_phlow_dependency
 
 # Create authentication dependencies
 auth_required = create_phlow_dependency(phlow)
@@ -453,7 +453,7 @@ Enable debug logging:
 
 ```python
 import logging
-logging.getLogger("phlow_auth").setLevel(logging.DEBUG)
+logging.getLogger("phlow").setLevel(logging.DEBUG)
 logging.getLogger("uvicorn").setLevel(logging.DEBUG)
 ```
 
