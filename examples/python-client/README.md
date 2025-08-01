@@ -15,7 +15,26 @@ This example demonstrates how to create a Python-based agent using FastAPI and P
 
 ## Setup
 
-### 1. Install Dependencies
+### Option 1: Quick Start with Docker Compose (Recommended)
+
+```bash
+# Clone and enter the directory
+cd examples/python-client
+
+# Start Supabase + Phlow Agent with one command
+docker-compose up -d
+
+# Check if everything is running
+docker-compose ps
+```
+
+This will start:
+- **Supabase Database**: `localhost:54322` (PostgreSQL)
+- **Supabase API**: `localhost:54321` (REST API)
+- **Supabase Studio**: `localhost:54323` (Admin Dashboard)
+- **Phlow Agent**: `localhost:8000` (Your FastAPI app)
+
+### Option 2: Manual Setup
 
 ```bash
 # Install with uv (recommended)
@@ -27,9 +46,16 @@ pip install -e ".[examples]"
 
 ### 2. Environment Configuration
 
+**For Docker Compose** (ready to use):
+```bash
+# Uses pre-configured values for local Supabase
+cp .env.docker .env
+```
+
+**For Manual Setup**:
 ```bash
 cp .env.example .env
-# Edit .env with your configuration
+# Edit .env with your Supabase project details
 ```
 
 Required environment variables:
@@ -78,7 +104,20 @@ openssl rsa -pubout -in private_key.pem -out public_key.pem
 
 ## Running the Agent
 
-### Development Mode
+### With Docker Compose (Easiest)
+
+```bash
+# Start everything (Supabase + Agent)
+docker-compose up -d
+
+# View logs
+docker-compose logs -f phlow-agent
+
+# Stop everything
+docker-compose down
+```
+
+### Development Mode (Manual)
 
 ```bash
 python main.py
@@ -92,14 +131,18 @@ The agent will start on `http://localhost:8000` with auto-reload enabled.
 uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
 ```
 
-### Using Docker
+### Testing the Setup
 
 ```bash
-# Build image
-docker build -t python-phlow-agent .
+# Test the agent health
+curl http://localhost:8000/health
 
-# Run container
-docker run -p 8000:8000 --env-file .env python-phlow-agent
+# Access Supabase Studio (Docker only)
+open http://localhost:54323
+
+# Test authentication endpoint
+curl http://localhost:8000/protected
+# Should return 401 (expected)
 ```
 
 ## API Endpoints
