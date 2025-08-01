@@ -133,6 +133,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
 
 ### Testing the Setup
 
+**Quick Health Check:**
 ```bash
 # Test the agent health
 curl http://localhost:8000/health
@@ -144,6 +145,27 @@ open http://localhost:54323
 curl http://localhost:8000/protected
 # Should return 401 (expected)
 ```
+
+**End-to-End Testing:**
+```bash
+# Run comprehensive E2E tests (requires Docker Compose)
+./run_e2e_tests.sh
+
+# Run with options
+./run_e2e_tests.sh --verbose --slow --no-cleanup
+
+# Or run tests manually
+pytest test_e2e.py -v -s
+```
+
+**Test Coverage:**
+- ✅ Docker stack health and connectivity
+- ✅ Supabase database schema and sample data
+- ✅ Agent registration and endpoints
+- ✅ Authentication flows
+- ✅ Client helper utilities
+- ✅ Token generation/validation
+- ✅ Performance and concurrent requests
 
 ## API Endpoints
 

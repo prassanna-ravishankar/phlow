@@ -215,12 +215,35 @@ Pull requests welcome! We're building towards our marketplace vision:
 
 **Scope**: Please keep contributions focused on authentication, agent registry, discovery, and marketplace features. Communication protocols should be contributed to the [A2A Protocol](https://github.com/a2aproject) directly.
 
+### Quick Start
 ```bash
-git clone https://github.com/prassanna-ravishankar/phlow.git
-cd phlow
-pip install -e .
-pytest
+# Install dependencies
+make install
+
+# Run all checks
+make check
+
+# Start development environment
+make dev
+
+# Run E2E tests
+make test-e2e
 ```
+
+### Development Commands
+```bash
+make install        # Install dependencies
+make test          # Run unit tests
+make test-e2e      # Run end-to-end tests
+make lint          # Run linting
+make format        # Format code
+make dev           # Start Docker environment
+make clean         # Clean build artifacts
+```
+
+### Testing
+- **Unit Tests**: `make test` - Fast, mocked, runs in CI
+- **E2E Tests**: `make test-e2e` - Full stack, Docker required
 
 ## License
 
