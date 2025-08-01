@@ -22,11 +22,9 @@ __all__ = [
     "Proof",
     "CachedRole",
     "RoleVerificationResult",
-
     # Message types
     "RoleCredentialRequest",
     "RoleCredentialResponse",
-
     # Core components
     "RoleCredentialVerifier",
     "RoleCache",

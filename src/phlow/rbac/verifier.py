@@ -28,9 +28,7 @@ class RoleCredentialVerifier:
         self.supabase = supabase_client
 
     async def verify_presentation(
-        self,
-        presentation: VerifiablePresentation,
-        required_role: str
+        self, presentation: VerifiablePresentation, required_role: str
     ) -> RoleVerificationResult:
         """Verify a verifiable presentation contains a valid role credential.
 
@@ -45,8 +43,7 @@ class RoleCredentialVerifier:
             # 1. Verify presentation structure
             if not presentation.verifiable_credential:
                 return RoleVerificationResult(
-                    is_valid=False,
-                    error_message="No credentials in presentation"
+                    is_valid=False, error_message="No credentials in presentation"
                 )
 
             # 2. Find role credential in presentation
@@ -59,7 +56,7 @@ class RoleCredentialVerifier:
             if not role_credential:
                 return RoleVerificationResult(
                     is_valid=False,
-                    error_message="No role credential found in presentation"
+                    error_message="No role credential found in presentation",
                 )
 
             # 3. Verify the role credential
@@ -75,8 +72,7 @@ class RoleCredentialVerifier:
 
             if not presentation_valid:
                 return RoleVerificationResult(
-                    is_valid=False,
-                    error_message="Invalid presentation signature"
+                    is_valid=False, error_message="Invalid presentation signature"
                 )
 
             # 5. Create credential hash for caching
@@ -87,20 +83,17 @@ class RoleCredentialVerifier:
                 role=required_role,
                 issuer_did=role_credential.issuer,
                 expires_at=self._parse_expiration(role_credential.expiration_date),
-                credential_hash=credential_hash
+                credential_hash=credential_hash,
             )
 
         except Exception as e:
             logger.error(f"Error verifying presentation: {e}")
             return RoleVerificationResult(
-                is_valid=False,
-                error_message=f"Verification error: {str(e)}"
+                is_valid=False, error_message=f"Verification error: {str(e)}"
             )
 
     async def _verify_role_credential(
-        self,
-        credential: RoleCredential,
-        required_role: str
+        self, credential: RoleCredential, required_role: str
     ) -> RoleVerificationResult:
         """Verify a single role credential.
 
@@ -114,8 +107,7 @@ class RoleCredentialVerifier:
         # 1. Check credential type
         if "RoleCredential" not in credential.type:
             return RoleVerificationResult(
-                is_valid=False,
-                error_message="Not a role credential"
+                is_valid=False, error_message="Not a role credential"
             )
 
         # 2. Check if credential contains required role
@@ -123,18 +115,17 @@ class RoleCredentialVerifier:
         if required_role not in available_roles:
             return RoleVerificationResult(
                 is_valid=False,
-                error_message=f"Required role '{required_role}' not found in credential"
+                error_message=f"Required role '{required_role}' not found in credential",
             )
 
         # 3. Check expiration
         if credential.expiration_date:
             expiry = datetime.fromisoformat(
-                credential.expiration_date.replace('Z', '+00:00')
+                credential.expiration_date.replace("Z", "+00:00")
             )
             if expiry < datetime.now(timezone.utc):
                 return RoleVerificationResult(
-                    is_valid=False,
-                    error_message="Credential has expired"
+                    is_valid=False, error_message="Credential has expired"
                 )
 
         # 4. Verify cryptographic signature (simplified for now)
@@ -142,24 +133,25 @@ class RoleCredentialVerifier:
 
         if not signature_valid:
             return RoleVerificationResult(
-                is_valid=False,
-                error_message="Invalid credential signature"
+                is_valid=False, error_message="Invalid credential signature"
             )
 
         return RoleVerificationResult(
             is_valid=True,
             role=required_role,
             issuer_did=credential.issuer,
-            expires_at=self._parse_expiration(credential.expiration_date)
+            expires_at=self._parse_expiration(credential.expiration_date),
         )
 
     async def _verify_credential_signature(self, credential: RoleCredential) -> bool:
         """Verify the cryptographic signature of a credential.
 
-        This is a simplified implementation. In production, this would:
-        1. Resolve the issuer DID to get verification keys
-        2. Verify the signature using the appropriate cryptographic method
-        3. Check the proof purpose and verification method
+        ⚠️  SECURITY WARNING: This is a simplified mock implementation.
+        For production use, implement proper cryptographic verification with:
+        1. DID resolution to retrieve issuer's public keys
+        2. Signature verification using cryptographic libraries (e.g., PyJWT, cryptography)
+        3. Proof purpose and verification method validation
+        4. Signature suite support (Ed25519, RSA, ECDSA)
 
         Args:
             credential: The credential to verify
@@ -167,8 +159,16 @@ class RoleCredentialVerifier:
         Returns:
             True if signature is valid
         """
-        # TODO: Implement actual cryptographic verification
-        # For now, just check that proof exists and has required fields
+        # TODO: CRITICAL - Implement actual cryptographic verification for production
+        # Current implementation accepts any credential with proof - INSECURE
+        
+        # Production implementation should:
+        # 1. Resolve issuer DID using DID resolution spec
+        # 2. Extract public key from DID document
+        # 3. Verify signature using appropriate cryptographic method
+        # 4. Validate proof purpose matches expected use
+        # 5. Check signature suite compatibility
+        
         if not credential.proof:
             logger.warning("No proof found in credential")
             return False
@@ -179,12 +179,19 @@ class RoleCredentialVerifier:
                 logger.warning(f"Missing required proof field: {field}")
                 return False
 
-        # Placeholder: In real implementation, verify signature here
-        logger.info(f"Verifying credential signature for issuer: {credential.issuer}")
+        # WARNING: Mock implementation - accepts any credential with valid proof structure
+        logger.warning(
+            f"Using mock signature verification for issuer: {credential.issuer} "
+            f"(INSECURE - implement proper crypto verification for production)"
+        )
         return True
 
-    async def _verify_presentation_signature(self, presentation: VerifiablePresentation) -> bool:
+    async def _verify_presentation_signature(
+        self, presentation: VerifiablePresentation
+    ) -> bool:
         """Verify the cryptographic signature of a presentation.
+
+        ⚠️  SECURITY WARNING: Mock implementation - not cryptographically secure.
 
         Args:
             presentation: The presentation to verify
@@ -192,13 +199,16 @@ class RoleCredentialVerifier:
         Returns:
             True if signature is valid
         """
-        # TODO: Implement actual cryptographic verification
+        # TODO: CRITICAL - Implement actual cryptographic verification for production
         # Similar to credential verification but for presentations
         if not presentation.proof:
             logger.warning("No proof found in presentation")
             return False
 
-        logger.info(f"Verifying presentation signature for holder: {presentation.holder}")
+        logger.warning(
+            f"Using mock presentation signature verification for holder: {presentation.holder} "
+            f"(INSECURE - implement proper crypto verification for production)"
+        )
         return True
 
     def _create_credential_hash(self, credential: RoleCredential) -> str:
@@ -228,9 +238,7 @@ class RoleCredentialVerifier:
             return None
 
         try:
-            return datetime.fromisoformat(
-                expiration_date.replace('Z', '+00:00')
-            )
+            return datetime.fromisoformat(expiration_date.replace("Z", "+00:00"))
         except ValueError:
             logger.warning(f"Invalid expiration date format: {expiration_date}")
             return None

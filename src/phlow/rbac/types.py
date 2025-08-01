@@ -35,10 +35,13 @@ class Proof(BaseModel):
 class RoleCredential(BaseModel):
     """Verifiable Credential for role assertions."""
 
-    context: list[str] = Field(alias="@context", default=[
-        "https://www.w3.org/2018/credentials/v1",
-        "https://www.w3.org/2018/credentials/examples/v1"
-    ])
+    context: list[str] = Field(
+        alias="@context",
+        default=[
+            "https://www.w3.org/2018/credentials/v1",
+            "https://www.w3.org/2018/credentials/examples/v1",
+        ],
+    )
     id: str
     type: list[str] = ["VerifiableCredential", "RoleCredential"]
     issuer: str  # DID of the issuer
@@ -53,9 +56,9 @@ class RoleCredential(BaseModel):
 class VerifiablePresentation(BaseModel):
     """Verifiable Presentation containing role credentials."""
 
-    context: list[str] = Field(alias="@context", default=[
-        "https://www.w3.org/2018/credentials/v1"
-    ])
+    context: list[str] = Field(
+        alias="@context", default=["https://www.w3.org/2018/credentials/v1"]
+    )
     type: list[str] = ["VerifiablePresentation"]
     verifiable_credential: list[RoleCredential] = Field(alias="verifiableCredential")
     holder: str  # DID of the holder

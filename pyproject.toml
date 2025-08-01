@@ -155,7 +155,7 @@ exclude_lines = [
     "@(abc\\.)?abstractmethod",
 ]
 
-# Taskipy configuration  
+# Taskipy configuration
 [tool.taskipy.tasks]
 # Development tasks
 install = "uv sync"
@@ -193,5 +193,3 @@ dev = [
     "ruff>=0.12.7",
     "taskipy>=1.14.1",
 ]
-
-

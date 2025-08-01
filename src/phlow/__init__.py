@@ -47,7 +47,6 @@ __all__ = [
     "VerifyOptions",
     "AuditLog",
     "AgentCard",
-
     # Exceptions
     "PhlowError",
     "AuthenticationError",
@@ -55,17 +54,14 @@ __all__ = [
     "ConfigurationError",
     "TokenError",
     "RateLimitError",
-
     # Helpers
     "SupabaseHelpers",
-
     # RBAC components
     "RoleCredential",
     "VerifiablePresentation",
     "RoleCredentialVerifier",
     "RoleCache",
     "RoleCredentialStore",
-
     # Utility functions
     "generate_token",
     "verify_token",

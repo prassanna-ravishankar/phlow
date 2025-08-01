@@ -66,11 +66,21 @@ class FastAPIPhlowAuth:
                 # Use the verify_token method for standard authentication
                 context = self.middleware.verify_token(credentials.credentials)
 
-                # TODO: Add permission checking logic here if needed
+                # Check required permissions if specified
                 if required_permissions:
-                    # For now, just log that permissions were requested
-                    # In a full implementation, you'd check context.agent permissions
-                    pass
+                    # TODO: Implement proper permission checking against agent permissions
+                    # For now, we'll check if the agent has the required permissions in metadata
+                    agent_permissions = context.agent.metadata.get('permissions', []) if context.agent.metadata else []
+                    
+                    for permission in required_permissions:
+                        if permission not in agent_permissions:
+                            raise HTTPException(
+                                status_code=403,
+                                detail={
+                                    "error": "PERMISSION_DENIED",
+                                    "message": f"Agent lacks required permission: {permission}"
+                                }
+                            )
 
                 return context
 
@@ -103,7 +113,7 @@ class FastAPIPhlowAuth:
             # the user should manually add the dependency to their endpoint.
 
             # Add hints to the function for documentation
-            if not hasattr(func, '__phlow_required_permissions__'):
+            if not hasattr(func, "__phlow_required_permissions__"):
                 func.__phlow_required_permissions__ = required_permissions  # type: ignore
 
             return func
@@ -178,7 +188,7 @@ class FastAPIPhlowAuth:
             # the user should manually add the dependency to their endpoint.
 
             # Add a hint to the function for documentation
-            if not hasattr(func, '__phlow_required_role__'):
+            if not hasattr(func, "__phlow_required_role__"):
                 func.__phlow_required_role__ = required_role  # type: ignore
 
             return func

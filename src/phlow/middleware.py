@@ -94,7 +94,9 @@ class PhlowMiddleware:
         except jwt.InvalidTokenError as e:
             raise AuthenticationError(f"Invalid token: {str(e)}")
 
-    async def authenticate_with_role(self, token: str, required_role: str) -> PhlowContext:
+    async def authenticate_with_role(
+        self, token: str, required_role: str
+    ) -> PhlowContext:
         """Authenticate and verify role credentials.
 
         Args:
@@ -111,7 +113,9 @@ class PhlowMiddleware:
         context = self.verify_token(token)
 
         # 2. Get agent ID from context
-        agent_id = context.agent.metadata.get('agent_id') if context.agent.metadata else None
+        agent_id = (
+            context.agent.metadata.get("agent_id") if context.agent.metadata else None
+        )
         if not agent_id:
             raise AuthenticationError("Agent ID not found in token")
 
@@ -128,7 +132,7 @@ class PhlowMiddleware:
             request_message = RoleCredentialRequest(
                 required_role=required_role,
                 context=f"Access requires '{required_role}' role",
-                nonce=nonce
+                nonce=nonce,
             )
 
             # Send A2A message to request role credential
@@ -139,7 +143,9 @@ class PhlowMiddleware:
             )
 
             if not role_response_data:
-                raise AuthenticationError(f"No response received for role '{required_role}' request")
+                raise AuthenticationError(
+                    f"No response received for role '{required_role}' request"
+                )
 
             role_response = RoleCredentialResponse(**role_response_data)
 
@@ -156,7 +162,7 @@ class PhlowMiddleware:
                         role=required_role,
                         credential_hash=verification_result.credential_hash,
                         issuer_did=verification_result.issuer_did,
-                        expires_at=verification_result.expires_at
+                        expires_at=verification_result.expires_at,
                     )
 
                     context.verified_roles = [required_role]
@@ -167,7 +173,9 @@ class PhlowMiddleware:
                     )
             else:
                 error_msg = role_response.error or "No valid presentation provided"
-                raise AuthenticationError(f"Role credential request failed: {error_msg}")
+                raise AuthenticationError(
+                    f"Role credential request failed: {error_msg}"
+                )
 
         except Exception as e:
             if isinstance(e, AuthenticationError):
@@ -175,14 +183,16 @@ class PhlowMiddleware:
             raise AuthenticationError(f"Error during role verification: {str(e)}")
 
     async def _send_role_credential_request(
-        self,
-        agent_id: str,
-        request: RoleCredentialRequest
+        self, agent_id: str, request: RoleCredentialRequest
     ) -> dict | None:
         """Send role credential request via A2A messaging.
 
-        This is a simplified implementation. In production, this would use
-        the A2A client to send messages to the specific agent.
+        ⚠️  PRODUCTION WARNING: This is a simplified mock implementation.
+        For production use, implement proper A2A messaging with:
+        1. Agent endpoint resolution via DID or agent registry
+        2. HTTP/WebSocket messaging with proper timeouts
+        3. Retry logic and error handling
+        4. Message authentication and encryption
 
         Args:
             agent_id: Target agent ID
@@ -192,19 +202,21 @@ class PhlowMiddleware:
             Response data or None if failed
         """
         try:
-            # TODO: Implement actual A2A messaging
-            # For now, return a mock response
-            # In production, this would:
-            # 1. Resolve agent's A2A endpoint
-            # 2. Send the request message
-            # 3. Wait for response with timeout
-            # 4. Return the response data
+            # TODO: CRITICAL - Implement actual A2A messaging for production
+            # Current mock implementation always fails - only for testing
+            
+            # Production implementation should:
+            # 1. Resolve agent's A2A endpoint from DID or registry
+            # 2. Send HTTP POST to agent's /tasks/send endpoint
+            # 3. Include proper authentication headers
+            # 4. Wait for response with configurable timeout (e.g., 30s)
+            # 5. Handle network errors, timeouts, and malformed responses
 
-            # Mock response for testing
+            # Mock response for development/testing only
             return {
                 "type": "role-credential-response",
                 "nonce": request.nonce,
-                "error": f"Role '{request.required_role}' not available"
+                "error": f"Role '{request.required_role}' not available (mock implementation)",
             }
 
         except Exception as e:
@@ -217,7 +229,9 @@ class PhlowMiddleware:
         Returns:
             Random alphanumeric string
         """
-        return ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(16))
+        return "".join(
+            secrets.choice(string.ascii_letters + string.digits) for _ in range(16)
+        )
 
     def get_a2a_client(self) -> Any | None:
         """Get the A2A client instance."""

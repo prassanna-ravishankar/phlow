@@ -22,11 +22,7 @@ class RoleCache:
         self.supabase = supabase_client
         self.table_name = "verified_roles"
 
-    async def get_cached_role(
-        self,
-        agent_id: str,
-        role: str
-    ) -> CachedRole | None:
+    async def get_cached_role(self, agent_id: str, role: str) -> CachedRole | None:
         """Retrieve a cached role verification.
 
         Args:
@@ -37,9 +33,13 @@ class RoleCache:
             Cached role data if found and valid, None otherwise
         """
         try:
-            result = self.supabase.table(self.table_name).select("*").eq(
-                "agent_id", agent_id
-            ).eq("role", role).execute()
+            result = (
+                self.supabase.table(self.table_name)
+                .select("*")
+                .eq("agent_id", agent_id)
+                .eq("role", role)
+                .execute()
+            )
 
             if not result.data:
                 return None
@@ -57,7 +57,7 @@ class RoleCache:
                 ),
                 credential_hash=cached_data["credential_hash"],
                 issuer_did=cached_data.get("issuer_did"),
-                metadata=cached_data.get("metadata", {})
+                metadata=cached_data.get("metadata", {}),
             )
 
             # Check if cached role has expired
@@ -78,7 +78,7 @@ class RoleCache:
         credential_hash: str,
         issuer_did: str | None = None,
         expires_at: datetime | None = None,
-        metadata: dict | None = None
+        metadata: dict | None = None,
     ) -> bool:
         """Cache a verified role credential.
 
@@ -101,7 +101,7 @@ class RoleCache:
                 "credential_hash": credential_hash,
                 "issuer_did": issuer_did,
                 "expires_at": expires_at.isoformat() if expires_at else None,
-                "metadata": metadata or {}
+                "metadata": metadata or {},
             }
 
             result = self.supabase.table(self.table_name).upsert(data).execute()
@@ -128,9 +128,9 @@ class RoleCache:
             True if successfully removed
         """
         try:
-            self.supabase.table(self.table_name).delete().eq(
-                "agent_id", agent_id
-            ).eq("role", role).execute()
+            self.supabase.table(self.table_name).delete().eq("agent_id", agent_id).eq(
+                "role", role
+            ).execute()
 
             logger.info(f"Removed cached role '{role}' for agent '{agent_id}'")
             return True
@@ -149,9 +149,12 @@ class RoleCache:
             List of cached roles
         """
         try:
-            result = self.supabase.table(self.table_name).select("*").eq(
-                "agent_id", agent_id
-            ).execute()
+            result = (
+                self.supabase.table(self.table_name)
+                .select("*")
+                .eq("agent_id", agent_id)
+                .execute()
+            )
 
             roles = []
             for data in result.data:
@@ -167,7 +170,7 @@ class RoleCache:
                     ),
                     credential_hash=data["credential_hash"],
                     issuer_did=data.get("issuer_did"),
-                    metadata=data.get("metadata", {})
+                    metadata=data.get("metadata", {}),
                 )
 
                 # Only return non-expired roles
@@ -193,9 +196,13 @@ class RoleCache:
             now = datetime.now(timezone.utc).isoformat()
 
             # Find expired roles
-            result = self.supabase.table(self.table_name).select("id").lt(
-                "expires_at", now
-            ).is_("expires_at", "not.null").execute()
+            result = (
+                self.supabase.table(self.table_name)
+                .select("id")
+                .lt("expires_at", now)
+                .is_("expires_at", "not.null")
+                .execute()
+            )
 
             if not result.data:
                 return 0

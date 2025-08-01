@@ -29,7 +29,7 @@ from .types import RoleCredential, VerifiablePresentation
 # src/phlow/middleware.py
 class PhlowMiddleware:
     # ... existing code ...
-    
+
     async def authenticate_with_role(self, required_role: str):
         """Verify agent has a specific role via VC."""
         # Implementation following the spec

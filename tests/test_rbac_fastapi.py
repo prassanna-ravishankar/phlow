@@ -23,6 +23,7 @@ class TestFastAPIRBACIntegration:
         # Import here to avoid import errors if FastAPI not installed
         try:
             from phlow.integrations.fastapi import FastAPIPhlowAuth
+
             return FastAPIPhlowAuth(mock_middleware)
         except ImportError:
             pytest.skip("FastAPI not installed")
@@ -41,7 +42,9 @@ class TestFastAPIRBACIntegration:
         return credentials
 
     @pytest.mark.asyncio
-    async def test_create_role_auth_dependency_success(self, fastapi_auth, mock_middleware, mock_request, mock_credentials):
+    async def test_create_role_auth_dependency_success(
+        self, fastapi_auth, mock_middleware, mock_request, mock_credentials
+    ):
         """Test successful role authentication dependency."""
         # Mock successful authentication
         mock_context = MagicMock()
@@ -55,10 +58,14 @@ class TestFastAPIRBACIntegration:
         context = await auth_dep(mock_request, mock_credentials)
 
         assert context == mock_context
-        mock_middleware.authenticate_with_role.assert_called_once_with("test-token", "admin")
+        mock_middleware.authenticate_with_role.assert_called_once_with(
+            "test-token", "admin"
+        )
 
     @pytest.mark.asyncio
-    async def test_create_role_auth_dependency_no_credentials(self, fastapi_auth, mock_request):
+    async def test_create_role_auth_dependency_no_credentials(
+        self, fastapi_auth, mock_request
+    ):
         """Test role authentication dependency with no credentials."""
         try:
             from fastapi import HTTPException
@@ -76,7 +83,9 @@ class TestFastAPIRBACIntegration:
         assert "Authorization header required" in str(exc_info.value.detail)
 
     @pytest.mark.asyncio
-    async def test_create_role_auth_dependency_auth_error(self, fastapi_auth, mock_middleware, mock_request, mock_credentials):
+    async def test_create_role_auth_dependency_auth_error(
+        self, fastapi_auth, mock_middleware, mock_request, mock_credentials
+    ):
         """Test role authentication dependency with authentication error."""
         try:
             from fastapi import HTTPException
@@ -84,7 +93,9 @@ class TestFastAPIRBACIntegration:
             pytest.skip("FastAPI not installed")
 
         # Mock authentication failure
-        mock_middleware.authenticate_with_role.side_effect = AuthenticationError("Role not verified")
+        mock_middleware.authenticate_with_role.side_effect = AuthenticationError(
+            "Role not verified"
+        )
 
         # Create dependency function
         auth_dep = fastapi_auth.create_role_auth_dependency("admin")
@@ -99,7 +110,9 @@ class TestFastAPIRBACIntegration:
         assert exc_info.value.detail["message"] == "Role not verified"
 
     @pytest.mark.asyncio
-    async def test_create_role_auth_dependency_generic_error(self, fastapi_auth, mock_middleware, mock_request, mock_credentials):
+    async def test_create_role_auth_dependency_generic_error(
+        self, fastapi_auth, mock_middleware, mock_request, mock_credentials
+    ):
         """Test role authentication dependency with generic error."""
         try:
             from fastapi import HTTPException
@@ -107,7 +120,9 @@ class TestFastAPIRBACIntegration:
             pytest.skip("FastAPI not installed")
 
         # Mock generic exception
-        mock_middleware.authenticate_with_role.side_effect = Exception("Something went wrong")
+        mock_middleware.authenticate_with_role.side_effect = Exception(
+            "Something went wrong"
+        )
 
         # Create dependency function
         auth_dep = fastapi_auth.create_role_auth_dependency("admin")
@@ -118,7 +133,9 @@ class TestFastAPIRBACIntegration:
 
         assert exc_info.value.status_code == 401
         # Generic exceptions return string error message
-        assert "Role authentication failed: Something went wrong" in exc_info.value.detail
+        assert (
+            "Role authentication failed: Something went wrong" in exc_info.value.detail
+        )
 
     def test_require_role_decorator(self, fastapi_auth):
         """Test require_role decorator creation."""
@@ -137,7 +154,7 @@ class TestFastAPIRBACIntegration:
 
         # The decorated function should be callable and have the role hint
         assert callable(decorated_endpoint)
-        assert hasattr(decorated_endpoint, '__phlow_required_role__')
+        assert hasattr(decorated_endpoint, "__phlow_required_role__")
         assert decorated_endpoint.__phlow_required_role__ == "admin"
 
     def test_convenience_functions(self):
@@ -179,7 +196,9 @@ class TestFastAPIRBACEndToEnd:
         auth = FastAPIPhlowAuth(mock_middleware)
 
         @app.post("/admin")
-        async def admin_endpoint(context: PhlowContext = Depends(auth.create_role_auth_dependency("admin"))):
+        async def admin_endpoint(
+            context: PhlowContext = Depends(auth.create_role_auth_dependency("admin")),
+        ):
             return {"message": "Admin access granted", "roles": context.verified_roles}
 
         # Store middleware reference for test access
@@ -199,12 +218,11 @@ class TestFastAPIRBACEndToEnd:
         # Mock successful authentication
         mock_context = MagicMock()
         mock_context.verified_roles = ["admin"]
-        app.state.mock_middleware.authenticate_with_role = AsyncMock(return_value=mock_context)
-
-        response = client.post(
-            "/admin",
-            headers={"Authorization": "Bearer test-token"}
+        app.state.mock_middleware.authenticate_with_role = AsyncMock(
+            return_value=mock_context
         )
+
+        response = client.post("/admin", headers={"Authorization": "Bearer test-token"})
 
         assert response.status_code == 200
         data = response.json()
@@ -226,8 +244,7 @@ class TestFastAPIRBACEndToEnd:
         )
 
         response = client.post(
-            "/admin",
-            headers={"Authorization": "Bearer invalid-token"}
+            "/admin", headers={"Authorization": "Bearer invalid-token"}
         )
 
         assert response.status_code == 401

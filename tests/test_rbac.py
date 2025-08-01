@@ -30,10 +30,7 @@ class TestRoleCredential:
             id="http://example.com/credentials/123",
             issuer="did:example:issuer",
             issuanceDate="2025-08-01T12:00:00Z",
-            credentialSubject=CredentialSubject(
-                id="did:example:subject",
-                role="admin"
-            )
+            credentialSubject=CredentialSubject(id="did:example:subject", role="admin"),
         )
 
         assert credential.id == "http://example.com/credentials/123"
@@ -48,9 +45,8 @@ class TestRoleCredential:
             issuer="did:example:issuer",
             issuanceDate="2025-08-01T12:00:00Z",
             credentialSubject=CredentialSubject(
-                id="did:example:subject",
-                roles=["admin", "manager"]
-            )
+                id="did:example:subject", roles=["admin", "manager"]
+            ),
         )
 
         roles = credential.credential_subject.get_roles()
@@ -65,10 +61,7 @@ class TestRoleCredential:
             issuer="did:example:issuer",
             issuanceDate="2025-08-01T12:00:00Z",
             expirationDate="2025-12-31T23:59:59Z",
-            credentialSubject=CredentialSubject(
-                id="did:example:subject",
-                role="admin"
-            )
+            credentialSubject=CredentialSubject(id="did:example:subject", role="admin"),
         )
 
         assert credential.expiration_date == "2025-12-31T23:59:59Z"
@@ -79,10 +72,7 @@ class TestRoleCredential:
             id="http://example.com/credentials/123",
             issuer="did:example:issuer",
             issuanceDate="2025-08-01T12:00:00Z",
-            credentialSubject=CredentialSubject(
-                id="did:example:subject",
-                role="admin"
-            )
+            credentialSubject=CredentialSubject(id="did:example:subject", role="admin"),
         )
 
         json_data = credential.dict(by_alias=True)
@@ -100,15 +90,11 @@ class TestVerifiablePresentation:
             id="http://example.com/credentials/123",
             issuer="did:example:issuer",
             issuanceDate="2025-08-01T12:00:00Z",
-            credentialSubject=CredentialSubject(
-                id="did:example:subject",
-                role="admin"
-            )
+            credentialSubject=CredentialSubject(id="did:example:subject", role="admin"),
         )
 
         presentation = VerifiablePresentation(
-            verifiableCredential=[credential],
-            holder="did:example:holder"
+            verifiableCredential=[credential], holder="did:example:holder"
         )
 
         assert presentation.holder == "did:example:holder"
@@ -136,17 +122,14 @@ class TestRoleCredentialVerifier:
             id="http://example.com/credentials/123",
             issuer="did:example:issuer",
             issuanceDate="2025-08-01T12:00:00Z",
-            credentialSubject=CredentialSubject(
-                id="did:example:subject",
-                role="admin"
-            ),
+            credentialSubject=CredentialSubject(id="did:example:subject", role="admin"),
             proof=Proof(
                 type="Ed25519Signature2020",
                 created="2025-08-01T12:00:00Z",
                 verification_method="did:example:issuer#key-1",
                 proof_purpose="assertionMethod",
-                signature="base64-encoded-signature"
-            )
+                signature="base64-encoded-signature",
+            ),
         )
 
     @pytest.fixture
@@ -160,8 +143,8 @@ class TestRoleCredentialVerifier:
                 created="2025-08-01T12:00:00Z",
                 verification_method="did:example:holder#key-1",
                 proof_purpose="authentication",
-                signature="base64-encoded-signature"
-            )
+                signature="base64-encoded-signature",
+            ),
         )
 
     @pytest.mark.asyncio
@@ -178,8 +161,7 @@ class TestRoleCredentialVerifier:
     async def test_verify_presentation_no_credentials(self, verifier):
         """Test verifying presentation with no credentials."""
         presentation = VerifiablePresentation(
-            verifiableCredential=[],
-            holder="did:example:holder"
+            verifiableCredential=[], holder="did:example:holder"
         )
 
         result = await verifier.verify_presentation(presentation, "admin")
@@ -204,22 +186,18 @@ class TestRoleCredentialVerifier:
             issuer="did:example:issuer",
             issuanceDate="2025-08-01T12:00:00Z",
             expirationDate="2025-08-01T13:00:00Z",  # Expired
-            credentialSubject=CredentialSubject(
-                id="did:example:subject",
-                role="admin"
-            ),
+            credentialSubject=CredentialSubject(id="did:example:subject", role="admin"),
             proof=Proof(
                 type="Ed25519Signature2020",
                 created="2025-08-01T12:00:00Z",
                 verification_method="did:example:issuer#key-1",
                 proof_purpose="assertionMethod",
-                signature="base64-encoded-signature"
-            )
+                signature="base64-encoded-signature",
+            ),
         )
 
         presentation = VerifiablePresentation(
-            verifiableCredential=[expired_credential],
-            holder="did:example:holder"
+            verifiableCredential=[expired_credential], holder="did:example:holder"
         )
 
         result = await verifier.verify_presentation(presentation, "admin")
@@ -256,7 +234,7 @@ class TestRoleCache:
             agent_id="test-agent",
             role="admin",
             credential_hash="test-hash",
-            issuer_did="did:example:issuer"
+            issuer_did="did:example:issuer",
         )
 
         assert result is True
@@ -267,16 +245,18 @@ class TestRoleCache:
         """Test retrieving cached role."""
         mock_table = mock_supabase.table.return_value
         mock_result = MagicMock()
-        mock_result.data = [{
-            "id": "test-id",
-            "agent_id": "test-agent",
-            "role": "admin",
-            "verified_at": "2025-08-01T12:00:00+00:00",
-            "expires_at": None,
-            "credential_hash": "test-hash",
-            "issuer_did": "did:example:issuer",
-            "metadata": {}
-        }]
+        mock_result.data = [
+            {
+                "id": "test-id",
+                "agent_id": "test-agent",
+                "role": "admin",
+                "verified_at": "2025-08-01T12:00:00+00:00",
+                "expires_at": None,
+                "credential_hash": "test-hash",
+                "issuer_did": "did:example:issuer",
+                "metadata": {},
+            }
+        ]
         mock_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = mock_result
 
         cached_role = await cache.get_cached_role("test-agent", "admin")
@@ -304,7 +284,7 @@ class TestRoleCache:
             agent_id="test-agent",
             role="admin",
             verified_at=datetime.now(timezone.utc),
-            credential_hash="test-hash"
+            credential_hash="test-hash",
         )
 
         assert not cache.is_expired(cached_role)
@@ -316,7 +296,7 @@ class TestRoleCache:
             role="admin",
             verified_at=datetime.now(timezone.utc),
             expires_at=datetime(2030, 1, 1, tzinfo=timezone.utc),
-            credential_hash="test-hash"
+            credential_hash="test-hash",
         )
 
         assert not cache.is_expired(cached_role)
@@ -328,7 +308,7 @@ class TestRoleCache:
             role="admin",
             verified_at=datetime.now(timezone.utc),
             expires_at=datetime(2020, 1, 1, tzinfo=timezone.utc),
-            credential_hash="test-hash"
+            credential_hash="test-hash",
         )
 
         assert cache.is_expired(cached_role)
@@ -354,10 +334,7 @@ class TestRoleCredentialStore:
             id="http://example.com/credentials/123",
             issuer="did:example:issuer",
             issuanceDate="2025-08-01T12:00:00Z",
-            credentialSubject=CredentialSubject(
-                id="did:example:subject",
-                role="admin"
-            )
+            credentialSubject=CredentialSubject(id="did:example:subject", role="admin"),
         )
 
     @pytest.mark.asyncio
@@ -403,8 +380,7 @@ class TestRoleCredentialStore:
         await store.add_credential(sample_credential)
 
         presentation = await store.create_presentation(
-            role="admin",
-            holder_did="did:example:holder"
+            role="admin", holder_did="did:example:holder"
         )
 
         assert presentation is not None
@@ -416,8 +392,7 @@ class TestRoleCredentialStore:
     async def test_create_presentation_missing_role(self, store):
         """Test creating presentation for missing role."""
         presentation = await store.create_presentation(
-            role="admin",
-            holder_did="did:example:holder"
+            role="admin", holder_did="did:example:holder"
         )
 
         assert presentation is None
@@ -445,7 +420,7 @@ class TestRoleCredentialMessages:
         request = RoleCredentialRequest(
             required_role="admin",
             context="Access requires admin role",
-            nonce="test-nonce-123"
+            nonce="test-nonce-123",
         )
 
         assert request.type == "role-credential-request"
@@ -458,20 +433,15 @@ class TestRoleCredentialMessages:
             id="http://example.com/credentials/123",
             issuer="did:example:issuer",
             issuanceDate="2025-08-01T12:00:00Z",
-            credentialSubject=CredentialSubject(
-                id="did:example:subject",
-                role="admin"
-            )
+            credentialSubject=CredentialSubject(id="did:example:subject", role="admin"),
         )
 
         presentation = VerifiablePresentation(
-            verifiableCredential=[credential],
-            holder="did:example:holder"
+            verifiableCredential=[credential], holder="did:example:holder"
         )
 
         response = RoleCredentialResponse(
-            nonce="test-nonce-123",
-            presentation=presentation
+            nonce="test-nonce-123", presentation=presentation
         )
 
         assert response.type == "role-credential-response"
@@ -482,8 +452,7 @@ class TestRoleCredentialMessages:
     def test_role_credential_response_error(self):
         """Test error role credential response."""
         response = RoleCredentialResponse(
-            nonce="test-nonce-123",
-            error="Role 'admin' not available"
+            nonce="test-nonce-123", error="Role 'admin' not available"
         )
 
         assert response.type == "role-credential-response"

@@ -46,6 +46,8 @@ async def analyze(request: Request):
 
 🔐 **A2A Authentication** - JWT token verification with RSA keys
 
+🛡️ **Role-Based Access Control** - W3C Verifiable Credentials for fine-grained authorization
+
 🤖 **Agent Discovery** - `/.well-known/agent.json` endpoint compliance
 
 🤝 **Multi-Agent Communication** - Agent-to-Agent task delegation
@@ -66,8 +68,9 @@ graph TB
     B --> E[Gemini AI]
     
     C --> F[JWT Authentication]
-    C --> G[Agent Discovery]
+    C --> G[Agent Discovery] 
     C --> H[Multi-Agent Tasks]
+    C --> I[RBAC & Credentials]
 ```
 
 ## Getting Started
@@ -75,7 +78,8 @@ graph TB
 1. **[Quick Start](quickstart.md)** - Build your first A2A agent
 2. **[Installation](installation.md)** - Setup guide  
 3. **[Configuration](configuration.md)** - Environment variables
-4. **[Example Agent](examples/simple/)** - Working code
+4. **[RBAC Guide](rbac.md)** - Role-based access control
+5. **[Example Agent](examples/simple/)** - Working code
 
 ## Development
 

@@ -131,15 +131,15 @@ class PhlowMiddleware:
         """
         # 1. Perform standard Phlow authentication first
         context = self.verify_token(token)
-        
+
         # 2. Check cache for previously verified role
         agent_id = context.agent.metadata.get('agent_id')
         cached_role = await self._get_cached_role(agent_id, required_role)
-        
+
         if cached_role and not self._is_expired(cached_role):
             context.verified_roles = [required_role]
             return context
-        
+
         # 3. Request role credential via A2A messaging
         role_response = await self.a2a_client.send_message(
             recipient_did=agent_id,
@@ -150,15 +150,15 @@ class PhlowMiddleware:
                 "nonce": self._generate_nonce()
             }
         )
-        
+
         # 4. Verify the credential
         if role_response.get("presentation"):
             presentation = role_response["presentation"]
             is_valid = await self.role_verifier.verify_vc(presentation)
-            
+
             if is_valid:
                 actual_role = self._extract_role_from_vc(presentation)
-                
+
                 if actual_role == required_role:
                     # 5. Cache the verified role in Supabase
                     await self._cache_verified_role(
@@ -166,10 +166,10 @@ class PhlowMiddleware:
                         required_role,
                         presentation
                     )
-                    
+
                     context.verified_roles = [required_role]
                     return context
-        
+
         raise AuthenticationError(f"Invalid or missing '{required_role}' role credential")
 
     async def _cache_verified_role(self, agent_id: str, role: str, presentation: dict):
@@ -187,7 +187,7 @@ class PhlowMiddleware:
         result = await self.supabase.table('verified_roles').select('*').eq(
             'agent_id', agent_id
         ).eq('role', role).single().execute()
-        
+
         return result.data if result.data else None
 ```
 
@@ -222,12 +222,12 @@ def phlow_auth_role(
                 status_code=401,
                 detail="Invalid authorization header"
             )
-        
+
         token = authorization.replace("Bearer ", "")
-        
+
         # Get middleware from app state
         middleware = request.app.state.phlow_middleware
-        
+
         try:
             context = await middleware.authenticate_with_role(token, required_role)
             return context
@@ -236,7 +236,7 @@ def phlow_auth_role(
         except Exception as e:
             logger.error(f"Role verification error: {e}")
             raise HTTPException(status_code=500, detail="Internal server error")
-    
+
     return Depends(verify_role)
 
 # Usage example:
@@ -261,35 +261,35 @@ class MyAgent:
     def __init__(self):
         self.phlow = PhlowMiddleware(config)
         self.credential_store = RoleCredentialStore()  # Store VCs locally
-        
+
         # Register handler for role credential requests
         self.phlow.a2a_client.register_handler(
-            'role-credential-request', 
+            'role-credential-request',
             self._handle_role_request
         )
-    
+
     async def _handle_role_request(self, message: dict) -> dict:
         """Handle incoming role credential requests."""
         requested_role = message.get('required_role')
         nonce = message.get('nonce')
-        
+
         # 1. Find the role credential in local store
         role_vc = await self.credential_store.get_credential(requested_role)
-        
+
         if not role_vc:
             return {
-                "type": "role-credential-response", 
+                "type": "role-credential-response",
                 "nonce": nonce,
                 "error": f"Role '{requested_role}' not available"
             }
-        
+
         # 2. Create and sign the Verifiable Presentation
         presentation = await self._create_presentation(role_vc)
-        
+
         # 3. Return the credential
         return {
             "type": "role-credential-response",
-            "nonce": nonce, 
+            "nonce": nonce,
             "presentation": presentation
         }
 ```
@@ -307,7 +307,7 @@ This feature would be implemented as an enhancement to the existing Phlow packag
 src/phlow/
 ├── rbac/
 │   ├── __init__.py
-│   ├── verifier.py           # VC verification logic  
+│   ├── verifier.py           # VC verification logic
 │   ├── cache.py              # Supabase role caching
 │   ├── store.py              # Client-side credential storage
 │   └── types.py              # RBAC-specific types
@@ -349,11 +349,11 @@ class TestRBACIntegration:
         middleware = PhlowMiddleware(test_config)
         context = await middleware.authenticate_with_role(token, "admin")
         assert "admin" in context.verified_roles
-    
+
     async def test_cache_verified_role_credentials(self):
-        # Test Supabase caching functionality  
+        # Test Supabase caching functionality
         pass
-    
+
     async def test_handle_role_credential_requests(self):
         # Test A2A message exchange
         pass
@@ -390,7 +390,7 @@ async def basic(context: PhlowContext = phlow_auth(required_permissions=['read:d
     return {"status": "ok"}
 
 # New RBAC API works alongside
-@app.post('/secure-endpoint') 
+@app.post('/secure-endpoint')
 async def secure(context: PhlowContext = phlow_auth_role('admin')):
     return {"status": "ok"}
 

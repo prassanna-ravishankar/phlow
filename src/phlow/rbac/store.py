@@ -42,7 +42,9 @@ class RoleCredentialStore:
                         credential = RoleCredential(**cred_data)
                         self._credentials[role] = credential
                     except Exception as e:
-                        logger.warning(f"Failed to load credential for role '{role}': {e}")
+                        logger.warning(
+                            f"Failed to load credential for role '{role}': {e}"
+                        )
 
                 logger.info(f"Loaded {len(self._credentials)} role credentials")
 
@@ -60,7 +62,7 @@ class RoleCredentialStore:
             for role, credential in self._credentials.items():
                 data[role] = credential.dict(by_alias=True, exclude_none=True)
 
-            with open(self.credentials_file, 'w') as f:
+            with open(self.credentials_file, "w") as f:
                 json.dump(data, f, indent=2)
 
             logger.info(f"Saved {len(self._credentials)} role credentials")
@@ -146,10 +148,7 @@ class RoleCredentialStore:
         return False
 
     async def create_presentation(
-        self,
-        role: str,
-        holder_did: str,
-        challenge: str | None = None
+        self, role: str, holder_did: str, challenge: str | None = None
     ) -> VerifiablePresentation | None:
         """Create a verifiable presentation for a role.
 
@@ -168,15 +167,16 @@ class RoleCredentialStore:
         try:
             # Create the presentation
             presentation = VerifiablePresentation(
-                verifiableCredential=[credential],
-                holder=holder_did
+                verifiableCredential=[credential], holder=holder_did
             )
 
             # TODO: Add cryptographic proof to presentation
             # For now, create a placeholder proof
             # In production, this would be signed with the holder's private key
 
-            logger.info(f"Created presentation for role '{role}' and holder '{holder_did}'")
+            logger.info(
+                f"Created presentation for role '{role}' and holder '{holder_did}'"
+            )
             return presentation
 
         except Exception as e:
@@ -224,7 +224,7 @@ class RoleCredentialStore:
         try:
             data = credential.dict(by_alias=True, exclude_none=True)
 
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 json.dump(data, f, indent=2)
 
             logger.info(f"Exported credential for role '{role}' to {file_path}")
