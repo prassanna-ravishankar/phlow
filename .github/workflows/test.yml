@@ -16,23 +16,23 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Install uv
       uses: astral-sh/setup-uv@v6
       with:
         enable-cache: true
         python-version: ${{ matrix.python-version }}
-    
+
     - name: Install dependencies
       run: |
         uv sync --all-extras --dev
-    
+
     - name: Run linting
       run: |
         uv run task lint
         uv run task format-check
         uv run task type-check
-    
+
     - name: Run unit tests
       run: |
         uv run task test-ci
@@ -46,7 +46,7 @@ jobs:
         AGENT_PERMISSIONS: read:test,write:test
         AGENT_PUBLIC_KEY: mock-public-key
         AGENT_PRIVATE_KEY: mock-private-key
-    
+
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
@@ -56,25 +56,25 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Install uv
       uses: astral-sh/setup-uv@v6
       with:
         enable-cache: true
         python-version: "3.11"
-    
+
     - name: Install dependencies
       run: |
         uv sync --all-extras --dev
-    
+
     - name: Run linting
       run: |
         uv run task lint
         uv run task format-check
-    
+
     - name: Type checking
       run: |
         uv run task type-check

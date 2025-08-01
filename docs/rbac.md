@@ -28,7 +28,7 @@ sequenceDiagram
     participant Client as Agent
     participant Server as Protected Service
     participant Cache as Supabase Cache
-    
+
     Client->>Server: Request with JWT token
     Server->>Cache: Check cached role
     alt Role cached & valid
@@ -55,7 +55,7 @@ await store.add_credential(admin_credential)
 
 # Create presentation for verification
 presentation = await store.create_presentation(
-    role="admin", 
+    role="admin",
     holder_did="did:example:agent"
 )
 ```
@@ -126,7 +126,7 @@ See the complete [RBAC example agent](../examples/rbac_agent/) for a working imp
 ⚠️ This implementation includes simplified cryptographic verification and A2A messaging suitable for development and testing. For production deployment:
 
 1. **Implement cryptographic signature verification** using issuer public keys and standard signature suites
-2. **Add proper A2A messaging** with agent endpoint resolution and network error handling  
+2. **Add proper A2A messaging** with agent endpoint resolution and network error handling
 3. **Configure restrictive database policies** based on your specific security requirements
 4. **Add monitoring and rate limiting** for role verification requests
 
@@ -153,8 +153,8 @@ Create FastAPI dependency requiring specific role.
 ### authenticate_with_role()
 ```python
 async def authenticate_with_role(
-    self, 
-    token: str, 
+    self,
+    token: str,
     required_role: str
 ) -> PhlowContext
 ```

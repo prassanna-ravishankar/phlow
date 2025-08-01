@@ -24,7 +24,7 @@ python main.py
 
 2. **A2A Discovery**: Each agent discovers others via `/.well-known/agent.json`
 
-3. **Agent-to-Agent Communication**: 
+3. **Agent-to-Agent Communication**:
    - DataAnalyst analyzes sales data
    - ContentWriter creates marketing content based on the analysis
 
@@ -33,7 +33,7 @@ python main.py
 Each agent implements:
 
 - ✅ **Agent Discovery**: `/.well-known/agent.json` endpoint
-- ✅ **Task Processing**: `/tasks/send` endpoint  
+- ✅ **Task Processing**: `/tasks/send` endpoint
 - ✅ **Specialized Capabilities**: Unique skills and descriptions
 - ✅ **A2A Message Format**: Proper request/response structure
 
@@ -55,7 +55,7 @@ curl -X POST http://localhost:8001/tasks/send \
 curl -X POST http://localhost:8002/tasks/send \
   -H "Content-Type: application/json" \
   -d '{
-    "id": "task-456", 
+    "id": "task-456",
     "message": {
       "role": "user",
       "parts": [{"type": "text", "text": "Create marketing content for 25% sales growth"}]
@@ -68,7 +68,7 @@ curl -X POST http://localhost:8002/tasks/send \
 While running, each agent exposes:
 
 - **DataAnalyst**: http://localhost:8001
-- **ContentWriter**: http://localhost:8002  
+- **ContentWriter**: http://localhost:8002
 - **CodeReviewer**: http://localhost:8003
 
 Each with:

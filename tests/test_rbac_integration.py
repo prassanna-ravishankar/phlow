@@ -74,19 +74,19 @@ class TestRBACIntegration:
         ):
             mock_create_client.return_value = MagicMock()
             mock_convert.return_value = MagicMock()  # Mock A2A agent card conversion
-            
+
             middleware = PhlowMiddleware(test_config)
 
             # Override with mock components for testing
             middleware.supabase = MagicMock()
             middleware.role_verifier = RoleCredentialVerifier(middleware.supabase)
             middleware.role_cache = RoleCache(middleware.supabase)
-            
+
             # Create a shared mock context for all tests
             mock_context = MagicMock()
             mock_context.agent = test_config.agent_card
             mock_context.verified_roles = []
-            
+
             # Mock the verify_token method to avoid PhlowContext validation issues
             middleware.verify_token = MagicMock(return_value=mock_context)
 
@@ -711,19 +711,19 @@ class TestRBACPerformance:
         ):
             mock_create_client.return_value = MagicMock()
             mock_convert.return_value = MagicMock()  # Mock A2A agent card conversion
-            
+
             middleware = PhlowMiddleware(test_config)
 
             # Override with mock components for testing
             middleware.supabase = MagicMock()
             middleware.role_verifier = RoleCredentialVerifier(middleware.supabase)
             middleware.role_cache = RoleCache(middleware.supabase)
-            
+
             # Create a shared mock context for all tests
             mock_context = MagicMock()
             mock_context.agent = test_config.agent_card
             mock_context.verified_roles = []
-            
+
             # Mock the verify_token method to avoid PhlowContext validation issues
             middleware.verify_token = MagicMock(return_value=mock_context)
 

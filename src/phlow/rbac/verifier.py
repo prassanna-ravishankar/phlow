@@ -161,14 +161,14 @@ class RoleCredentialVerifier:
         """
         # TODO: CRITICAL - Implement actual cryptographic verification for production
         # Current implementation accepts any credential with proof - INSECURE
-        
+
         # Production implementation should:
         # 1. Resolve issuer DID using DID resolution spec
         # 2. Extract public key from DID document
         # 3. Verify signature using appropriate cryptographic method
         # 4. Validate proof purpose matches expected use
         # 5. Check signature suite compatibility
-        
+
         if not credential.proof:
             logger.warning("No proof found in credential")
             return False

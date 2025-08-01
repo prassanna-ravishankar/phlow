@@ -70,16 +70,20 @@ class FastAPIPhlowAuth:
                 if required_permissions:
                     # TODO: Implement proper permission checking against agent permissions
                     # For now, we'll check if the agent has the required permissions in metadata
-                    agent_permissions = context.agent.metadata.get('permissions', []) if context.agent.metadata else []
-                    
+                    agent_permissions = (
+                        context.agent.metadata.get("permissions", [])
+                        if context.agent.metadata
+                        else []
+                    )
+
                     for permission in required_permissions:
                         if permission not in agent_permissions:
                             raise HTTPException(
                                 status_code=403,
                                 detail={
                                     "error": "PERMISSION_DENIED",
-                                    "message": f"Agent lacks required permission: {permission}"
-                                }
+                                    "message": f"Agent lacks required permission: {permission}",
+                                },
                             )
 
                 return context

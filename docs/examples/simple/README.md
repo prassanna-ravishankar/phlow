@@ -31,7 +31,7 @@ curl -X POST http://localhost:8000/tasks/send \
   -d '{
     "id": "task-123",
     "message": {
-      "role": "user", 
+      "role": "user",
       "parts": [{"type": "text", "text": "Hello from another agent!"}]
     }
   }'

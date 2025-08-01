@@ -22,10 +22,11 @@ repos:
       # Run the formatter
       - id: ruff-format
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.14.0
-    hooks:
-      - id: mypy
-        additional_dependencies: [types-requests, types-setuptools]
-        args: [--config-file=pyproject.toml]
-        exclude: ^(tests/|docs/examples/)
+  # Note: Using ty for type checking instead of mypy
+  # - repo: https://github.com/pre-commit/mirrors-mypy
+  #   rev: v1.14.0
+  #   hooks:
+  #     - id: mypy
+  #       additional_dependencies: [types-requests, types-setuptools]
+  #       args: [--config-file=pyproject.toml]
+  #       exclude: ^(tests/|docs/examples/)
