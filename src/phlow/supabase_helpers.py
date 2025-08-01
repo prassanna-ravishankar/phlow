@@ -1,6 +1,6 @@
 """Supabase helper utilities for Phlow authentication."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from supabase import Client
@@ -36,7 +36,7 @@ class SupabaseHelpers:
             "public_key": agent_card.public_key,
             "endpoints": agent_card.endpoints or {},
             "metadata": agent_card.metadata or {},
-            "updated_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
         }
 
         result = self.supabase.table("agent_cards").upsert(data).execute()
@@ -58,7 +58,7 @@ class SupabaseHelpers:
             "public_key": agent_card.public_key,
             "endpoints": agent_card.endpoints or {},
             "metadata": agent_card.metadata or {},
-            "updated_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
         }
 
         result = self.supabase.table("agent_cards").upsert(data).execute()

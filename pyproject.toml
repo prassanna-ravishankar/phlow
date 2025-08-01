@@ -41,14 +41,15 @@ dev = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.0.0",
-    "black>=23.0.0",
-    "isort>=5.12.0",
-    "flake8>=6.0.0",
+    "ruff>=0.9.0",
+    "mypy>=1.5.0",
+    "ty>=0.0.1a16",
     "twine>=4.0.0",
     "testcontainers>=3.7.0",
     "google-genai>=0.1.0",
     "uvicorn[standard]>=0.23.0",
     "taskipy>=1.14.0",
+    "pre-commit>=3.8.0",
 ]
 examples = [
     "fastapi>=0.100.0",
@@ -161,16 +162,16 @@ test = "uv run pytest tests/ -v --cov=src/phlow --cov-report=term-missing --cov-
 test-unit = "uv run pytest tests/ -v --cov=src/phlow --cov-report=term-missing --cov-report=xml -m 'not e2e'"
 test-ci = "uv run pytest tests/ -v --cov=src/phlow --cov-report=xml --cov-report=term-missing -m 'not e2e'"
 
-# E2E testing (requires Docker) with auto-detection for Rancher Desktop
-test-e2e = { cmd = "if [ -S \"$HOME/.rd/docker.sock\" ]; then echo \"✅ Rancher Desktop detected\"; DOCKER_HOST=unix://$HOME/.rd/docker.sock uv run pytest tests/test_e2e*.py -v -s; else echo \"✅ Using default Docker setup\"; uv run pytest tests/test_e2e*.py -v -s; fi", help = "Run all E2E tests with Docker auto-detection" }
-test-e2e-single = { cmd = "if [ -S \"$HOME/.rd/docker.sock\" ]; then DOCKER_HOST=unix://$HOME/.rd/docker.sock uv run pytest tests/test_e2e.py -v -s; else uv run pytest tests/test_e2e.py -v -s; fi", help = "Run single-agent E2E tests" }
-test-e2e-multi = { cmd = "if [ -S \"$HOME/.rd/docker.sock\" ]; then DOCKER_HOST=unix://$HOME/.rd/docker.sock uv run pytest tests/test_e2e_multi_agent.py -v -s; else uv run pytest tests/test_e2e_multi_agent.py -v -s; fi", help = "Run multi-agent E2E tests" }
+# E2E testing (requires Docker)
+test-e2e = { cmd = "bash scripts/test-e2e.sh tests/test_e2e*.py -v -s", help = "Run all E2E tests with Docker auto-detection" }
+test-e2e-single = { cmd = "bash scripts/test-e2e.sh tests/test_e2e.py -v -s", help = "Run single-agent E2E tests" }
+test-e2e-multi = { cmd = "bash scripts/test-e2e.sh tests/test_e2e_multi_agent.py -v -s", help = "Run multi-agent E2E tests" }
 
 # Code quality
 lint = "uv run ruff check src/ tests/ --fix"
 format = "uv run ruff format src/ tests/"
 format-check = "uv run ruff format src/ tests/ --check"
-type-check = "uvx ty check src/ --ignore missing-argument --ignore invalid-argument-type --ignore unknown-argument"
+type-check = "uvx ty check src/ --python-version 3.10 --ignore missing-argument --ignore invalid-argument-type --ignore unknown-argument"
 quality = { cmd = "uv run task lint && uv run task format && uv run task type-check", help = "Run all code quality checks" }
 
 # Build and release

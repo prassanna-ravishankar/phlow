@@ -1,13 +1,13 @@
 """Phlow middleware - A2A Protocol extension with Supabase integration."""
 
-import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import httpx
 import jwt
 from a2a.client import A2AClient
 from a2a.types import AgentCard as A2AAgentCard
-from a2a.types import Message, Task
+from a2a.types import Task
 from supabase import create_client
 
 from .exceptions import AuthenticationError, ConfigurationError
@@ -127,8 +127,8 @@ class PhlowMiddleware:
         payload = {
             "sub": agent_card.metadata.get("agent_id") if agent_card.metadata else None,
             "name": agent_card.name,
-            "iat": datetime.datetime.utcnow(),
-            "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1),
+            "iat": datetime.now(timezone.utc),
+            "exp": datetime.now(timezone.utc) + timedelta(hours=1),
         }
 
         return jwt.encode(payload, self.config.private_key, algorithm="HS256")
@@ -146,7 +146,7 @@ class PhlowMiddleware:
         # This would use the A2A client to send messages
         # For now, return a mock task
         return Task(
-            id=f"task-{datetime.datetime.utcnow().isoformat()}",
+            id=f"task-{datetime.now(timezone.utc).isoformat()}",
             # A2A Task doesn't have agent_id, status, or messages fields directly
             # These would be handled differently in the actual A2A protocol
         )
@@ -205,7 +205,7 @@ class PhlowMiddleware:
                 .insert(
                     {
                         "agent_id": agent_id,
-                        "timestamp": datetime.datetime.utcnow().isoformat(),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
                         "event_type": "authentication",
                         "success": success,
                         "metadata": metadata or {},
@@ -238,7 +238,7 @@ class PhlowMiddleware:
                     "skills": agent_card.skills,
                     "security_schemes": agent_card.security_schemes,
                     "metadata": agent_card.metadata,
-                    "created_at": datetime.datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(timezone.utc).isoformat(),
                 }
             ).execute()
         except Exception as e:

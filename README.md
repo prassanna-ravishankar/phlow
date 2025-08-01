@@ -218,32 +218,35 @@ Pull requests welcome! We're building towards our marketplace vision:
 ### Quick Start
 ```bash
 # Install dependencies
-make install
+uv sync --dev
 
-# Run all checks
-make check
+# Run all quality checks
+uv run task quality
 
-# Start development environment
-make dev
+# Run tests
+uv run task test
 
-# Run E2E tests
-make test-e2e
+# Run E2E tests (requires Docker)
+uv run task test-e2e
 ```
 
 ### Development Commands
 ```bash
-make install        # Install dependencies
-make test          # Run unit tests
-make test-e2e      # Run end-to-end tests
-make lint          # Run linting
-make format        # Format code
-make dev           # Start Docker environment
-make clean         # Clean build artifacts
+uv sync --dev              # Install all dependencies
+uv run task test           # Run all tests with coverage
+uv run task test-unit      # Run unit tests only
+uv run task test-e2e       # Run end-to-end tests (Docker required)
+uv run task lint           # Run linting with auto-fix
+uv run task format         # Format code
+uv run task type-check     # Run type checking
+uv run task quality        # Run all quality checks
+uv run task build          # Build distribution packages
+uv run task clean          # Clean build artifacts
 ```
 
 ### Testing
-- **Unit Tests**: `make test` - Fast, mocked, runs in CI
-- **E2E Tests**: `make test-e2e` - Full stack, Docker required
+- **Unit Tests**: `uv run task test-unit` - Fast, mocked, runs in CI
+- **E2E Tests**: `uv run task test-e2e` - Full stack, Docker required
 
 ## License
 
