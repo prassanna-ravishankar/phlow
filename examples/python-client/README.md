@@ -233,19 +233,23 @@ print(f"Agent status: {health['status']}")
 
 ## Testing
 
-### Run Integration Tests
+### Run E2E Integration Tests
 
 ```bash
-python test_client.py
+# Comprehensive E2E tests with Docker stack
+./run_e2e_tests.sh
+
+# Or run manually (requires Docker Compose stack)
+pytest test_e2e.py -v -s
 ```
 
 This will test:
-- Public endpoints
-- Authentication requirements
-- Permission-based access control
-- Token generation
-- Error handling
-- Async functionality
+- Complete Docker stack health and connectivity
+- Agent registration with database  
+- JWT token generation and validation
+- FastAPI middleware functionality
+- Client helper utilities
+- Performance and concurrent requests
 
 ### Manual Testing with curl
 
