@@ -1,0 +1,190 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "phlow"
+version = "0.1.0"
+description = "Simple Python library for Phlow authentication"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [
+    { name = "Prassanna Ravishankar" },
+]
+keywords = ["phlow", "authentication", "agent", "a2a", "supabase", "middleware", "jwt"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    "supabase>=2.0.0",
+    "pydantic>=2.0.0",
+    "typing-extensions>=4.0.0",
+    "pyjwt>=2.8.0",
+    "a2a-sdk>=0.2.11",
+    "httpx>=0.24.0",
+]
+
+[project.optional-dependencies]
+fastapi = ["fastapi>=0.100.0"]
+flask = ["flask>=2.3.0"]
+django = ["django>=4.2.0"]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "flake8>=6.0.0",
+    "twine>=4.0.0",
+    "testcontainers>=3.7.0",
+    "google-genai>=0.1.0",
+    "uvicorn[standard]>=0.23.0",
+    "taskipy>=1.14.0",
+]
+examples = [
+    "fastapi>=0.100.0",
+    "uvicorn[standard]>=0.23.0",
+    "python-dotenv>=1.0.0",
+    "requests>=2.31.0",
+]
+
+[project.urls]
+Documentation = "https://prassanna.io/phlow/"
+Issues = "https://github.com/prassanna-ravishankar/phlow/issues"
+Source = "https://github.com/prassanna-ravishankar/phlow"
+
+[tool.hatch.version]
+path = "src/phlow/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+only-include = ["src"]
+sources = ["src"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "tests", "README.md"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501",  # line too long, handled by formatter
+    "B008",  # do not perform function calls in argument defaults
+    "B904",  # raise from in except blocks
+    "C901",  # too complex
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]  # allow assert in tests
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--disable-warnings",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "e2e: marks tests as end-to-end (requires Docker, skipped in CI)",
+]
+
+[tool.coverage.run]
+source = ["src"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+# Taskipy configuration  
+[tool.taskipy.tasks]
+# Development tasks
+install = "uv sync"
+install-dev = "uv sync --dev"
+
+# Testing tasks
+test = "uv run pytest tests/ -v --cov=src/phlow --cov-report=term-missing --cov-report=xml"
+test-unit = "uv run pytest tests/ -v --cov=src/phlow --cov-report=term-missing --cov-report=xml -m 'not e2e'"
+test-ci = "uv run pytest tests/ -v --cov=src/phlow --cov-report=xml --cov-report=term-missing -m 'not e2e'"
+
+# E2E testing (requires Docker) with auto-detection for Rancher Desktop
+test-e2e = { cmd = "if [ -S \"$HOME/.rd/docker.sock\" ]; then echo \"✅ Rancher Desktop detected\"; DOCKER_HOST=unix://$HOME/.rd/docker.sock uv run pytest tests/test_e2e*.py -v -s; else echo \"✅ Using default Docker setup\"; uv run pytest tests/test_e2e*.py -v -s; fi", help = "Run all E2E tests with Docker auto-detection" }
+test-e2e-single = { cmd = "if [ -S \"$HOME/.rd/docker.sock\" ]; then DOCKER_HOST=unix://$HOME/.rd/docker.sock uv run pytest tests/test_e2e.py -v -s; else uv run pytest tests/test_e2e.py -v -s; fi", help = "Run single-agent E2E tests" }
+test-e2e-multi = { cmd = "if [ -S \"$HOME/.rd/docker.sock\" ]; then DOCKER_HOST=unix://$HOME/.rd/docker.sock uv run pytest tests/test_e2e_multi_agent.py -v -s; else uv run pytest tests/test_e2e_multi_agent.py -v -s; fi", help = "Run multi-agent E2E tests" }
+
+# Code quality
+lint = "uv run ruff check src/ tests/ --fix"
+format = "uv run ruff format src/ tests/"
+format-check = "uv run ruff format src/ tests/ --check"
+type-check = "uvx ty check src/ --ignore missing-argument --ignore invalid-argument-type --ignore unknown-argument"
+quality = { cmd = "uv run task lint && uv run task format && uv run task type-check", help = "Run all code quality checks" }
+
+# Build and release
+build = "uv run python -m build"
+clean = "rm -rf dist/ build/ *.egg-info .pytest_cache .coverage htmlcov/ .ruff_cache"
+release = { cmd = "uv run task clean && uv run task build && uv run twine upload dist/*", help = "Clean, build and upload to PyPI" }
+
+# Development server for examples
+dev-example = { cmd = "cd docs/examples/simple && uv sync && uv run python main.py", help = "Run standalone example server" }
+
+[dependency-groups]
+dev = [
+    "ruff>=0.12.7",
+    "taskipy>=1.14.1",
+]
+
+

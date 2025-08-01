@@ -8,8 +8,7 @@
 
 <div align="center">
 
-[![npm version](https://img.shields.io/npm/v/phlow-auth.svg)](https://www.npmjs.com/package/phlow-auth)
-[![PyPI version](https://img.shields.io/pypi/v/phlow-auth.svg)](https://pypi.org/project/phlow-auth/)
+[![PyPI version](https://img.shields.io/pypi/v/phlow.svg)](https://pypi.org/project/phlow/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 </div>
@@ -36,45 +35,19 @@ We're building the foundational trust layer that will enable agents to securely 
 ## ⚡ Quick Start
 
 ```bash
-npm install phlow-auth
-# or
-pip install phlow-auth
-```
-
-### JavaScript Example
-
-```javascript
-import { PhlowMiddleware } from 'phlow-auth';
-
-const phlow = new PhlowMiddleware({
-  agentCard: {
-    schemaVersion: '1.0',
-    name: 'My Agent',
-    description: 'Agent description', 
-    serviceUrl: 'https://my-agent.com',
-    skills: ['chat', 'analysis'],
-    securitySchemes: {},
-    metadata: {
-      agentId: 'my-agent-id',
-      publicKey: 'public-key-here'
-    }
-  },
-  privateKey: process.env.PRIVATE_KEY,
-  supabaseUrl: process.env.SUPABASE_URL,
-  supabaseAnonKey: process.env.SUPABASE_ANON_KEY
-});
+pip install phlow
 ```
 
 ### Python Example
 
 ```python
-from phlow_auth import PhlowMiddleware, AgentCard, PhlowConfig
+from phlow import PhlowMiddleware, AgentCard, PhlowConfig
 
 config = PhlowConfig(
     agent_card=AgentCard(
         name="My Agent",
         description="Agent description",
-        service_url="https://my-agent.com", 
+        service_url="https://my-agent.com",
         skills=["chat", "analysis"],
         metadata={"agent_id": "my-agent-id", "public_key": "public-key-here"}
     ),
@@ -86,15 +59,15 @@ config = PhlowConfig(
 phlow = PhlowMiddleware(config)
 ```
 
-### Express.js Middleware
+### FastAPI Middleware
 
-```javascript
-// Use A2A authentication with Supabase features
-app.post('/api/chat', phlow.authenticate(), (req, res) => {
-  // Access both A2A context and Supabase client
-  const { agent, supabase } = req.phlow;
-  res.json({ message: `Hello from ${agent.name}` });
-});
+```python
+# Use A2A authentication with Supabase features  
+@app.post("/api/chat")
+async def chat_endpoint(context: PhlowContext = Depends(auth_required)):
+    # Access agent info and Supabase client
+    agent = context.agent
+    return {"message": f"Hello from {agent.name}"}
 ```
 
 [Full Setup Guide →](docs/getting-started.md)
@@ -105,8 +78,8 @@ app.post('/api/chat', phlow.authenticate(), (req, res) => {
 - **📋 Agent Storage** - Store and retrieve agent cards in Supabase
 - **🛡️ RLS Helpers** - Generate basic Supabase Row Level Security policies
 - **📊 Basic Audit** - Log authentication events to Supabase
-- **🌐 Multi-Language** - JavaScript/TypeScript and Python packages
-- **🔧 Middleware** - Express and FastAPI integration helpers
+- **🌐 Python Package** - Pure Python implementation
+- **🔧 Middleware** - FastAPI integration helpers
 
 
 ## How It Works
@@ -129,10 +102,10 @@ sequenceDiagram
 
 ```
 phlow/
-├── packages/
-│   ├── phlow-auth-js/          # JWT auth middleware for JavaScript
-│   └── phlow-auth-python/      # JWT auth middleware for Python
-└── docs/
+├── src/phlow/              # Python authentication library
+├── tests/                  # Test suite
+├── examples/               # Example implementations
+└── docs/                   # Documentation
     ├── getting-started.md      # Quick setup guide
     ├── a2a-compatibility.md    # A2A Protocol integration
     └── api-reference.md        # API documentation
@@ -152,7 +125,7 @@ See [Getting Started](docs/getting-started.md) for setup instructions.
 
 ## 🔧 Setup
 
-1. **Install**: `npm install phlow-auth` or `pip install phlow-auth`
+1. **Install**: `pip install phlow`
 2. **Configure**: Set up Supabase project and environment variables
 3. **Initialize**: Register your agent card in Supabase
 4. **Authenticate**: Add Phlow middleware to your A2A agent
@@ -161,40 +134,33 @@ See [Getting Started](docs/getting-started.md) for setup instructions.
 
 ## 💡 Example: A2A Agent with Phlow Auth
 
-```javascript
-// A2A + Phlow Integration
-import { PhlowMiddleware } from 'phlow-auth';
+```python
+# A2A + Phlow Integration
+from phlow import PhlowMiddleware, AgentCard, PhlowConfig
 
-const agentCard = {
-  schemaVersion: '1.0',
-  name: 'My Agent',
-  description: 'A2A-compatible agent',
-  serviceUrl: 'https://my-agent.com',
-  skills: ['chat', 'analysis'],
-  securitySchemes: {},
-  metadata: {
-    agentId: 'my-agent-id',
-    publicKey: process.env.PUBLIC_KEY
-  }
-};
+config = PhlowConfig(
+    agent_card=AgentCard(
+        name="My Agent",
+        description="A2A-compatible agent",
+        service_url="https://my-agent.com",
+        skills=["chat", "analysis"],
+        metadata={"agent_id": "my-agent-id", "public_key": "public-key-here"}
+    ),
+    private_key=os.environ["PRIVATE_KEY"],
+    supabase_url=os.environ["SUPABASE_URL"],
+    supabase_anon_key=os.environ["SUPABASE_ANON_KEY"]
+)
 
-// Initialize Phlow for authentication
-const phlow = new PhlowMiddleware({
-  agentCard,
-  supabaseUrl: process.env.SUPABASE_URL,
-  supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
-  privateKey: process.env.PRIVATE_KEY
-});
+phlow = PhlowMiddleware(config)
 
-// Add Phlow auth middleware to Express
-app.use('/api/a2a', phlow.authenticate());
+# Use with FastAPI
+from phlow.integrations.fastapi import create_phlow_dependency
+auth_required = create_phlow_dependency(phlow)
 
-// Handle A2A messages
-app.post('/api/a2a/message', async (req, res) => {
-  const { phlow } = req; // Contains agent, supabase, a2aClient
-  // Process A2A message using phlow context
-  res.json({ status: 'received' });
-});
+@app.post("/api/a2a/message")
+async def handle_message(context: PhlowContext = Depends(auth_required)):
+    # Process A2A message using phlow context
+    return {"status": "received"}
 ```
 
 ## 📚 Documentation
@@ -207,15 +173,14 @@ app.post('/api/a2a/message', async (req, res) => {
 
 | Language | Package | Framework Support |
 |----------|---------|------------------|
-| JavaScript/TypeScript | `phlow-auth` | Express.js, Node.js |
-| Python | `phlow-auth` | FastAPI, Flask |
+| Python | `phlow` | FastAPI, Flask |
 
 ## 🚀 Roadmap & Vision
 
 ### Phase 1: Authentication Middleware (Current)
 - ✅ JWT authentication for A2A Protocol
 - ✅ Agent card storage in Supabase  
-- ✅ Basic middleware for Express/FastAPI
+- ✅ Basic middleware for FastAPI
 - 🔄 Enhanced security and testing
 
 ### Phase 2: Agent Discovery & Registry (Next 6 months)
@@ -250,12 +215,35 @@ Pull requests welcome! We're building towards our marketplace vision:
 
 **Scope**: Please keep contributions focused on authentication, agent registry, discovery, and marketplace features. Communication protocols should be contributed to the [A2A Protocol](https://github.com/a2aproject) directly.
 
+### Quick Start
 ```bash
-git clone https://github.com/prassanna-ravishankar/phlow.git
-cd phlow
-npm install
-npm test
+# Install dependencies
+make install
+
+# Run all checks
+make check
+
+# Start development environment
+make dev
+
+# Run E2E tests
+make test-e2e
 ```
+
+### Development Commands
+```bash
+make install        # Install dependencies
+make test          # Run unit tests
+make test-e2e      # Run end-to-end tests
+make lint          # Run linting
+make format        # Format code
+make dev           # Start Docker environment
+make clean         # Clean build artifacts
+```
+
+### Testing
+- **Unit Tests**: `make test` - Fast, mocked, runs in CI
+- **E2E Tests**: `make test-e2e` - Full stack, Docker required
 
 ## License
 

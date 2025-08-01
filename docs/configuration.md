@@ -1,190 +1,122 @@
 # Configuration
 
-Configure Phlow for your agent's needs.
+Configure Phlow for your A2A agent.
 
-## Basic Configuration
+## Required Environment Variables
 
-### JavaScript
-```javascript
-const phlow = new PhlowMiddleware({
-  // Required
-  agentCard: agentCard,           // A2A Protocol agent card
-  privateKey: privateKey,         // RSA private key
-  supabaseUrl: supabaseUrl,       // Your Supabase project URL
-  supabaseAnonKey: supabaseKey,   // Your Supabase anon key
-  
-  // Optional
-  enableAuditLog: true,           // Track auth events (default: false)
-  enableRateLimiting: true,       // Enable rate limits (default: false)
-  rateLimitConfig: {
-    windowMs: 60000,              // Time window (1 minute)
-    maxRequests: 100              // Max requests per window
-  }
-});
-```
-
-### Python
-```python
-phlow = PhlowMiddleware({
-    # Required
-    'agent_card': agent_card,      # A2A Protocol agent card
-    'private_key': private_key,    # RSA private key
-    'supabase_url': supabase_url,  # Your Supabase project URL
-    'supabase_anon_key': supabase_key,  # Your Supabase anon key
-    
-    # Optional
-    'enable_audit': True,          # Track auth events (default: False)
-    'rate_limiting': {
-        'max_requests': 100,       # Max requests per window
-        'window_ms': 60000         # Time window (1 minute)
-    }
-})
-```
-
-## Agent Card Format
-
-Your agent card must follow the A2A Protocol standard:
-
-```javascript
-const agentCard = {
-  schemaVersion: '1.0',
-  name: 'My Agent',
-  description: 'What your agent does',
-  serviceUrl: 'https://your-agent.com',
-  skills: [
-    {
-      name: 'skill-name',
-      description: 'What this skill does'
-    }
-  ],
-  securitySchemes: {
-    'bearer-jwt': {
-      type: 'http',
-      scheme: 'bearer',
-      bearerFormat: 'JWT'
-    }
-  },
-  metadata: {
-    agentId: 'unique-agent-id',
-    publicKey: 'your-public-key'
-  }
-};
-```
-
-## Environment Variables
-
-### Required Variables
 ```bash
-# Your agent's keys
-PHLOW_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----..."
-PHLOW_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----..."
-
-# Supabase connection
+# Supabase (required)
 SUPABASE_URL="https://your-project.supabase.co"
 SUPABASE_ANON_KEY="your-anon-key"
+
+# Authentication (required)
+PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----..."
+PUBLIC_KEY="-----BEGIN PUBLIC KEY-----..."
+
+# AI Integration (optional)
+GEMINI_API_KEY="your-gemini-api-key"
 ```
 
-### Optional Variables
+## Agent Configuration
+
+```python
+from phlow import AgentCard, PhlowConfig
+
+config = PhlowConfig(
+    agent_card=AgentCard(
+        name="My Agent",
+        description="A2A compliant AI agent",
+        service_url="https://my-agent.com",
+        skills=["chat", "analysis"],
+        metadata={
+            "agent_id": "unique-agent-id",
+            "public_key": os.getenv("PUBLIC_KEY")
+        }
+    ),
+    private_key=os.getenv("PRIVATE_KEY"),
+    supabase_url=os.getenv("SUPABASE_URL"),
+    supabase_anon_key=os.getenv("SUPABASE_ANON_KEY")
+)
+```
+
+## FastAPI Integration
+
+```python
+from phlow.integrations.fastapi import FastAPIPhlowAuth
+
+auth = FastAPIPhlowAuth(config)
+
+@app.post("/protected")
+@auth.require_agent_auth
+async def protected_endpoint(request: Request):
+    agent = request.state.agent
+    return {"agent": agent.name}
+```
+
+## Optional Features
+
+### Audit Logging
+```python
+config = PhlowConfig(
+    # ... other config
+    enable_audit=True  # Logs auth events to Supabase
+)
+```
+
+### Rate Limiting
+```python
+from phlow import RateLimiter
+
+rate_limiter = RateLimiter(
+    max_requests=100,
+    window_seconds=60
+)
+```
+
+## Development Commands
+
 ```bash
-# Enable features
-PHLOW_ENABLE_AUDIT=true
-PHLOW_ENABLE_RATE_LIMIT=true
+# Install dependencies
+uv sync --dev
 
-# Rate limiting
-PHLOW_RATE_LIMIT_WINDOW_MS=60000
-PHLOW_RATE_LIMIT_MAX_REQUESTS=100
+# Run tests
+uv run task test-unit        # Unit tests
+uv run task test-e2e         # E2E tests (requires Docker)
 
-# Agent info
-PHLOW_AGENT_ID="my-agent-001"
-PHLOW_AGENT_NAME="My Agent"
-PHLOW_SERVICE_URL="https://my-agent.com"
+# Code quality
+uv run task lint             # Lint and fix
+uv run task format           # Format code
+uv run task type-check       # Type checking
+
+# Development server
+uv run task dev-example      # Run example agent
 ```
 
-## Loading Configuration
+## RSA Key Generation
 
-### From Environment
-```javascript
-const phlow = new PhlowMiddleware({
-  agentCard: {
-    name: process.env.PHLOW_AGENT_NAME,
-    metadata: {
-      agentId: process.env.PHLOW_AGENT_ID,
-      publicKey: process.env.PHLOW_PUBLIC_KEY
-    }
-    // ... other fields
-  },
-  privateKey: process.env.PHLOW_PRIVATE_KEY,
-  supabaseUrl: process.env.SUPABASE_URL,
-  supabaseAnonKey: process.env.SUPABASE_ANON_KEY
-});
-```
-
-### From Config File
-```javascript
-// config.json
-{
-  "agentCard": { /* ... */ },
-  "supabase": {
-    "url": "...",
-    "anonKey": "..."
-  }
-}
-
-// Load it
-const config = require('./config.json');
-const phlow = new PhlowMiddleware(config);
-```
-
-## Security Configuration
-
-### Key Generation
 ```bash
-# Generate new RSA key pair
-phlow generate-keys
+# Generate private key
+openssl genrsa -out private.pem 2048
 
-# Output:
-# Private key saved to: private_key.pem
-# Public key saved to: public_key.pem
+# Extract public key
+openssl rsa -in private.pem -pubout -out public.pem
+
+# Set environment variables
+export PRIVATE_KEY="$(cat private.pem)"
+export PUBLIC_KEY="$(cat public.pem)"
 ```
 
-### Key Storage Best Practices
-- Never commit private keys to git
-- Use environment variables or secure vaults
-- Rotate keys periodically
-- Use different keys for each environment
+## Docker Setup
 
-## Advanced Options
+For E2E testing:
 
-### Custom Token Expiry
-```javascript
-{
-  tokenExpiry: '24h',  // Default: '1h'
-  refreshThreshold: 600  // Seconds before expiry to refresh
-}
+```bash
+# Docker Desktop
+docker --version
+
+# Rancher Desktop (auto-detected)
+ls ~/.rd/docker.sock
+
+# Test Docker access
+uv run task test-e2e
 ```
-
-### Custom Supabase Tables
-```javascript
-{
-  tables: {
-    agentCards: 'custom_agents_table',
-    auditLogs: 'custom_audit_table'
-  }
-}
-```
-
-### Middleware Options
-```javascript
-{
-  skipPaths: ['/health', '/metrics'],  // Skip auth for these
-  customHeaders: {
-    agentId: 'x-custom-agent-id'  // Custom header name
-  }
-}
-```
-
-## Next Steps
-
-- [Authentication Guide](guides/authentication.md) - How auth works
-- [Security Best Practices](guides/security.md) - Secure your agent
-- [API Reference](api/javascript.md) - All configuration options
