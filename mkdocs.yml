@@ -18,7 +18,9 @@ nav:
   - Quick Start: quickstart.md
   - Installation: installation.md
   - Configuration: configuration.md
-  - Example: examples/simple/README.md
+  - Examples:
+    - Simple Agent: examples/simple/README.md
+    - Multi-Agent: examples/multi-agent/README.md
 
 markdown_extensions:
   - admonition

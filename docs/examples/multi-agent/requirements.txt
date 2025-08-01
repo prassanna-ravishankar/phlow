@@ -1,4 +1,4 @@
-# Simple A2A Agent Dependencies
+# Multi-Agent A2A Communication Dependencies
 fastapi>=0.100.0
 uvicorn[standard]>=0.23.0
 python-dotenv>=1.0.0
