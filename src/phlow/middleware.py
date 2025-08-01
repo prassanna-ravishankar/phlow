@@ -30,7 +30,7 @@ class PhlowMiddleware:
         self.httpx_client = httpx.AsyncClient()
         self.a2a_client = A2AClient(
             httpx_client=self.httpx_client,
-            agent_card=self._convert_to_a2a_agent_card(config.agent_card)
+            agent_card=self._convert_to_a2a_agent_card(config.agent_card),
         )
 
         # Validate configuration

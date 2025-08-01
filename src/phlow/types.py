@@ -26,7 +26,7 @@ class AgentCard(BaseModel):
     skills: list[str] = []
     security_schemes: dict[str, Any] = {}
     metadata: dict[str, Any] | None = None
-    
+
     # Phlow-specific fields (for backward compatibility)
     agent_id: str | None = None
     permissions: list[str] = []
