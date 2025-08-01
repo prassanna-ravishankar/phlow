@@ -16,10 +16,21 @@ test-unit: ## Run unit tests with coverage
 	uv run pytest tests/ -v --cov=src/phlow --cov-report=term-missing --cov-report=xml
 
 test-e2e: ## Run end-to-end tests (requires Docker)
-	uv run pytest tests/test_e2e.py -v -s
+	@echo "🐳 Detecting Docker setup..."
+	@if [ -S "$$HOME/.rd/docker.sock" ]; then \
+		echo "✅ Rancher Desktop detected"; \
+		DOCKER_HOST=unix://$$HOME/.rd/docker.sock uv run pytest tests/test_e2e.py -v -s; \
+	else \
+		echo "✅ Using default Docker setup"; \
+		uv run pytest tests/test_e2e.py -v -s; \
+	fi
 
 test-e2e-verbose: ## Run E2E tests with verbose output
-	uv run pytest tests/test_e2e.py -v -s --tb=long
+	@if [ -S "$$HOME/.rd/docker.sock" ]; then \
+		DOCKER_HOST=unix://$$HOME/.rd/docker.sock uv run pytest tests/test_e2e.py -v -s --tb=long; \
+	else \
+		uv run pytest tests/test_e2e.py -v -s --tb=long; \
+	fi
 
 test-all: test-unit test-e2e ## Run both unit and E2E tests
 
