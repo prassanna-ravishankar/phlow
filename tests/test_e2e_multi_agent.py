@@ -120,7 +120,7 @@ class TestMultiAgentA2ACommunication:
                 "endpoints": {"task": "/tasks/send"},
                 "metadata": {
                     "framework": "phlow",
-                    "model": "gemini-2.5-flash",
+                    "model": "gemini-2.5-flash-lite",
                     "specialization": capabilities[0] if capabilities else "general",
                 },
             }
@@ -144,13 +144,14 @@ class TestMultiAgentA2ACommunication:
 
                 # Use Gemini with agent-specific prompt
                 if os.environ.get("GEMINI_API_KEY"):
-                    import google.generativeai as genai
+                    from google import genai
 
-                    genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-
-                    model = genai.GenerativeModel("gemini-2.5-flash")
+                    client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
                     prompt = f"You are {agent_name}, a specialized Phlow A2A agent. {agent_description}. Respond briefly to: {user_text}"
-                    response = model.generate_content(prompt)
+                    response = client.models.generate_content(
+                        model="gemini-2.5-flash-lite",
+                        contents=prompt
+                    )
                     response_text = response.text
                 else:
                     # Fallback response without Gemini
@@ -171,7 +172,7 @@ class TestMultiAgentA2ACommunication:
                     "artifacts": [],
                     "metadata": {
                         "agent_id": agent_id,
-                        "model": "gemini-2.5-flash",
+                        "model": "gemini-2.5-flash-lite",
                         "framework": "phlow",
                         "specialization": capabilities[0]
                         if capabilities

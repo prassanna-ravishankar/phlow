@@ -188,13 +188,12 @@ class TestPhlowWithDirectDocker:
                 print(f"🤖 A2A Task {task_id}: Processing '{user_text}'")
 
                 # Use Gemini API for response
-                import google.generativeai as genai
+                from google import genai
 
-                genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-
-                model = genai.GenerativeModel("gemini-2.5-flash")
-                response = model.generate_content(
-                    f"You are a Phlow A2A agent. Respond helpfully and briefly to: {user_text}"
+                client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash-lite",
+                    contents=f"You are a Phlow A2A agent. Respond helpfully and briefly to: {user_text}"
                 )
 
                 # Return A2A-compliant task response
@@ -213,7 +212,7 @@ class TestPhlowWithDirectDocker:
                     "artifacts": [],
                     "metadata": {
                         "agent_id": "phlow-test-agent-001",
-                        "model": "gemini-2.5-flash",
+                        "model": "gemini-2.5-flash-lite",
                         "framework": "phlow",
                     },
                 }

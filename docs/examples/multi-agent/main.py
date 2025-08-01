@@ -39,7 +39,7 @@ def create_agent(agent_id: str, agent_name: str, agent_description: str, capabil
             },
             "metadata": {
                 "framework": "phlow",
-                "model": "gemini-2.5-flash",
+                "model": "gemini-2.5-flash-lite",
                 "specialization": capabilities[0] if capabilities else "general",
                 "port": port
             }
@@ -65,12 +65,14 @@ def create_agent(agent_id: str, agent_name: str, agent_description: str, capabil
             # Use Gemini with agent-specific prompt
             if os.environ.get("GEMINI_API_KEY"):
                 try:
-                    import google.generativeai as genai
-                    genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+                    from google import genai
                     
-                    model = genai.GenerativeModel('gemini-2.5-flash')
+                    client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
                     prompt = f"You are {agent_name}, a specialized Phlow A2A agent. {agent_description}. Respond briefly to: {user_text}"
-                    response = model.generate_content(prompt)
+                    response = client.models.generate_content(
+                        model='gemini-2.5-flash-lite',
+                        contents=prompt
+                    )
                     response_text = response.text
                 except Exception as e:
                     response_text = f"I'm {agent_name}. I specialize in {', '.join(capabilities)}. You said: {user_text} (Gemini error: {e})"
@@ -98,7 +100,7 @@ def create_agent(agent_id: str, agent_name: str, agent_description: str, capabil
                 "artifacts": [],
                 "metadata": {
                     "agent_id": agent_id,
-                    "model": "gemini-2.5-flash",
+                    "model": "gemini-2.5-flash-lite",
                     "framework": "phlow",
                     "specialization": capabilities[0] if capabilities else "general"
                 }

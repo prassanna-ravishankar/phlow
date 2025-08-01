@@ -38,7 +38,7 @@ def agent_card():
         },
         "metadata": {
             "framework": "phlow",
-            "model": "gemini-2.5-flash"
+            "model": "gemini-2.5-flash-lite"
         }
     }
 
@@ -65,12 +65,12 @@ def send_task(task: dict):
         # Use Gemini API for response (if available)
         if os.environ.get("GEMINI_API_KEY"):
             try:
-                import google.generativeai as genai
-                genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+                from google import genai
                 
-                model = genai.GenerativeModel('gemini-2.5-flash')
-                response = model.generate_content(
-                    f"You are a helpful Phlow A2A agent. Respond briefly and helpfully to: {user_text}"
+                client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+                response = client.models.generate_content(
+                    model='gemini-2.5-flash-lite',
+                    contents=f"You are a helpful Phlow A2A agent. Respond briefly and helpfully to: {user_text}"
                 )
                 response_text = response.text
             except Exception as e:
@@ -100,7 +100,7 @@ def send_task(task: dict):
             "artifacts": [],
             "metadata": {
                 "agent_id": "phlow-simple-agent-001",
-                "model": "gemini-2.5-flash",
+                "model": "gemini-2.5-flash-lite",
                 "framework": "phlow"
             }
         }

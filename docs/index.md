@@ -50,7 +50,7 @@ async def analyze(request: Request):
 
 🤝 **Multi-Agent Communication** - Agent-to-Agent task delegation
 
-🧠 **AI Integration** - Gemini API for intelligent responses
+🧠 **AI-Ready** - Framework designed for AI agent integration (examples include Gemini)
 
 📊 **Supabase Integration** - Agent registry and audit logging
 

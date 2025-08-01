@@ -81,7 +81,7 @@ Each with:
 - 🤖 **Specialized Agents** with unique capabilities
 - 🔍 **Automatic Discovery** via A2A protocol
 - 💬 **Inter-Agent Communication** with task delegation
-- 🧠 **AI Integration** via Gemini (optional)
+- 🧠 **AI Integration Example** via Gemini (optional)
 - 📊 **Real Workflow** demonstration (Data Analysis → Content Creation)
 
 This example is based on the working `tests/test_e2e_multi_agent.py` and demonstrates real A2A Protocol multi-agent collaboration!

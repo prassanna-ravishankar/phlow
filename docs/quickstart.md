@@ -38,7 +38,7 @@ config = PhlowConfig(
         metadata={
             "agent_id": "my-agent-001",
             "public_key": os.getenv("PUBLIC_KEY"),
-            "model": "gemini-2.5-flash"
+            "model": "gemini-2.5-flash-lite"
         }
     ),
     private_key=os.getenv("PRIVATE_KEY"),

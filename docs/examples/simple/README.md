@@ -41,7 +41,7 @@ curl -X POST http://localhost:8000/tasks/send \
 
 - ✅ **A2A Agent Card** at `/.well-known/agent.json`
 - ✅ **A2A Task Endpoint** at `/tasks/send`
-- ✅ **Gemini AI Integration** (optional)
+- ✅ **AI Integration Example** (Gemini, optional)
 - ✅ **Error Handling** with A2A-compliant responses
 - ✅ **Legacy Endpoints** for backward compatibility
 
