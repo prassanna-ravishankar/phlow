@@ -31,6 +31,8 @@ dependencies = [
     "pyjwt>=2.8.0",
     "a2a-sdk>=0.2.11",
     "httpx>=0.24.0",
+    "cryptography>=41.0.0",
+    "base58>=2.1.1",
 ]
 
 [project.optional-dependencies]
@@ -39,7 +41,6 @@ flask = ["flask>=2.3.0"]
 django = ["django>=4.2.0"]
 rbac = [
     "pyld>=2.0.0",           # JSON-LD processing for VCs
-    "cryptography>=41.0.0",   # Enhanced crypto operations
 ]
 dev = [
     "pytest>=7.0.0",
@@ -102,25 +103,7 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101"]  # allow assert in tests
 
-[tool.mypy]
-python_version = "3.10"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = true
-no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_no_return = true
-warn_unreachable = true
-strict_equality = true
-
-[[tool.mypy.overrides]]
-module = "tests.*"
-disallow_untyped_defs = false
-disallow_incomplete_defs = false
+# Using ty for type checking instead of mypy for better performance
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

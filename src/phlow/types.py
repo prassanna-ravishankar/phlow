@@ -3,7 +3,6 @@
 from typing import Any
 
 from pydantic import BaseModel, Field
-from supabase import Client as SupabaseClient
 from typing_extensions import TypedDict
 
 try:
@@ -68,7 +67,7 @@ class PhlowContext(BaseModel):
     claims: dict[str, Any]
 
     # Phlow additions
-    supabase: SupabaseClient
+    supabase: Any  # SupabaseClient in production, mockable for tests
     a2a_client: Any | None = None  # A2AClient when available
     verified_roles: list[str] = Field(default_factory=list)  # RBAC verified roles
 

@@ -117,7 +117,27 @@ class TestRoleCredentialVerifier:
 
     @pytest.fixture
     def sample_credential(self):
-        """Create a sample role credential."""
+        """Create a sample role credential with valid signature."""
+        # First create the credential object to get the exact structure that will be verified
+        temp_credential = RoleCredential(
+            id="http://example.com/credentials/123",
+            issuer="did:example:issuer",
+            issuanceDate="2025-08-01T12:00:00Z",
+            credentialSubject=CredentialSubject(id="did:example:subject", role="admin"),
+        )
+
+        # Get the data structure that the verifier will see (without proof)
+        credential_data = temp_credential.model_dump(by_alias=True)
+        credential_data.pop(
+            "proof", None
+        )  # Remove proof field entirely, just like the verifier does
+
+        # Generate valid signature for this exact data
+        signature = self._generate_test_signature(
+            credential_data, "did:example:issuer#key-1"
+        )
+
+        # Now create the final credential with the signature
         return RoleCredential(
             id="http://example.com/credentials/123",
             issuer="did:example:issuer",
@@ -128,13 +148,25 @@ class TestRoleCredentialVerifier:
                 created="2025-08-01T12:00:00Z",
                 verification_method="did:example:issuer#key-1",
                 proof_purpose="assertionMethod",
-                signature="base64-encoded-signature",
+                signature=signature,
             ),
         )
 
     @pytest.fixture
     def sample_presentation(self, sample_credential):
-        """Create a sample verifiable presentation."""
+        """Create a sample verifiable presentation with valid signature."""
+        # Create presentation data without proof
+        temp_presentation = VerifiablePresentation(
+            verifiableCredential=[sample_credential], holder="did:example:holder"
+        )
+        presentation_data = temp_presentation.model_dump(by_alias=True)
+        presentation_data.pop("proof", None)  # Remove proof field entirely
+
+        # Generate valid signature for presentation
+        signature = self._generate_test_signature(
+            presentation_data, "did:example:holder#key-1"
+        )
+
         return VerifiablePresentation(
             verifiableCredential=[sample_credential],
             holder="did:example:holder",
@@ -143,9 +175,43 @@ class TestRoleCredentialVerifier:
                 created="2025-08-01T12:00:00Z",
                 verification_method="did:example:holder#key-1",
                 proof_purpose="authentication",
-                signature="base64-encoded-signature",
+                signature=signature,
             ),
         )
+
+    def _generate_test_signature(self, data: dict, verification_method: str) -> str:
+        """Generate a valid Ed25519 signature for test data.
+
+        Args:
+            data: The data to sign (JSON-serializable dict)
+            verification_method: DID verification method URI
+
+        Returns:
+            Base64-encoded signature
+        """
+        import base64
+        import hashlib
+        import json
+
+        from cryptography.hazmat.primitives.asymmetric import ed25519
+
+        # Create deterministic private key from verification method (for testing only)
+        seed = verification_method.encode("utf-8")
+        private_key_bytes = hashlib.sha256(seed).digest()
+
+        # Create Ed25519 private key from seed
+        private_key = ed25519.Ed25519PrivateKey.from_private_bytes(private_key_bytes)
+
+        # Create canonical representation of data
+        canonical_data = json.dumps(data, sort_keys=True, separators=(",", ":")).encode(
+            "utf-8"
+        )
+
+        # Sign the data
+        signature = private_key.sign(canonical_data)
+
+        # Return base64-encoded signature
+        return base64.b64encode(signature).decode("utf-8")
 
     @pytest.mark.asyncio
     async def test_verify_valid_presentation(self, verifier, sample_presentation):

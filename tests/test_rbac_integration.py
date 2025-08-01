@@ -65,30 +65,25 @@ class TestRBACIntegration:
 
     @pytest.fixture
     def middleware(self, test_config):
-        """Create middleware with mocked dependencies."""
+        """Create middleware with properly mocked dependencies."""
         with (
             patch("phlow.middleware.create_client") as mock_create_client,
             patch("phlow.middleware.httpx.AsyncClient"),
             patch("phlow.middleware.A2AClient"),
             patch.object(PhlowMiddleware, "_convert_to_a2a_agent_card") as mock_convert,
         ):
-            mock_create_client.return_value = MagicMock()
+            # Create a mock Supabase client that can work with PhlowContext
+            mock_supabase = MagicMock()
+            mock_supabase.table = MagicMock()
+            mock_create_client.return_value = mock_supabase
             mock_convert.return_value = MagicMock()  # Mock A2A agent card conversion
 
+            # Create middleware - this will use the mocked Supabase client
             middleware = PhlowMiddleware(test_config)
 
-            # Override with mock components for testing
-            middleware.supabase = MagicMock()
+            # Initialize RBAC components with the mocked supabase client
             middleware.role_verifier = RoleCredentialVerifier(middleware.supabase)
             middleware.role_cache = RoleCache(middleware.supabase)
-
-            # Create a shared mock context for all tests
-            mock_context = MagicMock()
-            mock_context.agent = test_config.agent_card
-            mock_context.verified_roles = []
-
-            # Mock the verify_token method to avoid PhlowContext validation issues
-            middleware.verify_token = MagicMock(return_value=mock_context)
 
             return middleware
 
@@ -702,30 +697,25 @@ class TestRBACPerformance:
 
     @pytest.fixture
     def middleware(self, test_config):
-        """Create middleware with mocked dependencies."""
+        """Create middleware with properly mocked dependencies."""
         with (
             patch("phlow.middleware.create_client") as mock_create_client,
             patch("phlow.middleware.httpx.AsyncClient"),
             patch("phlow.middleware.A2AClient"),
             patch.object(PhlowMiddleware, "_convert_to_a2a_agent_card") as mock_convert,
         ):
-            mock_create_client.return_value = MagicMock()
+            # Create a mock Supabase client that can work with PhlowContext
+            mock_supabase = MagicMock()
+            mock_supabase.table = MagicMock()
+            mock_create_client.return_value = mock_supabase
             mock_convert.return_value = MagicMock()  # Mock A2A agent card conversion
 
+            # Create middleware - this will use the mocked Supabase client
             middleware = PhlowMiddleware(test_config)
 
-            # Override with mock components for testing
-            middleware.supabase = MagicMock()
+            # Initialize RBAC components with the mocked supabase client
             middleware.role_verifier = RoleCredentialVerifier(middleware.supabase)
             middleware.role_cache = RoleCache(middleware.supabase)
-
-            # Create a shared mock context for all tests
-            mock_context = MagicMock()
-            mock_context.agent = test_config.agent_card
-            mock_context.verified_roles = []
-
-            # Mock the verify_token method to avoid PhlowContext validation issues
-            middleware.verify_token = MagicMock(return_value=mock_context)
 
             return middleware
 
