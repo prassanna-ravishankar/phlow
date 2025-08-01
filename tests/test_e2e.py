@@ -20,6 +20,10 @@ import time
 import pytest
 import requests
 import docker
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 @pytest.mark.e2e
@@ -161,7 +165,7 @@ class TestPhlowWithDirectDocker:
                 },
                 "metadata": {
                     "framework": "phlow",
-                    "model": "gemini-pro"
+                    "model": "gemini-2.5-flash"
                 }
             }
         
@@ -189,7 +193,7 @@ class TestPhlowWithDirectDocker:
                 import google.generativeai as genai
                 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
                 
-                model = genai.GenerativeModel('gemini-pro')
+                model = genai.GenerativeModel('gemini-2.5-flash')
                 response = model.generate_content(
                     f"You are a Phlow A2A agent. Respond helpfully and briefly to: {user_text}"
                 )
@@ -215,7 +219,7 @@ class TestPhlowWithDirectDocker:
                     "artifacts": [],
                     "metadata": {
                         "agent_id": "phlow-test-agent-001",
-                        "model": "gemini-pro",
+                        "model": "gemini-2.5-flash",
                         "framework": "phlow"
                     }
                 }
