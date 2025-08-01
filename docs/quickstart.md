@@ -45,7 +45,7 @@ Get a Phlow-protected agent running in 5 minutes.
 === "Python"
     ```python
     from fastapi import FastAPI, Request
-    from phlow_auth import PhlowMiddleware
+    from phlow import PhlowMiddleware
 
     app = FastAPI()
 

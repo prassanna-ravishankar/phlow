@@ -1,7 +1,7 @@
 """Basic tests for Phlow authentication."""
 
-from phlow_auth.exceptions import PhlowError, TokenError
-from phlow_auth.types import AgentCard, PhlowConfig
+from phlow.exceptions import PhlowError, TokenError
+from phlow.types import AgentCard, PhlowConfig
 
 
 def test_agent_card_creation():
@@ -53,7 +53,7 @@ def test_exception_hierarchy():
 
 def test_imports():
     """Test that main exports are available."""
-    from phlow_auth import (
+    from phlow import (
         AgentCard,
         PhlowConfig,
         PhlowError,

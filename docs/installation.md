@@ -1,67 +1,26 @@
 # Installation
 
-Choose your platform and follow the installation guide.
-
-## JavaScript/TypeScript
-
-### npm
-```bash
-npm install phlow-auth
-```
-
-### yarn
-```bash
-yarn add phlow-auth
-```
-
-### pnpm
-```bash
-pnpm add phlow-auth
-```
-
-### TypeScript Support
-TypeScript definitions are included. No additional `@types` package needed.
-
-## Python
+## Python Package
 
 ### pip
 ```bash
-pip install phlow-auth
+pip install phlow
 ```
 
 ### Poetry
 ```bash
-poetry add phlow-auth
+poetry add phlow
 ```
 
 ### Requirements File
 ```txt
-phlow-auth>=0.1.0
+phlow>=0.1.0
 ```
 
 ### Python Version Support
-- Python 3.8+
+- Python 3.10+
 - Async/await support included
 - Type hints included
-
-## CLI Tools
-
-The Phlow CLI helps with development tasks.
-
-### Global Installation
-```bash
-npm install -g phlow-cli
-```
-
-### Project Installation
-```bash
-npm install --save-dev phlow-cli
-```
-
-### Verify Installation
-```bash
-phlow --version
-```
 
 ## Supabase Setup
 
@@ -72,15 +31,8 @@ Phlow requires a Supabase project for agent registry and audit logs.
    - Create a new project
    - Note your project URL and anon key
 
-2. **Run Database Migrations**
-   ```bash
-   phlow init --supabase-url YOUR_URL --supabase-key YOUR_KEY
-   ```
-
-3. **Verify Setup**
-   ```bash
-   phlow test-connection
-   ```
+2. **Set up database schema**
+   - Run the SQL migrations from `docs/database-schema.sql`
 
 ## Next Steps
 

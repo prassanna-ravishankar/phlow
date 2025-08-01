@@ -56,7 +56,7 @@ If you don't have RSA keys yet, you can generate them using the Phlow CLI:
 
 ```bash
 # Install Phlow CLI globally
-npm install -g phlow-cli
+pip install phlow
 
 # Initialize and generate keys
 phlow init
@@ -474,4 +474,4 @@ except requests.exceptions.RequestException as e:
 - 📖 Read the [main documentation](../../docs/getting-started.md)
 - 🔍 Explore other [examples](../)
 - 🧪 Run [integration tests](../../tests/integration/)
-- 🐍 Check out the [Python library documentation](../../packages/phlow-auth-python/README.md)
+- 📖 Read the [main documentation](../../docs/getting-started.md)

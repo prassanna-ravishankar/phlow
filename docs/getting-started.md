@@ -159,7 +159,7 @@ app.get('/protected', phlow.authenticate(), (req, res) => {
 **FastAPI:**
 ```python
 from fastapi import FastAPI, Depends
-from phlow_auth.integrations.fastapi import create_phlow_dependency
+from phlow.integrations.fastapi import create_phlow_dependency
 
 app = FastAPI()
 auth_required = create_phlow_dependency(phlow)
@@ -195,7 +195,7 @@ const response = await fetch('http://target-agent:3000/protected', {
 
 ```python
 # Generate token for another agent
-from phlow_auth import generate_token
+from phlow import generate_token
 
 token = generate_token(
     my_agent_card,
@@ -482,7 +482,7 @@ DEBUG=phlow:* npm start
 
 # Python
 import logging
-logging.getLogger('phlow_auth').setLevel(logging.DEBUG)
+logging.getLogger('phlow').setLevel(logging.DEBUG)
 ```
 
 ### Health Checks

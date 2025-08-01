@@ -124,7 +124,7 @@ src/
 **Purpose**: Python authentication library with async/sync support
 
 ```
-src/phlow_auth/
+src/phlow/
 ├── __init__.py           # Package exports
 ├── middleware.py         # Core PhlowMiddleware class
 ├── jwt_utils.py         # JWT operations

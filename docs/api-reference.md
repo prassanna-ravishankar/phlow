@@ -329,7 +329,7 @@ This page documents the complete API for all Phlow packages. Use the tabs below 
 
     **Example:**
     ```python
-    from phlow_auth import PhlowMiddleware, PhlowConfig, AgentCard
+    from phlow import PhlowMiddleware, PhlowConfig, AgentCard
 
     config = PhlowConfig(
         supabase_url="https://your-project.supabase.co",
@@ -412,7 +412,7 @@ This page documents the complete API for all Phlow packages. Use the tabs below 
     ### FastAPI Integration
 
     ```python
-    from phlow_auth.integrations.fastapi import create_phlow_dependency
+    from phlow.integrations.fastapi import create_phlow_dependency
     from fastapi import FastAPI, Depends
 
     app = FastAPI()

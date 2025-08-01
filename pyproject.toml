@@ -3,24 +3,16 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "phlow-auth"
+name = "phlow"
 version = "0.1.0"
-description = "JWT authentication middleware for AI agents with Supabase integration"
+description = "Simple Python library for Phlow authentication"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
 authors = [
     { name = "Prassanna Ravishankar" },
 ]
-keywords = [
-    "phlow",
-    "authentication",
-    "agent",
-    "a2a",
-    "supabase",
-    "middleware",
-    "jwt",
-]
+keywords = ["phlow", "authentication", "agent", "a2a", "supabase", "middleware", "jwt"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -30,9 +22,8 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Software Development :: Libraries :: Python Modules",
-    "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
-    "Topic :: Security",
 ]
+
 dependencies = [
     "supabase>=2.0.0",
     "pydantic>=2.0.0",
@@ -62,45 +53,8 @@ Issues = "https://github.com/prassanna-ravishankar/phlow/issues"
 Source = "https://github.com/prassanna-ravishankar/phlow"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/phlow_auth"]
+# TODO update package path after moving code
+packages = ["phlow"]
 
 [tool.hatch.build.targets.sdist]
-include = [
-    "/src",
-    "/tests",
-    "/README.md",
-]
-
-[tool.black]
-line-length = 88
-target-version = ['py38']
-
-[tool.isort]
-profile = "black"
-line_length = 88
-
-[tool.mypy]
-python_version = "3.10"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-check_untyped_defs = true
-ignore_missing_imports = true
-# Only check our source code, not dependencies
-files = ["src/"]
-# Exclude dependencies
-exclude = [
-    ".venv/",
-    "venv/",
-]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-python_functions = ["test_*"]
-addopts = "--cov=src/phlow_auth --cov-report=term-missing"
-
-[dependency-groups]
-dev = [
-    "build>=1.2.2.post1",
-]
+include = ["src", "tests", "README.md"]

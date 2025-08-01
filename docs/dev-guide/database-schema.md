@@ -288,7 +288,7 @@ console.log(policy)
 
 **Python**:
 ```python
-from phlow_auth.supabase_helpers import SupabaseHelpers
+from phlow.supabase_helpers import SupabaseHelpers
 
 # Generate permission-based policy
 policy = SupabaseHelpers.generate_rls_policy(

@@ -222,12 +222,12 @@ flake8 src/
 
 # Testing
 pytest
-pytest --cov=src/phlow_auth
+pytest --cov=src/phlow
 ```
 
 **Package structure**:
 ```python
-# src/phlow_auth/__init__.py
+# src/phlow/__init__.py
 from .middleware import PhlowMiddleware
 from .types import AgentCard, PhlowConfig
 from .exceptions import PhlowError, AuthenticationError
@@ -379,7 +379,7 @@ describe('JWT Operations', () => {
 ```python
 # packages/phlow-auth-python/tests/test_jwt.py
 import pytest
-from phlow_auth.jwt_utils import generate_token, verify_token
+from phlow.jwt_utils import generate_token, verify_token
 
 @pytest.mark.asyncio
 async def test_generate_and_verify_token():

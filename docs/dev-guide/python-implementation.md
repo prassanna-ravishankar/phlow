@@ -45,7 +45,7 @@ def create_auth_dependency(self) -> Callable:
 
 ### PhlowMiddleware Class
 
-**File**: `src/phlow_auth/middleware.py`
+**File**: `src/phlow/middleware.py`
 
 ```python
 from typing import Optional, List, Dict, Any
@@ -265,7 +265,7 @@ class PhlowMiddleware:
 
 ### JWT Operations
 
-**File**: `src/phlow_auth/jwt_utils.py`
+**File**: `src/phlow/jwt_utils.py`
 
 ```python
 import jwt
@@ -417,7 +417,7 @@ def _parse_expiry(expires_in: str) -> int:
 
 ### Type System with Pydantic
 
-**File**: `src/phlow_auth/types.py`
+**File**: `src/phlow/types.py`
 
 ```python
 from pydantic import BaseModel, Field, validator
@@ -544,7 +544,7 @@ class AuthEvent:
 
 ### FastAPI Integration
 
-**File**: `src/phlow_auth/integrations/fastapi.py`
+**File**: `src/phlow/integrations/fastapi.py`
 
 ```python
 from fastapi import Request, Depends, HTTPException
@@ -731,7 +731,7 @@ def create_fastapi_app():
 
 #### Rate Limiting
 
-**File**: `src/phlow_auth/rate_limiter.py`
+**File**: `src/phlow/rate_limiter.py`
 
 ```python
 import time
@@ -794,7 +794,7 @@ class RateLimiter:
 
 #### Audit Logging
 
-**File**: `src/phlow_auth/audit.py`
+**File**: `src/phlow/audit.py`
 
 ```python
 import json
@@ -879,7 +879,7 @@ class PermissionEvent:
 ### Flask Integration (Planned)
 
 ```python
-# src/phlow_auth/integrations/flask.py
+# src/phlow/integrations/flask.py
 from flask import request, g, jsonify
 from functools import wraps
 
@@ -918,7 +918,7 @@ class FlaskIntegration:
 # tests/test_middleware.py
 import pytest
 from unittest.mock import AsyncMock, Mock
-from phlow_auth import PhlowMiddleware, PhlowConfig, AgentCard
+from phlow import PhlowMiddleware, PhlowConfig, AgentCard
 
 @pytest.fixture
 def config():
@@ -988,7 +988,7 @@ async def test_rate_limiting(middleware):
 # tests/test_fastapi_integration.py
 import pytest
 from fastapi.testclient import TestClient
-from phlow_auth.integrations.fastapi import create_fastapi_app
+from phlow.integrations.fastapi import create_fastapi_app
 
 @pytest.fixture
 def app():
@@ -1074,7 +1074,7 @@ class PhlowMiddleware:
 ```python
 # Production configuration example
 import os
-from phlow_auth import PhlowConfig, AgentCard, RateLimitConfig, AuditConfig
+from phlow import PhlowConfig, AgentCard, RateLimitConfig, AuditConfig
 
 def create_production_config() -> PhlowConfig:
     return PhlowConfig(

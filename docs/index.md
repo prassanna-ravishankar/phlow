@@ -15,59 +15,30 @@ Phlow extends A2A Protocol JWT authentication with Supabase storage. It verifies
 
 ## Simple Integration
 
-=== "JavaScript"
-    ```javascript
-    import { PhlowMiddleware } from 'phlow-auth';
+```python
+from phlow import PhlowMiddleware, AgentCard, PhlowConfig
 
-    const phlow = new PhlowMiddleware({
-      agentCard: {
-        schemaVersion: '1.0',
-        name: 'My Agent',
-        description: 'AI assistant agent',
-        serviceUrl: 'https://my-agent.com',
-        skills: ['chat', 'analysis'],
-        securitySchemes: {},
-        metadata: {
-          agentId: 'my-agent-id',
-          publicKey: process.env.PUBLIC_KEY
-        }
-      },
-      privateKey: process.env.PRIVATE_KEY,
-      supabaseUrl: process.env.SUPABASE_URL,
-      supabaseAnonKey: process.env.SUPABASE_ANON_KEY
-    });
+config = PhlowConfig(
+    agent_card=AgentCard(
+        name="My Agent",
+        description="AI assistant agent", 
+        service_url="https://my-agent.com",
+        skills=["chat", "analysis"],
+        metadata={"agent_id": "my-agent-id", "public_key": os.getenv("PUBLIC_KEY")}
+    ),
+    private_key=os.getenv("PRIVATE_KEY"),
+    supabase_url=os.getenv("SUPABASE_URL"),
+    supabase_anon_key=os.getenv("SUPABASE_ANON_KEY")
+)
 
-    app.post('/api/analyze', phlow.authenticate(), (req, res) => {
-      const { agent, supabase } = req.phlow;
-      res.json({ message: `Hello ${agent.name}` });
-    });
-    ```
-
-=== "Python"
-    ```python
-    from phlow_auth import PhlowMiddleware, AgentCard, PhlowConfig
-
-    config = PhlowConfig(
-        agent_card=AgentCard(
-            name="My Agent",
-            description="AI assistant agent", 
-            service_url="https://my-agent.com",
-            skills=["chat", "analysis"],
-            metadata={"agent_id": "my-agent-id", "public_key": os.getenv("PUBLIC_KEY")}
-        ),
-        private_key=os.getenv("PRIVATE_KEY"),
-        supabase_url=os.getenv("SUPABASE_URL"),
-        supabase_anon_key=os.getenv("SUPABASE_ANON_KEY")
-    )
-
-    phlow = PhlowMiddleware(config)
+phlow = PhlowMiddleware(config)
     
-    @app.post("/api/analyze")
-    @phlow.authenticate
-    async def analyze(request: Request):
-        agent = request.phlow.agent
-        return {"message": f"Hello {agent.name}"}
-    ```
+@app.post("/api/analyze")
+@phlow.authenticate
+async def analyze(request: Request):
+    agent = request.phlow.agent
+    return {"message": f"Hello {agent.name}"}
+```
 
 ## Key Features
 

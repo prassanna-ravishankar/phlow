@@ -11,7 +11,7 @@ import requests
 from typing import Dict, Any
 
 from dotenv import load_dotenv
-from phlow_auth import generate_token, AgentCard
+from phlow import generate_token, AgentCard
 
 # Load environment variables
 load_dotenv()
@@ -222,7 +222,7 @@ async def test_async_functionality():
     """Test async functionality of the Phlow library."""
     print("\n🔄 Testing async functionality...")
     
-    from phlow_auth import PhlowMiddleware, PhlowConfig, AgentCard
+    from phlow import PhlowMiddleware, PhlowConfig, AgentCard
     
     # Create test configuration
     config = PhlowConfig(

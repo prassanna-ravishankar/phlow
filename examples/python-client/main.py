@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from dotenv import load_dotenv
 
-from phlow_auth import (
+from phlow import (
     PhlowMiddleware,
     PhlowConfig,
     AgentCard,
@@ -24,7 +24,7 @@ from phlow_auth import (
     AuthorizationError,
     RateLimitError,
 )
-from phlow_auth.integrations.fastapi import create_phlow_dependency
+from phlow.integrations.fastapi import create_phlow_dependency
 
 # Load environment variables
 load_dotenv()

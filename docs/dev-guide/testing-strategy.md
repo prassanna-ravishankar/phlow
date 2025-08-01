@@ -351,8 +351,8 @@ describe('PhlowMiddleware', () => {
 # packages/phlow-auth-python/tests/unit/test_jwt.py
 import pytest
 import time
-from phlow_auth.jwt_utils import generate_token, verify_token, is_token_expired
-from phlow_auth.exceptions import TokenError
+from phlow.jwt_utils import generate_token, verify_token, is_token_expired
+from phlow.exceptions import TokenError
 
 class TestJWTOperations:
     
@@ -474,8 +474,8 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA[different]...
 # packages/phlow-auth-python/tests/unit/test_middleware.py
 import pytest
 from unittest.mock import AsyncMock, Mock
-from phlow_auth import PhlowMiddleware, PhlowConfig, AgentCard
-from phlow_auth.exceptions import AuthenticationError, TokenError
+from phlow import PhlowMiddleware, PhlowConfig, AgentCard
+from phlow.exceptions import AuthenticationError, TokenError
 
 class TestPhlowMiddleware:
     
@@ -548,7 +548,7 @@ class TestPhlowMiddleware:
     @pytest.mark.asyncio
     async def test_rate_limiting(self, middleware):
         """Test rate limiting functionality."""
-        from phlow_auth.rate_limiter import RateLimiter
+        from phlow.rate_limiter import RateLimiter
         
         middleware.rate_limiter = RateLimiter(max_requests=1, window_seconds=60)
         
@@ -1041,8 +1041,8 @@ export async function createTestToken(
 ```python
 # tests/fixtures/mock_agents.py
 from fastapi import FastAPI, Depends
-from phlow_auth import PhlowMiddleware, PhlowConfig
-from phlow_auth.integrations.fastapi import FastAPIIntegration
+from phlow import PhlowMiddleware, PhlowConfig
+from phlow.integrations.fastapi import FastAPIIntegration
 
 def create_mock_agent_server(agent_id: str, port: int):
     """Create a mock agent server for testing."""
@@ -1136,7 +1136,7 @@ jobs:
       - name: Run Python tests
         run: |
           cd packages/phlow-auth-python
-          pytest --cov=src/phlow_auth --cov-report=xml
+          pytest --cov=src/phlow --cov-report=xml
       
       - name: Upload coverage
         uses: codecov/codecov-action@v3

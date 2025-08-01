@@ -11,7 +11,7 @@ from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 from datetime import datetime
 
-from phlow_auth import generate_token, AgentCard, decode_token
+from phlow import generate_token, AgentCard, decode_token
 
 
 @dataclass

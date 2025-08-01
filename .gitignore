@@ -57,6 +57,7 @@ pip-delete-this-directory.txt
 dist/
 build/
 .coverage
+.mypy_cache/
 
 # Supabase
 **/supabase/.branches
