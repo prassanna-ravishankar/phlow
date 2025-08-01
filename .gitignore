@@ -32,8 +32,6 @@ build/
 # Turbo
 .turbo/
 
-# Python type checking
-*.tsbuildinfo
 
 # Changeset
 .changeset/
@@ -55,6 +53,7 @@ pip-delete-this-directory.txt
 dist/
 build/
 .coverage
+coverage.xml
 .mypy_cache/
 .ruff_cache/
 

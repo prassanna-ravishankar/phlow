@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from .types import AuditLog
@@ -173,7 +173,7 @@ def create_audit_entry(
         The audit log entry
     """
     return AuditLog(
-        timestamp=datetime.utcnow().isoformat(),
+        timestamp=datetime.now(timezone.utc).isoformat(),
         event=event,
         agent_id=agent_id,
         target_agent_id=target_agent_id,
