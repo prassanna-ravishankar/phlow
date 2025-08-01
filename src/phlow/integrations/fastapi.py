@@ -45,9 +45,7 @@ class FastAPIPhlowAuth:
 
         async def auth_dependency(
             request: Request,
-            credentials: HTTPAuthorizationCredentials | None = Depends(
-                self.security
-            ),
+            credentials: HTTPAuthorizationCredentials | None = Depends(self.security),
         ) -> PhlowContext:
             if not credentials:
                 raise HTTPException(

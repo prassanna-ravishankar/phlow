@@ -12,16 +12,17 @@ Run with: DOCKER_HOST=unix:///Users/$USER/.rd/docker.sock pytest tests/test_e2e_
 """
 
 import os
+import socket
+import threading
 import time
+import uuid
+
+import docker
 import pytest
 import requests
-import docker
-import threading
-import socket
-import uuid
+import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI
-import uvicorn
 
 # Load environment variables from .env file
 load_dotenv()
@@ -37,11 +38,13 @@ class TestMultiAgentA2ACommunication:
         try:
             # Auto-detect Rancher Desktop socket if DOCKER_HOST not set
             if not os.environ.get("DOCKER_HOST"):
-                rancher_socket = f"unix:///Users/{os.environ.get('USER', 'user')}/.rd/docker.sock"
+                rancher_socket = (
+                    f"unix:///Users/{os.environ.get('USER', 'user')}/.rd/docker.sock"
+                )
                 if os.path.exists(rancher_socket.replace("unix://", "")):
                     os.environ["DOCKER_HOST"] = rancher_socket
                     print(f"🐳 Auto-detected Rancher Desktop: {rancher_socket}")
-            
+
             client = docker.from_env()
             client.ping()
         except Exception as e:
@@ -55,15 +58,15 @@ class TestMultiAgentA2ACommunication:
                 "postgres:15-alpine",
                 environment={
                     "POSTGRES_DB": "phlow_multi_test",
-                    "POSTGRES_USER": "postgres", 
+                    "POSTGRES_USER": "postgres",
                     "POSTGRES_PASSWORD": "postgres",
                 },
                 ports={"5432/tcp": None},
                 detach=True,
                 remove=True,
-                name=f"phlow-multi-postgres-{int(time.time())}"
+                name=f"phlow-multi-postgres-{int(time.time())}",
             )
-            
+
             # Wait for PostgreSQL to be ready
             for _ in range(30):
                 try:
@@ -80,13 +83,13 @@ class TestMultiAgentA2ACommunication:
 
             postgres_container.reload()
             postgres_port = postgres_container.ports["5432/tcp"][0]["HostPort"]
-            
+
             yield {
                 "postgres_url": f"postgresql://postgres:postgres@localhost:{postgres_port}/phlow_multi_test",
                 "postgres_port": postgres_port,
-                "container": postgres_container
+                "container": postgres_container,
             }
-            
+
         finally:
             if postgres_container:
                 try:
@@ -96,10 +99,12 @@ class TestMultiAgentA2ACommunication:
                     pass
             client.close()
 
-    def create_agent(self, agent_id: str, agent_name: str, agent_description: str, capabilities: list):
+    def create_agent(
+        self, agent_id: str, agent_name: str, agent_description: str, capabilities: list
+    ):
         """Create a Phlow A2A-compliant agent"""
         app = FastAPI(title=f"Phlow Agent: {agent_name}")
-        
+
         # A2A Agent Card (discovery endpoint)
         @app.get("/.well-known/agent.json")
         def agent_card():
@@ -109,19 +114,17 @@ class TestMultiAgentA2ACommunication:
                 "description": agent_description,
                 "version": "1.0.0",
                 "author": "Phlow Framework",
-                "capabilities": {cap: True for cap in capabilities},
+                "capabilities": dict.fromkeys(capabilities, True),
                 "input_modes": ["text"],
                 "output_modes": ["text"],
-                "endpoints": {
-                    "task": "/tasks/send"
-                },
+                "endpoints": {"task": "/tasks/send"},
                 "metadata": {
                     "framework": "phlow",
                     "model": "gemini-2.5-flash",
-                    "specialization": capabilities[0] if capabilities else "general"
-                }
+                    "specialization": capabilities[0] if capabilities else "general",
+                },
             }
-        
+
         # A2A Task endpoint
         @app.post("/tasks/send")
         def send_task(task: dict):
@@ -129,44 +132,40 @@ class TestMultiAgentA2ACommunication:
                 task_id = task.get("id", "unknown")
                 message = task.get("message", {})
                 user_text = ""
-                
+
                 if "parts" in message:
                     for part in message["parts"]:
                         if part.get("type") == "text":
                             user_text += part.get("text", "")
                 else:
                     user_text = message.get("text", "Hello")
-                
+
                 print(f"🤖 {agent_name} processing: '{user_text}'")
-                
+
                 # Use Gemini with agent-specific prompt
                 if os.environ.get("GEMINI_API_KEY"):
                     import google.generativeai as genai
+
                     genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-                    
-                    model = genai.GenerativeModel('gemini-2.5-flash')
+
+                    model = genai.GenerativeModel("gemini-2.5-flash")
                     prompt = f"You are {agent_name}, a specialized Phlow A2A agent. {agent_description}. Respond briefly to: {user_text}"
                     response = model.generate_content(prompt)
                     response_text = response.text
                 else:
                     # Fallback response without Gemini
                     response_text = f"Hello! I'm {agent_name}. I specialize in {', '.join(capabilities)}. You said: {user_text}"
-                
+
                 return {
                     "id": task_id,
                     "status": {
                         "state": "completed",
-                        "message": "Task completed successfully"
+                        "message": "Task completed successfully",
                     },
                     "messages": [
                         {
                             "role": "agent",
-                            "parts": [
-                                {
-                                    "type": "text", 
-                                    "text": response_text
-                                }
-                            ]
+                            "parts": [{"type": "text", "text": response_text}],
                         }
                     ],
                     "artifacts": [],
@@ -174,47 +173,39 @@ class TestMultiAgentA2ACommunication:
                         "agent_id": agent_id,
                         "model": "gemini-2.5-flash",
                         "framework": "phlow",
-                        "specialization": capabilities[0] if capabilities else "general"
-                    }
+                        "specialization": capabilities[0]
+                        if capabilities
+                        else "general",
+                    },
                 }
-                
+
             except Exception as e:
                 return {
                     "id": task.get("id", "unknown"),
-                    "status": {
-                        "state": "failed",
-                        "message": f"Task failed: {str(e)}"
-                    },
+                    "status": {"state": "failed", "message": f"Task failed: {str(e)}"},
                     "messages": [
                         {
-                            "role": "agent", 
-                            "parts": [
-                                {
-                                    "type": "text",
-                                    "text": f"Error: {str(e)}"
-                                }
-                            ]
+                            "role": "agent",
+                            "parts": [{"type": "text", "text": f"Error: {str(e)}"}],
                         }
                     ],
                     "artifacts": [],
-                    "metadata": {
-                        "agent_id": agent_id,
-                        "error": str(e)
-                    }
+                    "metadata": {"agent_id": agent_id, "error": str(e)},
                 }
-        
+
         # Health endpoint
         @app.get("/health")
         def health():
             return {"status": "healthy", "agent_id": agent_id}
-            
+
         return app
 
     def start_agent_server(self, app: FastAPI, port: int):
         """Start agent server in background thread"""
+
         def run_server():
             uvicorn.run(app, host="127.0.0.1", port=port, log_level="error")
-        
+
         thread = threading.Thread(target=run_server, daemon=True)
         thread.start()
         time.sleep(1)  # Give server time to start
@@ -233,21 +224,14 @@ class TestMultiAgentA2ACommunication:
             "id": str(uuid.uuid4()),
             "message": {
                 "role": "user",
-                "parts": [
-                    {
-                        "type": "text",
-                        "text": message_text
-                    }
-                ]
-            }
+                "parts": [{"type": "text", "text": message_text}],
+            },
         }
-        
+
         response = requests.post(
-            f"{agent_url}/tasks/send",
-            json=task_payload,
-            timeout=15
+            f"{agent_url}/tasks/send", json=task_payload, timeout=15
         )
-        
+
         if response.status_code == 200:
             return response.json()
         return None
@@ -256,63 +240,63 @@ class TestMultiAgentA2ACommunication:
         """Test multiple agents can discover each other via A2A protocol"""
         config = docker_setup
         print(f"📊 Using PostgreSQL: {config['postgres_url']}")
-        
+
         # Skip if no Gemini API key
         if not os.environ.get("GEMINI_API_KEY"):
             print("⚠️  GEMINI_API_KEY not set - using fallback responses")
-        
+
         # Create multiple specialized agents
         agents = [
             {
                 "id": "data-analyst-001",
-                "name": "DataAnalyst Agent", 
+                "name": "DataAnalyst Agent",
                 "description": "Specializes in data analysis and insights",
                 "capabilities": ["data_analysis", "statistics", "visualization"],
-                "port": None
+                "port": None,
             },
             {
-                "id": "code-reviewer-001", 
+                "id": "code-reviewer-001",
                 "name": "CodeReviewer Agent",
                 "description": "Specializes in code review and software engineering",
                 "capabilities": ["code_review", "software_engineering", "debugging"],
-                "port": None
+                "port": None,
             },
             {
                 "id": "content-writer-001",
-                "name": "ContentWriter Agent", 
+                "name": "ContentWriter Agent",
                 "description": "Specializes in content creation and writing",
                 "capabilities": ["content_writing", "editing", "marketing"],
-                "port": None
-            }
+                "port": None,
+            },
         ]
-        
+
         # Start all agents
         servers = []
         try:
             for agent in agents:
                 # Find available port
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                    s.bind(('', 0))
+                    s.bind(("", 0))
                     agent["port"] = s.getsockname()[1]
-                
+
                 # Create and start agent
                 app = self.create_agent(
                     agent["id"],
-                    agent["name"], 
+                    agent["name"],
                     agent["description"],
-                    agent["capabilities"]
+                    agent["capabilities"],
                 )
                 server = self.start_agent_server(app, agent["port"])
                 servers.append(server)
                 agent["url"] = f"http://127.0.0.1:{agent['port']}"
-                
+
             # Wait for all agents to start
             time.sleep(2)
-            
+
             print(f"🚀 Started {len(agents)} agents:")
             for agent in agents:
                 print(f"   {agent['name']}: {agent['url']}")
-            
+
             # Test A2A discovery for each agent
             discovered_agents = []
             for agent in agents:
@@ -322,104 +306,108 @@ class TestMultiAgentA2ACommunication:
                 assert "endpoints" in agent_card
                 assert agent_card["endpoints"]["task"] == "/tasks/send"
                 discovered_agents.append(agent_card)
-                print(f"✅ Discovered {agent_card['name']}: {agent_card['capabilities']}")
-            
+                print(
+                    f"✅ Discovered {agent_card['name']}: {agent_card['capabilities']}"
+                )
+
             print(f"✅ All {len(agents)} agents discovered successfully!")
-            
+
         finally:
             # Cleanup handled by daemon threads
             pass
 
     def test_agent_to_agent_communication(self, docker_setup):
         """Test agents communicating with each other using A2A protocol"""
-        config = docker_setup
-        
+        _ = docker_setup  # Use docker_setup for PostgreSQL availability
+
         # Skip if no Gemini API key
         if not os.environ.get("GEMINI_API_KEY"):
-            pytest.skip("GEMINI_API_KEY not set - skipping multi-agent communication test")
-        
+            pytest.skip(
+                "GEMINI_API_KEY not set - skipping multi-agent communication test"
+            )
+
         # Create two agents
         analyst_app = self.create_agent(
             "analyst-002",
             "Data Analyst",
-            "Expert in data analysis and providing insights", 
-            ["data_analysis", "insights"]
+            "Expert in data analysis and providing insights",
+            ["data_analysis", "insights"],
         )
-        
+
         writer_app = self.create_agent(
-            "writer-002", 
+            "writer-002",
             "Content Writer",
             "Expert in creating engaging content and summaries",
-            ["content_writing", "summarization"]
+            ["content_writing", "summarization"],
         )
-        
+
         # Start agents on different ports
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s1:
-            s1.bind(('', 0))
+            s1.bind(("", 0))
             analyst_port = s1.getsockname()[1]
-        
+
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s2:
-            s2.bind(('', 0))
+            s2.bind(("", 0))
             writer_port = s2.getsockname()[1]
-        
+
         try:
             # Start both agents
             self.start_agent_server(analyst_app, analyst_port)
             self.start_agent_server(writer_app, writer_port)
-            
+
             analyst_url = f"http://127.0.0.1:{analyst_port}"
             writer_url = f"http://127.0.0.1:{writer_port}"
-            
+
             time.sleep(2)  # Wait for agents to start
-            
+
             print(f"🤖 Analyst Agent: {analyst_url}")
             print(f"✍️  Writer Agent: {writer_url}")
-            
+
             # Analyst agent provides data insight
             analyst_result = self.send_a2a_task(
                 analyst_url,
-                "Analyze this data trend: Sales increased 25% last quarter. What insights can you provide?"
+                "Analyze this data trend: Sales increased 25% last quarter. What insights can you provide?",
             )
-            
+
             assert analyst_result is not None
             assert analyst_result["status"]["state"] == "completed"
-            
+
             analyst_response = ""
             for msg in analyst_result["messages"]:
                 if msg["role"] == "agent":
                     for part in msg["parts"]:
                         if part["type"] == "text":
                             analyst_response += part["text"]
-            
+
             print(f"📊 Analyst insight: {analyst_response[:100]}...")
-            
+
             # Writer agent creates content based on analyst's insight
             writer_result = self.send_a2a_task(
                 writer_url,
-                f"Create a brief marketing summary based on this analysis: {analyst_response[:200]}"
+                f"Create a brief marketing summary based on this analysis: {analyst_response[:200]}",
             )
-            
+
             assert writer_result is not None
             assert writer_result["status"]["state"] == "completed"
-            
+
             writer_response = ""
             for msg in writer_result["messages"]:
                 if msg["role"] == "agent":
                     for part in msg["parts"]:
                         if part["type"] == "text":
                             writer_response += part["text"]
-            
+
             print(f"✍️  Writer content: {writer_response[:100]}...")
-            
+
             # Verify the workflow
             assert len(analyst_response) > 0
             assert len(writer_response) > 0
             assert analyst_result["metadata"]["specialization"] == "data_analysis"
             assert writer_result["metadata"]["specialization"] == "content_writing"
-            
-            print(f"✅ Multi-agent A2A workflow completed successfully!")
-            print(f"   📊 Analyst → ✍️  Writer pipeline demonstrated")
-            
+
+            print("✅ Multi-agent A2A workflow completed successfully!")
+            print("   📊 Analyst → ✍️  Writer pipeline demonstrated")
+
         finally:
             # Cleanup handled by daemon threads
             pass

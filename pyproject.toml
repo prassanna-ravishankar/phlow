@@ -48,6 +48,7 @@ dev = [
     "testcontainers>=3.7.0",
     "google-generativeai>=0.3.0",
     "uvicorn[standard]>=0.23.0",
+    "taskipy>=1.14.0",
 ]
 examples = [
     "fastapi>=0.100.0",
@@ -148,3 +149,42 @@ exclude_lines = [
     "class .*\\bProtocol\\):",
     "@(abc\\.)?abstractmethod",
 ]
+
+# Taskipy configuration  
+[tool.taskipy.tasks]
+# Development tasks
+install = "uv sync"
+install-dev = "uv sync --dev"
+
+# Testing tasks
+test = "uv run pytest tests/ -v --cov=src/phlow --cov-report=term-missing --cov-report=xml"
+test-unit = "uv run pytest tests/ -v --cov=src/phlow --cov-report=term-missing --cov-report=xml -m 'not e2e'"
+test-ci = "uv run pytest tests/ -v --cov=src/phlow --cov-report=xml --cov-report=term-missing -m 'not e2e'"
+
+# E2E testing (requires Docker) with auto-detection for Rancher Desktop
+test-e2e = { cmd = "if [ -S \"$HOME/.rd/docker.sock\" ]; then echo \"✅ Rancher Desktop detected\"; DOCKER_HOST=unix://$HOME/.rd/docker.sock uv run pytest tests/test_e2e*.py -v -s; else echo \"✅ Using default Docker setup\"; uv run pytest tests/test_e2e*.py -v -s; fi", help = "Run all E2E tests with Docker auto-detection" }
+test-e2e-single = { cmd = "if [ -S \"$HOME/.rd/docker.sock\" ]; then DOCKER_HOST=unix://$HOME/.rd/docker.sock uv run pytest tests/test_e2e.py -v -s; else uv run pytest tests/test_e2e.py -v -s; fi", help = "Run single-agent E2E tests" }
+test-e2e-multi = { cmd = "if [ -S \"$HOME/.rd/docker.sock\" ]; then DOCKER_HOST=unix://$HOME/.rd/docker.sock uv run pytest tests/test_e2e_multi_agent.py -v -s; else uv run pytest tests/test_e2e_multi_agent.py -v -s; fi", help = "Run multi-agent E2E tests" }
+
+# Code quality
+lint = "uv run ruff check src/ tests/ --fix"
+format = "uv run ruff format src/ tests/"
+format-check = "uv run ruff format src/ tests/ --check"
+type-check = "uv run mypy src/"
+quality = { cmd = "uv run task lint && uv run task format && uv run task type-check", help = "Run all code quality checks" }
+
+# Build and release
+build = "uv run python -m build"
+clean = "rm -rf dist/ build/ *.egg-info .pytest_cache .coverage htmlcov/ .mypy_cache .ruff_cache"
+release = { cmd = "uv run task clean && uv run task build && uv run twine upload dist/*", help = "Clean, build and upload to PyPI" }
+
+# Development server for examples
+dev-example = { cmd = "cd docs/examples/simple && uv sync && uv run python main.py", help = "Run standalone example server" }
+
+[dependency-groups]
+dev = [
+    "ruff>=0.12.7",
+    "taskipy>=1.14.1",
+]
+
+

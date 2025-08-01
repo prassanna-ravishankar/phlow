@@ -196,15 +196,19 @@ class PhlowMiddleware:
             return
 
         try:
-            await self.supabase.table("auth_audit_log").insert(
-                {
-                    "agent_id": agent_id,
-                    "timestamp": datetime.datetime.utcnow().isoformat(),
-                    "event_type": "authentication",
-                    "success": success,
-                    "metadata": metadata or {},
-                }
-            ).execute()
+            await (
+                self.supabase.table("auth_audit_log")
+                .insert(
+                    {
+                        "agent_id": agent_id,
+                        "timestamp": datetime.datetime.utcnow().isoformat(),
+                        "event_type": "authentication",
+                        "success": success,
+                        "metadata": metadata or {},
+                    }
+                )
+                .execute()
+            )
         except Exception as e:
             # Log error but don't fail authentication
             print(f"Failed to log auth event: {e}")
