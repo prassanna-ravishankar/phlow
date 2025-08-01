@@ -11,7 +11,7 @@ from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 from datetime import datetime
 
-from phlow import generate_token, AgentCard, decode_token
+from phlow import generate_token, AgentCard, verify_token
 
 
 @dataclass
@@ -44,8 +44,8 @@ class PhlowClient:
         # Set default headers
         self.session.headers.update({
             "Content-Type": "application/json",
-            "User-Agent": f"PhlowClient/1.0 ({config.agent_card.agent_id})",
-            "X-Phlow-Agent-Id": config.agent_card.agent_id,
+            "User-Agent": f"PhlowClient/1.0 ({config.agent_card.metadata.get('agent_id', 'unknown')})",
+            "X-Phlow-Agent-Id": config.agent_card.metadata.get('agent_id', 'unknown'),
         })
     
     def generate_token(self, target_agent_id: str, expires_in: str = "1h") -> str:
@@ -355,12 +355,11 @@ def create_client_from_env() -> PhlowClient:
     
     # Create agent card
     agent_card = AgentCard(
-        agent_id=os.getenv("AGENT_ID"),
         name=os.getenv("AGENT_NAME"),
         description=os.getenv("AGENT_DESCRIPTION", "Python Phlow client"),
-        permissions=permissions,
-        public_key=os.getenv("AGENT_PUBLIC_KEY").replace("\\n", "\n"),
         metadata={
+            "agent_id": os.getenv("AGENT_ID"),
+            "public_key": os.getenv("AGENT_PUBLIC_KEY").replace("\\n", "\n"),
             "language": "python",
             "client_version": "1.0.0",
         }
