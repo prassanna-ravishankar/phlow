@@ -148,39 +148,168 @@ class RoleCredentialStore:
         return False
 
     async def create_presentation(
-        self, role: str, holder_did: str, challenge: str | None = None
+        self,
+        role: str,
+        holder_did: str,
+        challenge: str | None = None,
+        signing_key: bytes | None = None,
     ) -> VerifiablePresentation | None:
-        """Create a verifiable presentation for a role.
+        """Create a verifiable presentation for a role with cryptographic proof.
 
         Args:
             role: The role to create presentation for
             holder_did: DID of the holder
             challenge: Optional challenge for the presentation
+            signing_key: Optional Ed25519 private key bytes for signing.
+                        If None, will attempt to resolve from holder DID.
 
         Returns:
-            Verifiable presentation if credential exists
+            Signed verifiable presentation if credential exists
         """
         credential = await self.get_credential(role)
         if not credential:
             return None
 
         try:
-            # Create the presentation
+            # Create the presentation without proof first
             presentation = VerifiablePresentation(
                 verifiableCredential=[credential], holder=holder_did
             )
 
-            # TODO: Add cryptographic proof to presentation
-            # For now, create a placeholder proof
-            # In production, this would be signed with the holder's private key
-
-            logger.info(
-                f"Created presentation for role '{role}' and holder '{holder_did}'"
+            # Add cryptographic proof to presentation
+            signed_presentation = await self._add_presentation_proof(
+                presentation, holder_did, challenge, signing_key
             )
-            return presentation
+
+            if signed_presentation:
+                logger.info(
+                    f"Created signed presentation for role '{role}' and holder '{holder_did}'"
+                )
+                return signed_presentation
+            else:
+                logger.warning(
+                    f"Could not sign presentation for role '{role}' - returning unsigned"
+                )
+                return presentation
 
         except Exception as e:
             logger.error(f"Error creating presentation for role '{role}': {e}")
+            return None
+
+    async def _add_presentation_proof(
+        self,
+        presentation: VerifiablePresentation,
+        holder_did: str,
+        challenge: str | None = None,
+        signing_key: bytes | None = None,
+    ) -> VerifiablePresentation | None:
+        """Add cryptographic proof to a presentation.
+
+        Args:
+            presentation: The presentation to sign
+            holder_did: DID of the holder (for key resolution)
+            challenge: Optional challenge string
+            signing_key: Optional Ed25519 private key bytes
+
+        Returns:
+            Signed presentation or None if signing fails
+        """
+        try:
+            import base64
+            import json
+            from datetime import datetime, timezone
+
+            # Resolve private key if not provided
+            if not signing_key:
+                signing_key = await self._resolve_holder_private_key(holder_did)
+                if not signing_key:
+                    logger.error(
+                        f"Could not resolve private key for holder {holder_did}"
+                    )
+                    return None
+
+            # Create canonical presentation data (without proof)
+            presentation_dict = presentation.model_dump(by_alias=True)
+            presentation_dict.pop("proof", None)  # Remove any existing proof
+
+            # Add challenge if provided
+            if challenge:
+                presentation_dict["challenge"] = challenge
+
+            canonical_data = json.dumps(
+                presentation_dict, sort_keys=True, separators=(",", ":")
+            ).encode("utf-8")
+
+            # Sign the canonical data with Ed25519
+            from cryptography.hazmat.primitives.asymmetric import ed25519
+
+            private_key = ed25519.Ed25519PrivateKey.from_private_bytes(signing_key)
+            signature = private_key.sign(canonical_data)
+            signature_b64 = base64.b64encode(signature).decode("utf-8")
+
+            # Create verification method URI
+            verification_method = f"{holder_did}#key-1"
+
+            # Create the proof
+            from .types import Proof
+
+            proof = Proof(
+                type="Ed25519Signature2020",
+                created=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                verification_method=verification_method,
+                proof_purpose="authentication",
+                signature=signature_b64,
+                challenge=challenge,  # Include challenge in proof if provided
+            )
+
+            # Create new presentation with proof
+            signed_presentation = VerifiablePresentation(
+                context=presentation.context,
+                type=presentation.type,
+                verifiableCredential=presentation.verifiable_credential,
+                holder=presentation.holder,
+                proof=proof,
+            )
+
+            return signed_presentation
+
+        except Exception as e:
+            logger.error(f"Error adding proof to presentation: {e}")
+            return None
+
+    async def _resolve_holder_private_key(self, holder_did: str) -> bytes | None:
+        """Resolve private key for holder DID.
+
+        ⚠️  SECURITY NOTE: This implementation includes test keys for did:example DIDs.
+        In production, this should integrate with secure key management systems.
+
+        Args:
+            holder_did: DID of the holder
+
+        Returns:
+            Ed25519 private key bytes or None if not found
+        """
+        try:
+            # For testing: generate deterministic private key for did:example DIDs
+            if holder_did.startswith("did:example:"):
+                import hashlib
+
+                # Create deterministic private key from DID (for testing only)
+                seed = f"{holder_did}#key-1".encode()
+                private_key_bytes = hashlib.sha256(seed).digest()
+                return private_key_bytes
+
+            # TODO: In production, implement proper key resolution:
+            # 1. Query secure key management system (HSM, vault, etc.)
+            # 2. Use wallet integration APIs
+            # 3. Support hardware security modules
+            # 4. Implement proper key derivation from seed phrases
+
+            logger.warning(f"No private key resolution method for DID: {holder_did}")
+            return None
+
+        except Exception as e:
+            logger.error(f"Error resolving private key for {holder_did}: {e}")
             return None
 
     async def import_credential_from_file(self, file_path: Path) -> bool:

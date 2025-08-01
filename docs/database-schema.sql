@@ -3,7 +3,8 @@
 
 -- Drop existing tables if they exist
 DROP TABLE IF EXISTS verified_roles;
-DROP TABLE IF EXISTS phlow_audit_logs;
+DROP TABLE IF EXISTS auth_audit_log;
+DROP TABLE IF EXISTS did_public_keys;
 DROP TABLE IF EXISTS agent_cards;
 
 -- A2A-compatible Agent Cards table
@@ -26,15 +27,29 @@ CREATE TABLE agent_cards (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Simplified audit logs table
-CREATE TABLE phlow_audit_logs (
+-- Authentication audit logs table
+CREATE TABLE auth_audit_log (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
-  event TEXT NOT NULL,
   agent_id TEXT NOT NULL,
-  target_agent_id TEXT,
-  details JSONB DEFAULT '{}',
+  timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
+  event_type TEXT NOT NULL,
+  success BOOLEAN NOT NULL,
+  metadata JSONB DEFAULT '{}',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- DID public keys table for cryptographic verification
+CREATE TABLE did_public_keys (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  did TEXT NOT NULL,
+  key_fragment TEXT NOT NULL,
+  public_key TEXT NOT NULL, -- Base64 encoded public key
+  key_type TEXT NOT NULL, -- e.g., 'Ed25519', 'RSA'
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+  -- Ensure unique combination of DID and key fragment
+  UNIQUE(did, key_fragment)
 );
 
 -- RBAC: Verified roles table for caching role credential verifications
@@ -56,15 +71,18 @@ CREATE TABLE verified_roles (
 
 -- Indexes for performance
 CREATE INDEX idx_agent_cards_agent_id ON agent_cards(agent_id);
-CREATE INDEX idx_audit_logs_agent_id ON phlow_audit_logs(agent_id);
-CREATE INDEX idx_audit_logs_timestamp ON phlow_audit_logs(timestamp);
+CREATE INDEX idx_auth_audit_log_agent_id ON auth_audit_log(agent_id);
+CREATE INDEX idx_auth_audit_log_timestamp ON auth_audit_log(timestamp);
+CREATE INDEX idx_did_public_keys_did_fragment ON did_public_keys(did, key_fragment);
+CREATE INDEX idx_did_public_keys_did ON did_public_keys(did);
 CREATE INDEX idx_verified_roles_agent_role ON verified_roles(agent_id, role);
 CREATE INDEX idx_verified_roles_expires ON verified_roles(expires_at);
 CREATE INDEX idx_verified_roles_agent_id ON verified_roles(agent_id);
 
 -- Enable Row Level Security
 ALTER TABLE agent_cards ENABLE ROW LEVEL SECURITY;
-ALTER TABLE phlow_audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE auth_audit_log ENABLE ROW LEVEL SECURITY;
+ALTER TABLE did_public_keys ENABLE ROW LEVEL SECURITY;
 ALTER TABLE verified_roles ENABLE ROW LEVEL SECURITY;
 
 -- Basic RLS policies
@@ -77,11 +95,14 @@ CREATE POLICY agent_cards_own ON agent_cards
   FOR ALL USING (agent_id = current_setting('phlow.agent_id', true));
 
 -- Allow agents to read their own audit logs
-CREATE POLICY audit_logs_own ON phlow_audit_logs
+CREATE POLICY auth_audit_log_own ON auth_audit_log
   FOR SELECT USING (
-    agent_id = current_setting('phlow.agent_id', true) OR
-    target_agent_id = current_setting('phlow.agent_id', true)
+    agent_id = current_setting('phlow.agent_id', true)
   );
+
+-- Allow public read access to DID public keys for verification
+CREATE POLICY did_public_keys_read ON did_public_keys
+  FOR SELECT USING (true);
 
 -- RBAC: Allow agents to manage their own verified roles
 CREATE POLICY verified_roles_own ON verified_roles
@@ -109,6 +130,11 @@ $$ language 'plpgsql';
 -- Triggers to auto-update the updated_at column
 CREATE TRIGGER update_agent_cards_updated_at
   BEFORE UPDATE ON agent_cards
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_did_public_keys_updated_at
+  BEFORE UPDATE ON did_public_keys
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 

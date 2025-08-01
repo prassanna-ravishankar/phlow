@@ -26,6 +26,9 @@ class RoleCredentialVerifier:
             supabase_client: Supabase client for caching
         """
         self.supabase = supabase_client
+        # DID document cache: {did: (document, expiry_timestamp)}
+        self._did_document_cache: dict[str, tuple[dict, float]] = {}
+        self._cache_ttl_seconds = 300  # 5 minutes cache
 
     async def verify_presentation(
         self, presentation: VerifiablePresentation, required_role: str
@@ -322,10 +325,53 @@ class RoleCredentialVerifier:
             logger.error(f"Failed to generate test public key: {e}")
             return None
 
+    def _get_cached_did_document(self, did: str) -> dict | None:
+        """Get cached DID document if still valid.
+
+        Args:
+            did: DID identifier
+
+        Returns:
+            Cached DID document or None if not cached/expired
+        """
+        import time
+
+        if did in self._did_document_cache:
+            document, expiry = self._did_document_cache[did]
+            if time.time() < expiry:
+                return document
+            else:
+                # Remove expired entry
+                del self._did_document_cache[did]
+        return None
+
+    def _cache_did_document(self, did: str, document: dict) -> None:
+        """Cache a DID document with expiration.
+
+        Args:
+            did: DID identifier
+            document: DID document to cache
+        """
+        import time
+
+        expiry = time.time() + self._cache_ttl_seconds
+        self._did_document_cache[did] = (document, expiry)
+
+        # Simple cache cleanup: remove expired entries when cache gets large
+        if len(self._did_document_cache) > 100:
+            current_time = time.time()
+            expired_keys = [
+                k
+                for k, (_, exp) in self._did_document_cache.items()
+                if current_time >= exp
+            ]
+            for key in expired_keys:
+                del self._did_document_cache[key]
+
     async def _resolve_did_document_public_key(
         self, did: str, key_fragment: str
     ) -> bytes | None:
-        """Resolve public key from DID document via HTTP.
+        """Resolve public key from DID document via HTTP with caching.
 
         Args:
             did: DID identifier
@@ -337,25 +383,20 @@ class RoleCredentialVerifier:
         try:
             import base64
 
-            import httpx
-
-            # Simple DID resolution - in production use proper DID resolution libraries
-            if did.startswith("did:web:"):
-                # did:web resolution: convert did:web:example.com to https://example.com/.well-known/did.json
-                domain = did.replace("did:web:", "")
-                did_doc_url = f"https://{domain}/.well-known/did.json"
-            elif did.startswith("did:key:"):
-                # did:key is self-contained, decode the key directly
+            # Handle did:key method directly (no HTTP needed)
+            if did.startswith("did:key:"):
                 return self._resolve_did_key(did)
-            else:
-                logger.warning(f"Unsupported DID method: {did}")
-                return None
 
-            # Fetch DID document
-            async with httpx.AsyncClient() as client:
-                response = await client.get(did_doc_url, timeout=10.0)
-                response.raise_for_status()
-                did_doc = response.json()
+            # Check cache first
+            did_doc = self._get_cached_did_document(did)
+
+            if not did_doc:
+                # Cache miss - fetch DID document
+                did_doc = await self._fetch_did_document(did)
+                if did_doc:
+                    self._cache_did_document(did, did_doc)
+                else:
+                    return None
 
             # Find verification method in DID document
             verification_methods = did_doc.get("verificationMethod", [])
@@ -376,6 +417,35 @@ class RoleCredentialVerifier:
             logger.error(f"DID document resolution failed for {did}: {e}")
 
         return None
+
+    async def _fetch_did_document(self, did: str) -> dict | None:
+        """Fetch DID document via HTTP.
+
+        Args:
+            did: DID identifier
+
+        Returns:
+            DID document or None if failed
+        """
+        try:
+            import httpx
+
+            if did.startswith("did:web:"):
+                # did:web resolution: convert did:web:example.com to https://example.com/.well-known/did.json
+                domain = did.replace("did:web:", "")
+                did_doc_url = f"https://{domain}/.well-known/did.json"
+
+                async with httpx.AsyncClient() as client:
+                    response = await client.get(did_doc_url, timeout=10.0)
+                    response.raise_for_status()
+                    return response.json()
+            else:
+                logger.warning(f"Unsupported DID method for HTTP resolution: {did}")
+                return None
+
+        except Exception as e:
+            logger.error(f"Failed to fetch DID document for {did}: {e}")
+            return None
 
     def _resolve_did_key(self, did_key: str) -> bytes | None:
         """Resolve public key from did:key method.
@@ -472,7 +542,8 @@ class RoleCredentialVerifier:
     ) -> bool:
         """Verify the cryptographic signature of a presentation.
 
-        ⚠️  SECURITY WARNING: Mock implementation - not cryptographically secure.
+        Implements proper W3C Verifiable Presentations signature verification
+        supporting Ed25519Signature2020 and JsonWebSignature2020 proof types.
 
         Args:
             presentation: The presentation to verify
@@ -480,17 +551,61 @@ class RoleCredentialVerifier:
         Returns:
             True if signature is valid
         """
-        # TODO: CRITICAL - Implement actual cryptographic verification for production
-        # Similar to credential verification but for presentations
         if not presentation.proof:
             logger.warning("No proof found in presentation")
             return False
 
-        logger.warning(
-            f"Using mock presentation signature verification for holder: {presentation.holder} "
-            f"(INSECURE - implement proper crypto verification for production)"
-        )
-        return True
+        # Validate required proof fields
+        required_fields = ["type", "created", "verification_method", "signature"]
+        for field in required_fields:
+            if not getattr(presentation.proof, field, None):
+                logger.warning(f"Missing required proof field in presentation: {field}")
+                return False
+
+        try:
+            import base64
+            import json
+
+            proof_type = presentation.proof.type
+            verification_method = presentation.proof.verification_method
+            signature_b64 = presentation.proof.signature
+
+            # Step 1: Resolve public key from verification method (holder's key)
+            public_key = await self._resolve_public_key(verification_method)
+            if not public_key:
+                logger.warning(
+                    f"Could not resolve public key for presentation holder: {verification_method}"
+                )
+                return False
+
+            # Step 2: Create canonical data to verify
+            # Remove proof from presentation for verification
+            presentation_dict = presentation.model_dump(by_alias=True)
+            presentation_dict.pop("proof", None)
+
+            # Create canonical JSON-LD (simplified - in production use pyld)
+            canonical_data = json.dumps(
+                presentation_dict, sort_keys=True, separators=(",", ":")
+            ).encode("utf-8")
+
+            # Step 3: Verify signature based on proof type
+            signature_bytes = base64.b64decode(signature_b64)
+
+            if proof_type == "Ed25519Signature2020":
+                return await self._verify_ed25519_signature(
+                    public_key, canonical_data, signature_bytes
+                )
+            elif proof_type == "JsonWebSignature2020":
+                return await self._verify_rsa_signature(
+                    public_key, canonical_data, signature_bytes
+                )
+            else:
+                logger.warning(f"Unsupported presentation signature type: {proof_type}")
+                return False
+
+        except Exception as e:
+            logger.error(f"Presentation signature verification failed: {e}")
+            return False
 
     def _create_credential_hash(self, credential: RoleCredential) -> str:
         """Create a hash of the credential for caching purposes.

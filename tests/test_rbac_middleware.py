@@ -262,15 +262,49 @@ class TestPhlowMiddlewareRBAC:
 
     @pytest.mark.asyncio
     async def test_send_role_credential_request(self, middleware):
-        """Test sending role credential request (mock implementation)."""
+        """Test sending role credential request with mocked HTTP response."""
+        from unittest.mock import AsyncMock, MagicMock, patch
+
         from phlow.rbac.types import RoleCredentialRequest
 
         request = RoleCredentialRequest(required_role="admin", nonce="test-nonce")
 
-        # The current implementation returns a mock response
-        response = await middleware._send_role_credential_request("test-agent", request)
+        # Mock the agent endpoint resolution to return a valid URL
+        with patch.object(middleware, "_resolve_agent_endpoint") as mock_resolve:
+            mock_resolve.return_value = "https://test-agent.example.com"
+
+            # Mock the HTTP response
+            mock_response = MagicMock()
+            mock_response.json.return_value = {
+                "status": "completed",
+                "result": {
+                    "type": "role-credential-response",
+                    "nonce": "test-nonce",
+                    "error": "Role 'admin' not available for testing",
+                },
+            }
+            mock_response.raise_for_status.return_value = None
+
+            # Mock the httpx.AsyncClient properly
+            async def mock_post(*args, **kwargs):
+                return mock_response
+
+            mock_client = MagicMock()
+            mock_client.post = mock_post
+
+            with patch("httpx.AsyncClient") as mock_client_class:
+                # Set up the async context manager
+                mock_client_class.return_value.__aenter__ = AsyncMock(
+                    return_value=mock_client
+                )
+                mock_client_class.return_value.__aexit__ = AsyncMock(return_value=None)
+
+                response = await middleware._send_role_credential_request(
+                    "test-agent", request
+                )
 
         assert response is not None
         assert response["type"] == "role-credential-response"
         assert response["nonce"] == "test-nonce"
-        assert "error" in response  # Mock implementation returns error
+        assert "error" in response  # Test expects error response
+        mock_resolve.assert_called_once_with("test-agent")

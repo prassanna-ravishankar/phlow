@@ -30,6 +30,7 @@ class Proof(BaseModel):
     verification_method: str  # DID URL for verification key
     proof_purpose: str  # e.g., "assertionMethod"
     signature: str  # Base64-encoded signature
+    challenge: str | None = None  # Optional challenge for presentations
 
 
 class RoleCredential(BaseModel):
