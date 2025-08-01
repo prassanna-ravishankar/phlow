@@ -1,0 +1,14 @@
+# Standalone Phlow Example Dependencies
+# This example treats phlow as an external library
+
+# Core dependencies
+phlow>=0.1.0
+fastapi>=0.100.0
+uvicorn[standard]>=0.23.0
+python-dotenv>=1.0.0
+
+# For client helper functionality
+requests>=2.31.0
+
+# Development/testing (optional)
+pytest>=7.0.0

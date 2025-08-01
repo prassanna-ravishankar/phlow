@@ -45,6 +45,7 @@ dev = [
     "mypy>=1.5.0",
     "flake8>=6.0.0",
     "twine>=4.0.0",
+    "testcontainers>=3.7.0",
 ]
 examples = [
     "fastapi>=0.100.0",
@@ -113,7 +114,7 @@ disallow_untyped_defs = false
 disallow_incomplete_defs = false
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "examples/python-client"]
+testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -125,6 +126,7 @@ addopts = [
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
+    "e2e: marks tests as end-to-end (requires Docker, skipped in CI)",
 ]
 
 [tool.coverage.run]

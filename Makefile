@@ -16,20 +16,20 @@ test-unit: ## Run unit tests with coverage
 	uv run pytest tests/ -v --cov=src/phlow --cov-report=term-missing --cov-report=xml
 
 test-e2e: ## Run end-to-end tests (requires Docker)
-	cd examples/python-client && ./run_e2e_tests.sh
+	uv run pytest tests/test_e2e.py -v -s
 
 test-e2e-verbose: ## Run E2E tests with verbose output
-	cd examples/python-client && ./run_e2e_tests.sh --verbose --slow
+	uv run pytest tests/test_e2e.py -v -s --tb=long
 
 test-all: test-unit test-e2e ## Run both unit and E2E tests
 
 lint: ## Run linting checks
-	uv run ruff check src/ tests/ examples/
+	uv run ruff check src/ tests/
 	uv run mypy src/
 
 format: ## Format code
-	uv run ruff format src/ tests/ examples/
-	uv run ruff check src/ tests/ examples/ --fix
+	uv run ruff format src/ tests/
+	uv run ruff check src/ tests/ --fix
 
 clean: ## Clean up build artifacts and caches
 	rm -rf build/
@@ -41,19 +41,14 @@ clean: ## Clean up build artifacts and caches
 	find . -type d -name __pycache__ -exec rm -rf {} +
 	find . -type f -name "*.pyc" -delete
 
-dev: ## Start development environment
-	cd examples/python-client && docker-compose up -d
-	@echo "🚀 Development environment started!"
-	@echo "   📊 Supabase Studio: http://localhost:54323"
-	@echo "   🌐 Supabase API: http://localhost:54321"
+dev: ## Start development environment (run example)
+	cd docs/examples/simple && python main.py
+	@echo "🚀 Development agent started!"
 	@echo "   🐍 Phlow Agent: http://localhost:8000"
 	@echo "   📖 Agent Docs: http://localhost:8000/docs"
 
-dev-stop: ## Stop development environment
-	cd examples/python-client && docker-compose down
-
-dev-logs: ## Show development environment logs
-	cd examples/python-client && docker-compose logs -f
+dev-example: ## Install and run the simple example
+	cd docs/examples/simple && pip install -r requirements.txt && python main.py
 
 build: ## Build the package
 	python -m build
