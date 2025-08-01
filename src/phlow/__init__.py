@@ -12,6 +12,15 @@ from .exceptions import (
     TokenError,
 )
 from .middleware import PhlowMiddleware
+
+# RBAC exports
+from .rbac import (
+    RoleCache,
+    RoleCredential,
+    RoleCredentialStore,
+    RoleCredentialVerifier,
+    VerifiablePresentation,
+)
 from .supabase_helpers import SupabaseHelpers
 from .types import AgentCard, AuditLog, PhlowConfig, PhlowContext, VerifyOptions
 
@@ -31,19 +40,33 @@ def verify_token(token: str, public_key: str) -> dict:
 
 __version__ = "0.1.0"
 __all__ = [
+    # Core middleware and types
     "PhlowMiddleware",
     "PhlowConfig",
     "PhlowContext",
     "VerifyOptions",
     "AuditLog",
+    "AgentCard",
+
+    # Exceptions
     "PhlowError",
     "AuthenticationError",
     "AuthorizationError",
     "ConfigurationError",
     "TokenError",
     "RateLimitError",
+
+    # Helpers
     "SupabaseHelpers",
-    "AgentCard",
+
+    # RBAC components
+    "RoleCredential",
+    "VerifiablePresentation",
+    "RoleCredentialVerifier",
+    "RoleCache",
+    "RoleCredentialStore",
+
+    # Utility functions
     "generate_token",
     "verify_token",
 ]

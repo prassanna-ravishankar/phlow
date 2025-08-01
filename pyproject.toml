@@ -37,6 +37,10 @@ dependencies = [
 fastapi = ["fastapi>=0.100.0"]
 flask = ["flask>=2.3.0"]
 django = ["django>=4.2.0"]
+rbac = [
+    "pyld>=2.0.0",           # JSON-LD processing for VCs
+    "cryptography>=41.0.0",   # Enhanced crypto operations
+]
 dev = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
@@ -184,6 +188,8 @@ dev-example = { cmd = "cd docs/examples/simple && uv sync && uv run python main.
 
 [dependency-groups]
 dev = [
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.1.0",
     "ruff>=0.12.7",
     "taskipy>=1.14.1",
 ]

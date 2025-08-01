@@ -1,5 +1,7 @@
 """Phlow middleware - A2A Protocol extension with Supabase integration."""
 
+import secrets
+import string
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -11,6 +13,11 @@ from a2a.types import Task
 from supabase import create_client
 
 from .exceptions import AuthenticationError, ConfigurationError
+from .rbac import RoleCache, RoleCredentialVerifier
+from .rbac.types import (
+    RoleCredentialRequest,
+    RoleCredentialResponse,
+)
 from .types import AgentCard, PhlowConfig, PhlowContext
 
 
@@ -32,6 +39,10 @@ class PhlowMiddleware:
             httpx_client=self.httpx_client,
             agent_card=self._convert_to_a2a_agent_card(config.agent_card),
         )
+
+        # Initialize RBAC components
+        self.role_verifier = RoleCredentialVerifier(self.supabase)
+        self.role_cache = RoleCache(self.supabase)
 
         # Validate configuration
         if not config.supabase_url or not config.supabase_anon_key:
@@ -82,6 +93,131 @@ class PhlowMiddleware:
 
         except jwt.InvalidTokenError as e:
             raise AuthenticationError(f"Invalid token: {str(e)}")
+
+    async def authenticate_with_role(self, token: str, required_role: str) -> PhlowContext:
+        """Authenticate and verify role credentials.
+
+        Args:
+            token: JWT token
+            required_role: The role string to verify (e.g., 'admin')
+
+        Returns:
+            PhlowContext with verified role information
+
+        Raises:
+            AuthenticationError: If authentication or role verification fails
+        """
+        # 1. Perform standard Phlow authentication first
+        context = self.verify_token(token)
+
+        # 2. Get agent ID from context
+        agent_id = context.agent.metadata.get('agent_id') if context.agent.metadata else None
+        if not agent_id:
+            raise AuthenticationError("Agent ID not found in token")
+
+        # 3. Check cache for previously verified role
+        cached_role = await self.role_cache.get_cached_role(agent_id, required_role)
+
+        if cached_role and not self.role_cache.is_expired(cached_role):
+            context.verified_roles = [required_role]
+            return context
+
+        # 4. Request role credential via A2A messaging
+        try:
+            nonce = self._generate_nonce()
+            request_message = RoleCredentialRequest(
+                required_role=required_role,
+                context=f"Access requires '{required_role}' role",
+                nonce=nonce
+            )
+
+            # Send A2A message to request role credential
+            # Note: This is a simplified implementation
+            # In practice, this would use the A2A client's messaging system
+            role_response_data = await self._send_role_credential_request(
+                agent_id, request_message
+            )
+
+            if not role_response_data:
+                raise AuthenticationError(f"No response received for role '{required_role}' request")
+
+            role_response = RoleCredentialResponse(**role_response_data)
+
+            # 5. Verify the credential
+            if role_response.presentation and not role_response.error:
+                verification_result = await self.role_verifier.verify_presentation(
+                    role_response.presentation, required_role
+                )
+
+                if verification_result.is_valid:
+                    # 6. Cache the verified role
+                    await self.role_cache.cache_verified_role(
+                        agent_id=agent_id,
+                        role=required_role,
+                        credential_hash=verification_result.credential_hash,
+                        issuer_did=verification_result.issuer_did,
+                        expires_at=verification_result.expires_at
+                    )
+
+                    context.verified_roles = [required_role]
+                    return context
+                else:
+                    raise AuthenticationError(
+                        f"Role credential verification failed: {verification_result.error_message}"
+                    )
+            else:
+                error_msg = role_response.error or "No valid presentation provided"
+                raise AuthenticationError(f"Role credential request failed: {error_msg}")
+
+        except Exception as e:
+            if isinstance(e, AuthenticationError):
+                raise
+            raise AuthenticationError(f"Error during role verification: {str(e)}")
+
+    async def _send_role_credential_request(
+        self,
+        agent_id: str,
+        request: RoleCredentialRequest
+    ) -> dict | None:
+        """Send role credential request via A2A messaging.
+
+        This is a simplified implementation. In production, this would use
+        the A2A client to send messages to the specific agent.
+
+        Args:
+            agent_id: Target agent ID
+            request: Role credential request
+
+        Returns:
+            Response data or None if failed
+        """
+        try:
+            # TODO: Implement actual A2A messaging
+            # For now, return a mock response
+            # In production, this would:
+            # 1. Resolve agent's A2A endpoint
+            # 2. Send the request message
+            # 3. Wait for response with timeout
+            # 4. Return the response data
+
+            # Mock response for testing
+            return {
+                "type": "role-credential-response",
+                "nonce": request.nonce,
+                "error": f"Role '{request.required_role}' not available"
+            }
+
+        except Exception as e:
+            print(f"Error sending role credential request: {e}")
+            return None
+
+    def _generate_nonce(self) -> str:
+        """Generate a random nonce for role credential requests.
+
+        Returns:
+            Random alphanumeric string
+        """
+        return ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(16))
 
     def get_a2a_client(self) -> Any | None:
         """Get the A2A client instance."""

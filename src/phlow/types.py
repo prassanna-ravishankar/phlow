@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from supabase import Client as SupabaseClient
 from typing_extensions import TypedDict
 
@@ -70,6 +70,7 @@ class PhlowContext(BaseModel):
     # Phlow additions
     supabase: SupabaseClient
     a2a_client: Any | None = None  # A2AClient when available
+    verified_roles: list[str] = Field(default_factory=list)  # RBAC verified roles
 
     model_config = {"arbitrary_types_allowed": True}
 

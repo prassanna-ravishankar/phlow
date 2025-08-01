@@ -2,6 +2,7 @@
 -- This schema supports both current Phlow usage and A2A Protocol compatibility
 
 -- Drop existing tables if they exist
+DROP TABLE IF EXISTS verified_roles;
 DROP TABLE IF EXISTS phlow_audit_logs;
 DROP TABLE IF EXISTS agent_cards;
 
@@ -36,14 +37,35 @@ CREATE TABLE phlow_audit_logs (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- RBAC: Verified roles table for caching role credential verifications
+CREATE TABLE verified_roles (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  agent_id TEXT NOT NULL,
+  role TEXT NOT NULL,
+  verified_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  expires_at TIMESTAMP WITH TIME ZONE,
+  credential_hash TEXT NOT NULL,
+  issuer_did TEXT,
+  metadata JSONB DEFAULT '{}',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  
+  -- Ensure unique combination of agent and role
+  UNIQUE(agent_id, role)
+);
+
 -- Indexes for performance
 CREATE INDEX idx_agent_cards_agent_id ON agent_cards(agent_id);
 CREATE INDEX idx_audit_logs_agent_id ON phlow_audit_logs(agent_id);
 CREATE INDEX idx_audit_logs_timestamp ON phlow_audit_logs(timestamp);
+CREATE INDEX idx_verified_roles_agent_role ON verified_roles(agent_id, role);
+CREATE INDEX idx_verified_roles_expires ON verified_roles(expires_at);
+CREATE INDEX idx_verified_roles_agent_id ON verified_roles(agent_id);
 
 -- Enable Row Level Security
 ALTER TABLE agent_cards ENABLE ROW LEVEL SECURITY;
 ALTER TABLE phlow_audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE verified_roles ENABLE ROW LEVEL SECURITY;
 
 -- Basic RLS policies
 -- Allow all agents to read agent cards (for public key lookup)
@@ -61,6 +83,15 @@ CREATE POLICY audit_logs_own ON phlow_audit_logs
     target_agent_id = current_setting('phlow.agent_id', true)
   );
 
+-- RBAC: Allow agents to manage their own verified roles
+CREATE POLICY verified_roles_own ON verified_roles 
+  FOR ALL USING (agent_id = current_setting('phlow.agent_id', true));
+
+-- RBAC: Allow services to read verified roles for authorization
+-- This policy could be more restrictive based on specific requirements
+CREATE POLICY verified_roles_service_read ON verified_roles 
+  FOR SELECT USING (true); -- Services need to read roles for authorization
+
 -- Function to update the updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -70,9 +101,14 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Trigger to auto-update the updated_at column
+-- Triggers to auto-update the updated_at column
 CREATE TRIGGER update_agent_cards_updated_at 
   BEFORE UPDATE ON agent_cards 
+  FOR EACH ROW 
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_verified_roles_updated_at 
+  BEFORE UPDATE ON verified_roles 
   FOR EACH ROW 
   EXECUTE FUNCTION update_updated_at_column();
 
