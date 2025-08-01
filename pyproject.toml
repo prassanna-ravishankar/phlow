@@ -54,6 +54,7 @@ dev = [
     "uvicorn[standard]>=0.23.0",
     "taskipy>=1.14.0",
     "pre-commit>=3.8.0",
+    "docker>=7.1.0",
 ]
 examples = [
     "fastapi>=0.100.0",
@@ -188,6 +189,7 @@ dev-example = { cmd = "cd docs/examples/simple && uv sync && uv run python main.
 
 [dependency-groups]
 dev = [
+    "mypy>=1.17.1",
     "pytest>=8.4.1",
     "pytest-asyncio>=1.1.0",
     "ruff>=0.12.7",
