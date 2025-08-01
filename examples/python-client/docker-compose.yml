@@ -1,9 +1,9 @@
-version: '3.8'
+# Docker Compose file for Phlow development stack
 
 services:
   # Supabase Database
   supabase-db:
-    image: supabase/postgres:15.1.1.78
+    image: supabase/postgres:latest
     restart: unless-stopped
     ports:
       - "54322:5432"
@@ -97,7 +97,7 @@ services:
 
   # Supabase Auth
   supabase-auth:
-    image: supabase/gotrue:v2.143.0
+    image: supabase/gotrue:latest
     restart: unless-stopped
     environment:
       GOTRUE_API_HOST: 0.0.0.0
@@ -126,7 +126,7 @@ services:
 
   # Supabase REST API
   supabase-rest:
-    image: postgrest/postgrest:v11.2.2
+    image: postgrest/postgrest:latest
     restart: unless-stopped
     environment:
       PGRST_DB_URI: postgres://authenticator:postgres@supabase-db:5432/postgres
@@ -141,7 +141,7 @@ services:
 
   # Supabase Realtime
   supabase-realtime:
-    image: supabase/realtime:v2.25.50
+    image: supabase/realtime:latest
     restart: unless-stopped
     environment:
       PORT: 4000
@@ -164,7 +164,7 @@ services:
 
   # Supabase Storage
   supabase-storage:
-    image: supabase/storage-api:v0.43.11
+    image: supabase/storage-api:latest
     restart: unless-stopped
     environment:
       ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
@@ -184,9 +184,9 @@ services:
       - supabase-db
       - supabase-rest
 
-  # Supabase Studio (Admin Dashboard)
+  # Supabase Studio (Admin Dashboard) - Latest stable version
   supabase-studio:
-    image: supabase/studio:20240101-8e4d4bd
+    image: supabase/studio:latest
     restart: unless-stopped
     ports:
       - "54323:3000"
@@ -200,7 +200,7 @@ services:
 
   # Supabase Meta (Database introspection)
   supabase-meta:
-    image: supabase/postgres-meta:v0.68.0
+    image: supabase/postgres-meta:latest
     restart: unless-stopped
     environment:
       PG_META_PORT: 8080

@@ -2,7 +2,7 @@
 End-to-End Integration Tests for Phlow Agent
 
 These tests require the Docker Compose stack to be running:
-    docker-compose up -d
+    docker-compose -f docker-compose.simple.yml up -d
 
 Run with: pytest test_e2e.py -v -s
 """
@@ -16,9 +16,9 @@ from typing import Dict, Any
 
 # Test configuration
 SUPABASE_URL = "http://localhost:54321"
-SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0"
+SUPABASE_ANON_KEY = "dummy-anon-key-for-local-dev"
 AGENT_URL = "http://localhost:8000"
-STUDIO_URL = "http://localhost:54323"
+ADMINER_URL = "http://localhost:54323"
 
 # Test timeouts
 CONNECTION_TIMEOUT = 5
@@ -35,8 +35,8 @@ class TestDockerStackE2E:
         
         # Check if services are accessible
         services = {
-            "Supabase API": SUPABASE_URL,
-            "Supabase Studio": STUDIO_URL,
+            "PostgREST API": SUPABASE_URL,
+            "Adminer": ADMINER_URL,
             "Phlow Agent": f"{AGENT_URL}/health"
         }
         
@@ -55,14 +55,13 @@ class TestDockerStackE2E:
         
         if not all_running:
             pytest.skip(
-                "Docker Compose stack not running. Start with: cd examples/python-client && docker-compose up -d"
+                "Docker Compose stack not running. Start with: cd examples/python-client && docker-compose -f docker-compose.simple.yml up -d"
             )
 
-    def test_supabase_database_connection(self):
-        """Test that Supabase database is accessible"""
+    def test_database_connection(self):
+        """Test that PostgREST database API is accessible"""
         response = requests.get(
-            f"{SUPABASE_URL}/rest/v1/agent_cards",
-            headers={"apikey": SUPABASE_ANON_KEY},
+            f"{SUPABASE_URL}/agent_cards",
             timeout=CONNECTION_TIMEOUT
         )
         assert response.status_code == 200
@@ -73,8 +72,7 @@ class TestDockerStackE2E:
     def test_agent_cards_table_schema(self):
         """Test that agent_cards table has correct schema"""
         response = requests.get(
-            f"{SUPABASE_URL}/rest/v1/agent_cards",
-            headers={"apikey": SUPABASE_ANON_KEY},
+            f"{SUPABASE_URL}/agent_cards",
             timeout=CONNECTION_TIMEOUT
         )
         assert response.status_code == 200
@@ -94,8 +92,7 @@ class TestDockerStackE2E:
     def test_sample_agent_exists(self):
         """Test that sample agent was inserted during initialization"""
         response = requests.get(
-            f"{SUPABASE_URL}/rest/v1/agent_cards?agent_id=eq.python-agent-001",
-            headers={"apikey": SUPABASE_ANON_KEY},
+            f"{SUPABASE_URL}/agent_cards?agent_id=eq.python-agent-001",
             timeout=CONNECTION_TIMEOUT
         )
         assert response.status_code == 200
@@ -145,27 +142,26 @@ class TestPhlowAgentE2E:
         assert "error" in data
         print("✅ Protected endpoint correctly rejects unauthenticated requests")
 
-    def test_agent_registration_in_supabase(self):
-        """Test that agent properly registered itself in Supabase"""
+    def test_agent_registration_in_database(self):
+        """Test that agent properly registered itself in the database"""
         # Get agent info
         agent_response = requests.get(f"{AGENT_URL}/info", timeout=CONNECTION_TIMEOUT)
         assert agent_response.status_code == 200
         agent_info = agent_response.json()
         
-        # Check if agent exists in Supabase
-        supabase_response = requests.get(
-            f"{SUPABASE_URL}/rest/v1/agent_cards?agent_id=eq.{agent_info['agent_id']}",
-            headers={"apikey": SUPABASE_ANON_KEY},
+        # Check if agent exists in database
+        db_response = requests.get(
+            f"{SUPABASE_URL}/agent_cards?agent_id=eq.{agent_info['agent_id']}",
             timeout=CONNECTION_TIMEOUT
         )
-        assert supabase_response.status_code == 200
+        assert db_response.status_code == 200
         
-        supabase_data = supabase_response.json()
-        assert len(supabase_data) >= 1, f"Agent {agent_info['agent_id']} not registered in Supabase"
+        db_data = db_response.json()
+        assert len(db_data) >= 1, f"Agent {agent_info['agent_id']} not registered in database"
         
-        registered_agent = supabase_data[0]
+        registered_agent = db_data[0]
         assert registered_agent["agent_id"] == agent_info["agent_id"]
-        print(f"✅ Agent properly registered in Supabase: {registered_agent['agent_id']}")
+        print(f"✅ Agent properly registered in database: {registered_agent['agent_id']}")
 
 
 class TestClientHelperE2E:

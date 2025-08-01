@@ -33,7 +33,7 @@ print_error() {
 }
 
 # Check if we're in the right directory
-if [[ ! -f "docker-compose.yml" ]]; then
+if [[ ! -f "docker-compose.simple.yml" ]]; then
     print_error "Please run this script from the examples/python-client directory"
     exit 1
 fi
@@ -54,7 +54,7 @@ fi
 cleanup() {
     if [[ "${CLEANUP_ON_EXIT:-true}" == "true" ]]; then
         print_status "Cleaning up Docker containers..."
-        docker-compose down --volumes --remove-orphans >/dev/null 2>&1 || true
+        docker-compose -f docker-compose.simple.yml down --volumes --remove-orphans >/dev/null 2>&1 || true
         print_success "Cleanup complete"
     else
         print_warning "Skipping cleanup (containers still running)"
@@ -101,11 +101,11 @@ done
 
 print_status "Starting Docker Compose stack..."
 
-# Start the stack
+# Start the stack (using simplified compose file)
 if [[ "$VERBOSE" == "true" ]]; then
-    docker-compose up -d
+    docker-compose -f docker-compose.simple.yml up -d
 else
-    docker-compose up -d >/dev/null 2>&1
+    docker-compose -f docker-compose.simple.yml up -d >/dev/null 2>&1
 fi
 
 # Wait for services to be healthy
@@ -129,15 +129,16 @@ check_service() {
 
 # Check each service
 services=(
-    "http://localhost:54321:Supabase API"
-    "http://localhost:54323:Supabase Studio"
-    "http://localhost:8000/health:Phlow Agent"
+    "http://localhost:54321:PostgREST_API"
+    "http://localhost:54323:Adminer"
+    "http://localhost:8000/health:Phlow_Agent"
 )
 
 all_healthy=true
 for service in "${services[@]}"; do
     url="${service%:*}"
     name="${service#*:}"
+    name="${name//_/ }"  # Replace underscores with spaces for display
     
     print_status "Checking $name..."
     if check_service "$url" 60; then
@@ -185,15 +186,15 @@ if uv run pytest "${pytest_args[@]}"; then
     # Show service URLs
     echo ""
     echo "🌐 Service URLs (while containers are running):"
-    echo "   📊 Supabase Studio: http://localhost:54323"
-    echo "   🌐 Supabase API: http://localhost:54321"
+    echo "   📊 Adminer (DB): http://localhost:54323"
+    echo "   🌐 PostgREST API: http://localhost:54321"
     echo "   🐍 Phlow Agent: http://localhost:8000"
     echo "   📖 Agent Docs: http://localhost:8000/docs"
     
     if [[ "$CLEANUP_ON_EXIT" == "false" ]]; then
         echo ""
         echo "💡 Containers are still running for manual testing"
-        echo "   Stop with: docker-compose down"
+        echo "   Stop with: docker-compose -f docker-compose.simple.yml down"
     fi
     
     exit 0
@@ -203,7 +204,7 @@ else
     if [[ "$VERBOSE" != "true" ]]; then
         echo ""
         print_status "For more details, run with --verbose flag"
-        print_status "Or check service logs: docker-compose logs [service-name]"
+        print_status "Or check service logs: docker-compose -f docker-compose.simple.yml logs [service-name]"
     fi
     
     exit 1

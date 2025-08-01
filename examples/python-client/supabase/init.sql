@@ -93,8 +93,26 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4f3e1nkbHm+9lqK5P8xJ
     public_key = EXCLUDED.public_key,
     updated_at = NOW();
 
--- Grant necessary permissions (Supabase creates these roles automatically)
--- These will be created by Supabase's auth system
+-- Create necessary roles for PostgreSQL (in Supabase these exist by default)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+        CREATE ROLE anon;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+        CREATE ROLE authenticated;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticator') THEN
+        CREATE ROLE authenticator LOGIN;
+        GRANT anon TO authenticator;
+        GRANT authenticated TO authenticator;
+    END IF;
+END
+$$;
+
+-- Grant necessary permissions
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
 GRANT SELECT ON public.agent_cards TO anon, authenticated;
 GRANT SELECT, INSERT, UPDATE ON public.audit_logs TO authenticated;

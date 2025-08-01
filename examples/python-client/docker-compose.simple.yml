@@ -1,0 +1,89 @@
+# Simplified Docker Compose for E2E Testing
+# Focuses on essential services: PostgreSQL + PostgREST + Phlow Agent
+
+services:
+  # PostgreSQL Database with Phlow schema
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    ports:
+      - "54322:5432"
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./supabase/init.sql:/docker-entrypoint-initdb.d/init-phlow-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # PostgREST API for database access
+  postgrest:
+    image: postgrest/postgrest:v12.0.2
+    restart: unless-stopped
+    ports:
+      - "54321:3000"
+    environment:
+      PGRST_DB_URI: postgres://postgres:postgres@postgres:5432/postgres
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: postgres
+      PGRST_JWT_SECRET: super-secret-jwt-token-with-at-least-32-characters-long
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Adminer for database administration (lightweight alternative to Supabase Studio)
+  adminer:
+    image: adminer:latest
+    restart: unless-stopped
+    ports:
+      - "54323:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    depends_on:
+      - postgres
+
+  # Phlow Agent
+  phlow-agent:
+    build: 
+      context: ../..
+      dockerfile: examples/python-client/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - SUPABASE_URL=http://postgrest:3000
+      - SUPABASE_ANON_KEY=dummy-anon-key-for-local-dev
+      - AGENT_ID=python-agent-001
+      - AGENT_NAME=Python Agent Example
+      - AGENT_DESCRIPTION=A Python-based Phlow agent using FastAPI
+      - AGENT_PERMISSIONS=read:data,write:data
+      - AGENT_PUBLIC_KEY=-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4f3e1nkbHm+9lqK5P8xJ\n-----END PUBLIC KEY-----
+      - AGENT_PRIVATE_KEY=-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA4f3e1nkbHm+9lqK5P8xJ\n-----END RSA PRIVATE KEY-----
+      - PORT=8000
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+      postgrest:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import requests; requests.get(\"http://localhost:8000/health\", timeout=5)'"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  postgres_data:
