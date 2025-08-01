@@ -26,22 +26,22 @@ jobs:
       with:
         version: "latest"
     
-    - name: Install build dependencies
+    - name: Install dependencies
       run: |
-        uv pip install build twine
+        uv sync --all-extras --dev
     
     - name: Build package
       run: |
-        python -m build
+        uv run task build
     
     - name: Check package
       run: |
-        twine check dist/*
+        uv run twine check dist/*
     
     - name: Upload to PyPI
       if: startsWith(github.ref, 'refs/tags/')
       run: |
-        twine upload dist/*
+        uv run twine upload dist/*
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}

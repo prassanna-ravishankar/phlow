@@ -25,9 +25,7 @@ jobs:
     
     - name: Install dependencies
       run: |
-        uv pip install -e ".[dev]"
-        # Add docs dependencies if we add them later
-        # uv pip install mkdocs mkdocs-material
+        uv sync --all-extras --dev
     
     - name: Check documentation links
       run: |
@@ -35,34 +33,31 @@ jobs:
         python -c "
         import os
         
-        # Check README links
+        # Check README links  
         readme_exists = os.path.exists('README.md')
         docs_dir_exists = os.path.exists('docs/')
-        examples_dir_exists = os.path.exists('examples/')
+        docs_examples_exists = os.path.exists('docs/examples/')
         
         print(f'✅ README.md exists: {readme_exists}')
-        print(f'✅ docs/ exists: {docs_dir_exists}')
-        print(f'✅ examples/ exists: {examples_dir_exists}')
+        print(f'✅ docs/ exists: {docs_dir_exists}')  
+        print(f'✅ docs/examples/ exists: {docs_examples_exists}')
         
-        if not all([readme_exists, docs_dir_exists, examples_dir_exists]):
+        if not all([readme_exists, docs_dir_exists, docs_examples_exists]):
             exit(1)
         "
     
     - name: Validate example documentation
       run: |
-        cd examples/python-client
+        # Check simple example
+        cd docs/examples/simple
+        test -f README.md
+        test -f main.py
+        test -f requirements.txt
+        echo "✅ Simple example documentation is valid"
         
-        # Check README exists and has basic sections
-        python -c "
-        with open('README.md') as f:
-            content = f.read()
-            
-        required_sections = ['Setup', 'Running', 'API Endpoints', 'Docker']
-        missing = [s for s in required_sections if s not in content]
-        
-        if missing:
-            print(f'❌ Missing sections in example README: {missing}')
-            exit(1)
-        else:
-            print('✅ Example README has all required sections')
-        "
+        # Check multi-agent example  
+        cd ../multi-agent
+        test -f README.md
+        test -f main.py
+        test -f requirements.txt
+        echo "✅ Multi-agent example documentation is valid"

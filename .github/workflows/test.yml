@@ -34,6 +34,7 @@ jobs:
     - name: Run linting
       run: |
         uv run task lint
+        uv run task format-check
         uv run task type-check
     
     - name: Run unit tests
