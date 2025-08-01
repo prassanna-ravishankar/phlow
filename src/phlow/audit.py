@@ -3,7 +3,7 @@
 import asyncio
 import logging
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any
 
 from .types import AuditLog
 
@@ -22,9 +22,9 @@ class AuditLogger:
         """
         self.supabase = supabase_client
         self.flush_interval = flush_interval_seconds
-        self.queue: List[AuditLog] = []
+        self.queue: list[AuditLog] = []
         self.max_batch_size = 100
-        self._flush_task: Optional[asyncio.Task] = None
+        self._flush_task: asyncio.Task | None = None
         self._running = False
 
     async def log(self, entry: AuditLog) -> None:
@@ -158,8 +158,8 @@ class AuditLogger:
 def create_audit_entry(
     event: str,
     agent_id: str,
-    target_agent_id: Optional[str] = None,
-    details: Optional[dict] = None,
+    target_agent_id: str | None = None,
+    details: dict | None = None,
 ) -> AuditLog:
     """Create an audit log entry.
 

@@ -1,0 +1,68 @@
+name: Documentation
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+    
+    - name: Install uv
+      uses: astral-sh/setup-uv@v2
+      with:
+        version: "latest"
+    
+    - name: Install dependencies
+      run: |
+        uv pip install -e ".[dev]"
+        # Add docs dependencies if we add them later
+        # uv pip install mkdocs mkdocs-material
+    
+    - name: Check documentation links
+      run: |
+        # Check that all referenced files exist
+        python -c "
+        import os
+        
+        # Check README links
+        readme_exists = os.path.exists('README.md')
+        docs_dir_exists = os.path.exists('docs/')
+        examples_dir_exists = os.path.exists('examples/')
+        
+        print(f'✅ README.md exists: {readme_exists}')
+        print(f'✅ docs/ exists: {docs_dir_exists}')
+        print(f'✅ examples/ exists: {examples_dir_exists}')
+        
+        if not all([readme_exists, docs_dir_exists, examples_dir_exists]):
+            exit(1)
+        "
+    
+    - name: Validate example documentation
+      run: |
+        cd examples/python-client
+        
+        # Check README exists and has basic sections
+        python -c "
+        with open('README.md') as f:
+            content = f.read()
+            
+        required_sections = ['Setup', 'Running', 'API Endpoints', 'Docker']
+        missing = [s for s in required_sections if s not in content]
+        
+        if missing:
+            print(f'❌ Missing sections in example README: {missing}')
+            exit(1)
+        else:
+            print('✅ Example README has all required sections')
+        "

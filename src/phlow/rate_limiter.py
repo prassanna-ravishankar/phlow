@@ -2,7 +2,6 @@
 
 import time
 from threading import Lock
-from typing import Dict, List, Optional
 
 
 class RateLimiter:
@@ -17,7 +16,7 @@ class RateLimiter:
         """
         self.max_requests = max_requests
         self.window_ms = window_ms
-        self.requests: Dict[str, List[float]] = {}
+        self.requests: dict[str, list[float]] = {}
         self._lock = Lock()
 
     def is_allowed(self, identifier: str) -> bool:
@@ -56,7 +55,7 @@ class RateLimiter:
 
             return True
 
-    def reset(self, identifier: Optional[str] = None) -> None:
+    def reset(self, identifier: str | None = None) -> None:
         """Reset rate limit for a specific identifier or all identifiers.
 
         Args:

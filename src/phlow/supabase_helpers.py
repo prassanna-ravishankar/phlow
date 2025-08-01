@@ -1,7 +1,7 @@
 """Supabase helper utilities for Phlow authentication."""
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from supabase import Client
 
@@ -66,7 +66,7 @@ class SupabaseHelpers:
         if result.data is None:
             raise Exception(f"Failed to register agent card: {result}")
 
-    async def get_agent_card(self, agent_id: str) -> Optional[AgentCard]:
+    async def get_agent_card(self, agent_id: str) -> AgentCard | None:
         """Get an agent card from the database.
 
         Args:
@@ -97,7 +97,7 @@ class SupabaseHelpers:
             metadata=data.get("metadata"),
         )
 
-    def get_agent_card_sync(self, agent_id: str) -> Optional[AgentCard]:
+    def get_agent_card_sync(self, agent_id: str) -> AgentCard | None:
         """Synchronously get an agent card.
 
         Args:
@@ -130,9 +130,9 @@ class SupabaseHelpers:
 
     async def list_agent_cards(
         self,
-        permissions: Optional[List[str]] = None,
-        metadata_filters: Optional[Dict[str, Any]] = None,
-    ) -> List[AgentCard]:
+        permissions: list[str] | None = None,
+        metadata_filters: dict[str, Any] | None = None,
+    ) -> list[AgentCard]:
         """List agent cards with optional filtering.
 
         Args:
@@ -176,9 +176,9 @@ class SupabaseHelpers:
 
     def list_agent_cards_sync(
         self,
-        permissions: Optional[List[str]] = None,
-        metadata_filters: Optional[Dict[str, Any]] = None,
-    ) -> List[AgentCard]:
+        permissions: list[str] | None = None,
+        metadata_filters: dict[str, Any] | None = None,
+    ) -> list[AgentCard]:
         """Synchronously list agent cards.
 
         Args:

@@ -1,7 +1,7 @@
 """FastAPI integration for Phlow authentication."""
 
+from collections.abc import Callable
 from functools import wraps
-from typing import Callable, List, Optional
 
 try:
     from fastapi import Depends, HTTPException, Request
@@ -30,7 +30,7 @@ class FastAPIPhlowAuth:
 
     def create_auth_dependency(
         self,
-        required_permissions: Optional[List[str]] = None,
+        required_permissions: list[str] | None = None,
         allow_expired: bool = False,
     ) -> Callable:
         """Create FastAPI dependency for authentication.
@@ -45,7 +45,7 @@ class FastAPIPhlowAuth:
 
         async def auth_dependency(
             request: Request,
-            credentials: Optional[HTTPAuthorizationCredentials] = Depends(
+            credentials: HTTPAuthorizationCredentials | None = Depends(
                 self.security
             ),
         ) -> PhlowContext:
@@ -87,7 +87,7 @@ class FastAPIPhlowAuth:
 
     def require_auth(
         self,
-        required_permissions: Optional[List[str]] = None,
+        required_permissions: list[str] | None = None,
         allow_expired: bool = False,
     ) -> Callable:
         """Decorator for protecting FastAPI routes.
@@ -122,7 +122,7 @@ class FastAPIPhlowAuth:
 
 def create_phlow_dependency(
     middleware: PhlowMiddleware,
-    required_permissions: Optional[List[str]] = None,
+    required_permissions: list[str] | None = None,
     allow_expired: bool = False,
 ) -> Callable:
     """Create a FastAPI dependency for Phlow authentication.

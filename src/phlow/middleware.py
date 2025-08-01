@@ -1,7 +1,7 @@
 """Phlow middleware - A2A Protocol extension with Supabase integration."""
 
 import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 import jwt
 from a2a.client import A2AClient
@@ -78,7 +78,7 @@ class PhlowMiddleware:
         except jwt.InvalidTokenError as e:
             raise AuthenticationError(f"Invalid token: {str(e)}")
 
-    def get_a2a_client(self) -> Optional[Any]:
+    def get_a2a_client(self) -> Any | None:
         """Get the A2A client instance."""
         return self.a2a_client
 
@@ -147,7 +147,7 @@ class PhlowMiddleware:
             messages=[Message(role="user", content=message)],
         )
 
-    def resolve_agent(self, agent_id: str) -> Optional[A2AAgentCard]:
+    def resolve_agent(self, agent_id: str) -> A2AAgentCard | None:
         """Resolve agent card from A2A network or Supabase.
 
         Args:
@@ -183,7 +183,7 @@ class PhlowMiddleware:
         return None
 
     async def log_auth_event(
-        self, agent_id: str, success: bool, metadata: Optional[Dict] = None
+        self, agent_id: str, success: bool, metadata: dict | None = None
     ):
         """Log authentication event to Supabase.
 
