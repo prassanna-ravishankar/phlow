@@ -46,15 +46,24 @@ dev = [
     "flake8>=6.0.0",
     "twine>=4.0.0",
 ]
+examples = [
+    "fastapi>=0.100.0",
+    "uvicorn[standard]>=0.23.0",
+    "python-dotenv>=1.0.0",
+    "requests>=2.31.0",
+]
 
 [project.urls]
 Documentation = "https://prassanna.io/phlow/"
 Issues = "https://github.com/prassanna-ravishankar/phlow/issues"
 Source = "https://github.com/prassanna-ravishankar/phlow"
 
+[tool.hatch.version]
+path = "src/phlow/__init__.py"
+
 [tool.hatch.build.targets.wheel]
-# TODO update package path after moving code
-packages = ["phlow"]
+only-include = ["src"]
+sources = ["src"]
 
 [tool.hatch.build.targets.sdist]
 include = ["src", "tests", "README.md"]

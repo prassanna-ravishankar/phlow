@@ -18,7 +18,11 @@ This example demonstrates how to create a Python-based agent using FastAPI and P
 ### 1. Install Dependencies
 
 ```bash
-pip install -r requirements.txt
+# Install with uv (recommended)
+uv pip install -e ".[examples]"
+
+# Or with pip
+pip install -e ".[examples]"
 ```
 
 ### 2. Environment Configuration
@@ -357,8 +361,8 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY pyproject.toml .
+RUN pip install --no-cache-dir -e ".[examples]"
 
 COPY . .
 
