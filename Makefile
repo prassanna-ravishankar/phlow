@@ -19,10 +19,26 @@ test-e2e: ## Run end-to-end tests (requires Docker)
 	@echo "🐳 Detecting Docker setup..."
 	@if [ -S "$$HOME/.rd/docker.sock" ]; then \
 		echo "✅ Rancher Desktop detected"; \
-		DOCKER_HOST=unix://$$HOME/.rd/docker.sock uv run pytest tests/test_e2e.py -v -s; \
+		DOCKER_HOST=unix://$$HOME/.rd/docker.sock uv run pytest tests/test_e2e*.py -v -s; \
 	else \
 		echo "✅ Using default Docker setup"; \
+		uv run pytest tests/test_e2e*.py -v -s; \
+	fi
+
+test-e2e-single: ## Run single-agent E2E tests
+	@echo "🐳 Running single-agent E2E tests..."
+	@if [ -S "$$HOME/.rd/docker.sock" ]; then \
+		DOCKER_HOST=unix://$$HOME/.rd/docker.sock uv run pytest tests/test_e2e.py -v -s; \
+	else \
 		uv run pytest tests/test_e2e.py -v -s; \
+	fi
+
+test-e2e-multi: ## Run multi-agent E2E tests
+	@echo "🐳 Running multi-agent E2E tests..."
+	@if [ -S "$$HOME/.rd/docker.sock" ]; then \
+		DOCKER_HOST=unix://$$HOME/.rd/docker.sock uv run pytest tests/test_e2e_multi_agent.py -v -s; \
+	else \
+		uv run pytest tests/test_e2e_multi_agent.py -v -s; \
 	fi
 
 test-e2e-verbose: ## Run E2E tests with verbose output
