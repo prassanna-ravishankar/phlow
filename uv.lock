@@ -1149,6 +1149,7 @@ dependencies = [
 
 [package.optional-dependencies]
 dev = [
+    { name = "docker" },
     { name = "google-genai" },
     { name = "mypy" },
     { name = "pre-commit" },
@@ -1184,6 +1185,7 @@ rbac = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "mypy" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "ruff" },
@@ -1195,6 +1197,7 @@ requires-dist = [
     { name = "a2a-sdk", specifier = ">=0.2.11" },
     { name = "cryptography", marker = "extra == 'rbac'", specifier = ">=41.0.0" },
     { name = "django", marker = "extra == 'django'", specifier = ">=4.2.0" },
+    { name = "docker", marker = "extra == 'dev'", specifier = ">=7.1.0" },
     { name = "fastapi", marker = "extra == 'examples'", specifier = ">=0.100.0" },
     { name = "fastapi", marker = "extra == 'fastapi'", specifier = ">=0.100.0" },
     { name = "flask", marker = "extra == 'flask'", specifier = ">=2.3.0" },
@@ -1224,6 +1227,7 @@ provides-extras = ["fastapi", "flask", "django", "rbac", "dev", "examples"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "mypy", specifier = ">=1.17.1" },
     { name = "pytest", specifier = ">=8.4.1" },
     { name = "pytest-asyncio", specifier = ">=1.1.0" },
     { name = "ruff", specifier = ">=0.12.7" },
