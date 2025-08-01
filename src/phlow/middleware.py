@@ -2,6 +2,7 @@
 
 import secrets
 import string
+from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -10,7 +11,7 @@ import jwt
 from a2a.client import A2AClient
 from a2a.types import AgentCard as A2AAgentCard
 from a2a.types import Task
-from supabase import create_client
+from supabase import Client, create_client
 
 from .exceptions import AuthenticationError, ConfigurationError
 from .rbac import RoleCache, RoleCredentialVerifier
@@ -56,6 +57,9 @@ class PhlowMiddleware:
             url=agent_card.service_url,  # service_url -> url
             skills=agent_card.skills,
             security_schemes=agent_card.security_schemes,
+            capabilities=agent_card.skills,  # Map skills to capabilities
+            defaultInputModes=["text"],  # Default input modes
+            defaultOutputModes=["text"],  # Default output modes
             # metadata is not a direct field in A2A AgentCard
         )
 
@@ -157,13 +161,14 @@ class PhlowMiddleware:
 
                 if verification_result.is_valid:
                     # 6. Cache the verified role
-                    await self.role_cache.cache_verified_role(
-                        agent_id=agent_id,
-                        role=required_role,
-                        credential_hash=verification_result.credential_hash,
-                        issuer_did=verification_result.issuer_did,
-                        expires_at=verification_result.expires_at,
-                    )
+                    if verification_result.credential_hash:
+                        await self.role_cache.cache_verified_role(
+                            agent_id=agent_id,
+                            role=required_role,
+                            credential_hash=verification_result.credential_hash,
+                            issuer_did=verification_result.issuer_did,
+                            expires_at=verification_result.expires_at,
+                        )
 
                     context.verified_roles = [required_role]
                     return context
@@ -204,14 +209,13 @@ class PhlowMiddleware:
         try:
             # TODO: CRITICAL - Implement actual A2A messaging for production
             # Current mock implementation always fails - only for testing
-            
+
             # Production implementation should:
             # 1. Resolve agent's A2A endpoint from DID or registry
             # 2. Send HTTP POST to agent's /tasks/send endpoint
             # 3. Include proper authentication headers
             # 4. Wait for response with configurable timeout (e.g., 30s)
             # 5. Handle network errors, timeouts, and malformed responses
-
             # Mock response for development/testing only
             return {
                 "type": "role-credential-response",
@@ -237,7 +241,7 @@ class PhlowMiddleware:
         """Get the A2A client instance."""
         return self.a2a_client
 
-    def get_supabase_client(self):
+    def get_supabase_client(self) -> Client:
         """Get the Supabase client instance."""
         return self.supabase
 
@@ -281,7 +285,8 @@ class PhlowMiddleware:
             "exp": datetime.now(timezone.utc) + timedelta(hours=1),
         }
 
-        return jwt.encode(payload, self.config.private_key, algorithm="HS256")
+        token = jwt.encode(payload, self.config.private_key, algorithm="HS256")
+        return str(token)
 
     def send_message(self, target_agent_id: str, message: str) -> Task:
         """Send A2A message to another agent.
@@ -338,7 +343,7 @@ class PhlowMiddleware:
 
     async def log_auth_event(
         self, agent_id: str, success: bool, metadata: dict | None = None
-    ):
+    ) -> None:
         """Log authentication event to Supabase.
 
         Args:
@@ -394,14 +399,14 @@ class PhlowMiddleware:
         except Exception as e:
             raise ConfigurationError(f"Failed to register agent: {e}")
 
-    def authenticate(self):
+    def authenticate(self) -> Callable[[Any], Any]:
         """Return authentication middleware function.
 
         For use with web frameworks like FastAPI or Flask.
         This would need framework-specific implementation.
         """
 
-        def middleware(request):
+        def middleware(request: Any) -> Any:
             # This would be implemented for specific frameworks
             # For now, return a placeholder
             auth_header = getattr(request, "headers", {}).get("authorization", "")
