@@ -56,6 +56,7 @@ dist/
 build/
 .coverage
 .mypy_cache/
+.ruff_cache/
 
 # Supabase
 **/supabase/.branches
