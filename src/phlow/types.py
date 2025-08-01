@@ -10,14 +10,15 @@ try:
     from a2a.client import A2AClient
     from a2a.types import AgentCard as A2AAgentCard
 except ImportError:
-    A2AClient = None
-    A2AAgentCard = None
+    A2AClient = None  # type: ignore
+    A2AAgentCard = None  # type: ignore
 
 
-# AgentCard type definition (A2A-compliant)
+# AgentCard type definition (A2A-compliant with Phlow extensions)
 class AgentCard(BaseModel):
-    """A2A-compliant Agent Card."""
+    """A2A-compliant Agent Card with Phlow-specific fields."""
 
+    # A2A standard fields
     schema_version: str = "1.0"
     name: str
     description: str = ""
@@ -25,6 +26,12 @@ class AgentCard(BaseModel):
     skills: list[str] = []
     security_schemes: dict[str, Any] = {}
     metadata: dict[str, Any] | None = None
+    
+    # Phlow-specific fields (for backward compatibility)
+    agent_id: str | None = None
+    permissions: list[str] = []
+    public_key: str | None = None
+    endpoints: dict[str, Any] | None = None
 
 
 class RateLimitingConfig(TypedDict):

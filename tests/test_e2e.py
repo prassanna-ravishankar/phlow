@@ -193,7 +193,7 @@ class TestPhlowWithDirectDocker:
                 client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
                 response = client.models.generate_content(
                     model="gemini-2.5-flash-lite",
-                    contents=f"You are a Phlow A2A agent. Respond helpfully and briefly to: {user_text}"
+                    contents=f"You are a Phlow A2A agent. Respond helpfully and briefly to: {user_text}",
                 )
 
                 # Return A2A-compliant task response

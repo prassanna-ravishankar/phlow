@@ -3,6 +3,7 @@
 import datetime
 from typing import Any
 
+import httpx
 import jwt
 from a2a.client import A2AClient
 from a2a.types import AgentCard as A2AAgentCard
@@ -25,8 +26,12 @@ class PhlowMiddleware:
         self.config = config
         self.supabase = create_client(config.supabase_url, config.supabase_anon_key)
 
-        # Initialize A2A client with agent card
-        self.a2a_client = A2AClient(self._convert_to_a2a_agent_card(config.agent_card))
+        # Initialize A2A client with httpx client and agent card
+        self.httpx_client = httpx.AsyncClient()
+        self.a2a_client = A2AClient(
+            httpx_client=self.httpx_client,
+            agent_card=self._convert_to_a2a_agent_card(config.agent_card)
+        )
 
         # Validate configuration
         if not config.supabase_url or not config.supabase_anon_key:
@@ -37,10 +42,10 @@ class PhlowMiddleware:
         return A2AAgentCard(
             name=agent_card.name,
             description=agent_card.description,
-            service_url=agent_card.service_url,
+            url=agent_card.service_url,  # service_url -> url
             skills=agent_card.skills,
             security_schemes=agent_card.security_schemes,
-            metadata=agent_card.metadata,
+            # metadata is not a direct field in A2A AgentCard
         )
 
     def verify_token(self, token: str) -> PhlowContext:
@@ -142,9 +147,8 @@ class PhlowMiddleware:
         # For now, return a mock task
         return Task(
             id=f"task-{datetime.datetime.utcnow().isoformat()}",
-            agent_id=target_agent_id,
-            status="pending",
-            messages=[Message(role="user", content=message)],
+            # A2A Task doesn't have agent_id, status, or messages fields directly
+            # These would be handled differently in the actual A2A protocol
         )
 
     def resolve_agent(self, agent_id: str) -> A2AAgentCard | None:

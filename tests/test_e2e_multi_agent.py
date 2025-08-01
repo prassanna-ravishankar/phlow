@@ -149,8 +149,7 @@ class TestMultiAgentA2ACommunication:
                     client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
                     prompt = f"You are {agent_name}, a specialized Phlow A2A agent. {agent_description}. Respond briefly to: {user_text}"
                     response = client.models.generate_content(
-                        model="gemini-2.5-flash-lite",
-                        contents=prompt
+                        model="gemini-2.5-flash-lite", contents=prompt
                     )
                     response_text = response.text
                 else:

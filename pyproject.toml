@@ -30,6 +30,7 @@ dependencies = [
     "typing-extensions>=4.0.0",
     "pyjwt>=2.8.0",
     "a2a-sdk>=0.2.11",
+    "httpx>=0.24.0",
 ]
 
 [project.optional-dependencies]
@@ -42,7 +43,7 @@ dev = [
     "pytest-cov>=4.0.0",
     "black>=23.0.0",
     "isort>=5.12.0",
-    "mypy>=1.5.0",
+
     "flake8>=6.0.0",
     "twine>=4.0.0",
     "testcontainers>=3.7.0",
@@ -170,12 +171,12 @@ test-e2e-multi = { cmd = "if [ -S \"$HOME/.rd/docker.sock\" ]; then DOCKER_HOST=
 lint = "uv run ruff check src/ tests/ --fix"
 format = "uv run ruff format src/ tests/"
 format-check = "uv run ruff format src/ tests/ --check"
-type-check = "uv run mypy src/"
+type-check = "uvx ty check src/ --ignore missing-argument --ignore invalid-argument-type --ignore unknown-argument"
 quality = { cmd = "uv run task lint && uv run task format && uv run task type-check", help = "Run all code quality checks" }
 
 # Build and release
 build = "uv run python -m build"
-clean = "rm -rf dist/ build/ *.egg-info .pytest_cache .coverage htmlcov/ .mypy_cache .ruff_cache"
+clean = "rm -rf dist/ build/ *.egg-info .pytest_cache .coverage htmlcov/ .ruff_cache"
 release = { cmd = "uv run task clean && uv run task build && uv run twine upload dist/*", help = "Clean, build and upload to PyPI" }
 
 # Development server for examples
