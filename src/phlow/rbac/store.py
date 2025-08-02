@@ -290,22 +290,38 @@ class RoleCredentialStore:
             Ed25519 private key bytes or None if not found
         """
         try:
-            # For testing: generate deterministic private key for did:example DIDs
-            if holder_did.startswith("did:example:"):
+            # Production key resolution - no hardcoded test keys
+            # Check environment variable for development/testing
+            import os
+
+            if (
+                holder_did.startswith("did:example:")
+                and os.getenv("PHLOW_ALLOW_TEST_KEYS") == "true"
+            ):
+                logger.warning("Using test key generation - NOT FOR PRODUCTION")
                 import hashlib
 
-                # Create deterministic private key from DID (for testing only)
+                # Create deterministic private key from DID (testing only, requires explicit env var)
                 seed = f"{holder_did}#key-1".encode()
                 private_key_bytes = hashlib.sha256(seed).digest()
                 return private_key_bytes
 
-            # TODO: In production, implement proper key resolution:
-            # 1. Query secure key management system (HSM, vault, etc.)
-            # 2. Use wallet integration APIs
-            # 3. Support hardware security modules
-            # 4. Implement proper key derivation from seed phrases
+            # Production key resolution methods:
+            # 1. Environment variables for specific DIDs
+            key_env_var = f"PHLOW_PRIVATE_KEY_{holder_did.replace(':', '_').replace('#', '_').upper()}"
+            key_base64 = os.getenv(key_env_var)
+            if key_base64:
+                import base64
 
-            logger.warning(f"No private key resolution method for DID: {holder_did}")
+                return base64.b64decode(key_base64)
+
+            # 2. Key management service integration (implement as needed)
+            # 3. Hardware security module integration
+            # 4. Secure key derivation from master keys
+
+            logger.error(
+                f"No private key available for DID: {holder_did}. Configure via environment variable {key_env_var} or implement key management integration."
+            )
             return None
 
         except Exception as e:

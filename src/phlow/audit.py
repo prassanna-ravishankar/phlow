@@ -70,10 +70,8 @@ class AuditLogger:
                 }
                 db_entries.append(db_entry)
 
-            # Insert into Supabase
-            result = (
-                self.supabase.table("phlow_audit_logs").insert(db_entries).execute()
-            )
+            # Insert into Supabase (using consistent table name)
+            result = self.supabase.table("auth_audit_log").insert(db_entries).execute()
 
             if result.data is None:
                 logger.error(f"Failed to insert audit logs: {result}")
@@ -106,10 +104,8 @@ class AuditLogger:
                 }
                 db_entries.append(db_entry)
 
-            # Insert into Supabase
-            result = (
-                self.supabase.table("phlow_audit_logs").insert(db_entries).execute()
-            )
+            # Insert into Supabase (using consistent table name)
+            result = self.supabase.table("auth_audit_log").insert(db_entries).execute()
 
             if result.data is None:
                 logger.error(f"Failed to insert audit logs: {result}")

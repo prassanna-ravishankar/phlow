@@ -53,10 +53,11 @@ from phlow.rbac import RoleCredentialStore
 store = RoleCredentialStore()
 await store.add_credential(admin_credential)
 
-# Create presentation for verification
+# Create cryptographically signed presentation for verification
 presentation = await store.create_presentation(
     role="admin",
-    holder_did="did:example:agent"
+    holder_did="did:example:agent",
+    challenge="optional-challenge-string"  # For additional security
 )
 ```
 
@@ -90,9 +91,10 @@ async def manager_endpoint(
 
 ## Database Schema
 
-RBAC adds a `verified_roles` table for caching:
+RBAC adds multiple tables for comprehensive functionality:
 
 ```sql
+-- Role verification cache
 CREATE TABLE verified_roles (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     agent_id TEXT NOT NULL,
@@ -101,7 +103,28 @@ CREATE TABLE verified_roles (
     expires_at TIMESTAMP WITH TIME ZONE,
     credential_hash TEXT NOT NULL,
     issuer_did TEXT,
+    metadata JSONB DEFAULT '{}',
     UNIQUE(agent_id, role)
+);
+
+-- DID public keys for cryptographic verification
+CREATE TABLE did_public_keys (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    did TEXT NOT NULL,
+    key_fragment TEXT NOT NULL,
+    public_key TEXT NOT NULL, -- Base64 encoded public key
+    key_type TEXT NOT NULL, -- 'Ed25519', 'RSA'
+    UNIQUE(did, key_fragment)
+);
+
+-- Authentication audit logs
+CREATE TABLE auth_audit_log (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    agent_id TEXT NOT NULL,
+    timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
+    event_type TEXT NOT NULL,
+    success BOOLEAN NOT NULL,
+    metadata JSONB DEFAULT '{}'
 );
 ```
 
@@ -121,14 +144,25 @@ See the complete [RBAC example agent](../examples/rbac_agent/) for a working imp
 - Protected endpoints
 - Credential management
 
-## Production Considerations
+## Production Features
 
-⚠️ This implementation includes simplified cryptographic verification and A2A messaging suitable for development and testing. For production deployment:
+✅ **This implementation includes production-ready cryptographic verification and A2A messaging:**
 
-1. **Implement cryptographic signature verification** using issuer public keys and standard signature suites
-2. **Add proper A2A messaging** with agent endpoint resolution and network error handling
-3. **Configure restrictive database policies** based on your specific security requirements
-4. **Add monitoring and rate limiting** for role verification requests
+1. **Full Cryptographic Verification**: Ed25519 and RSA signature verification using W3C standards
+2. **Real A2A Messaging**: HTTP-based agent communication with endpoint resolution and error handling
+3. **Secure Presentation Signing**: Cryptographic proof generation for verifiable presentations
+4. **DID Document Caching**: Performance optimization with TTL-based caching
+5. **Comprehensive Database Schema**: Complete with proper indexes and Row-Level Security policies
+
+## Production Deployment Requirements
+
+For production deployment, configure:
+
+1. **Key Management**: Integrate with secure key management systems (HSM, vaults) for production DID keys
+2. **Agent Registry**: Populate the `agent_cards` table with trusted agent endpoints
+3. **Database Setup**: Deploy the complete schema from `docs/database-schema.sql`
+4. **Monitoring**: Add logging and metrics for role verification flows
+5. **Rate Limiting**: Configure request limits for A2A messaging endpoints
 
 ## API Reference
 

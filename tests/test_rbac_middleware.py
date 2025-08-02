@@ -12,7 +12,7 @@ from phlow.rbac.types import (
     RoleVerificationResult,
     VerifiablePresentation,
 )
-from phlow.types import AgentCard, PhlowConfig
+from phlow.types import AgentCard, PhlowConfig, RateLimitConfigs
 
 
 class TestPhlowMiddlewareRBAC:
@@ -25,6 +25,11 @@ class TestPhlowMiddlewareRBAC:
         config.supabase_url = "https://test.supabase.co"
         config.supabase_anon_key = "test-anon-key"
         config.private_key = "test-private-key"
+        config.public_key = "test-public-key"
+        config.enable_audit_log = False
+        config.enable_rate_limiting = False
+        config.rate_limit_config = None
+        config.rate_limit_configs = RateLimitConfigs()
         config.agent_card = MagicMock(spec=AgentCard)
         config.agent_card.name = "Test Agent"
         config.agent_card.description = "Test agent for RBAC"
@@ -41,6 +46,14 @@ class TestPhlowMiddlewareRBAC:
             patch("phlow.middleware.create_client"),
             patch("phlow.middleware.httpx.AsyncClient"),
             patch("phlow.middleware.A2AClient"),
+            patch("phlow.middleware.get_key_store"),
+            patch("phlow.middleware.KeyManager"),
+            patch("phlow.middleware.RoleCredentialVerifier"),
+            patch("phlow.middleware.RoleCache"),
+            patch("phlow.middleware.create_rate_limiter_from_env"),
+            patch("phlow.middleware.supabase_circuit_breaker"),
+            patch("phlow.middleware.did_resolution_circuit_breaker"),
+            patch("phlow.middleware.a2a_messaging_circuit_breaker"),
             patch.object(PhlowMiddleware, "_convert_to_a2a_agent_card") as mock_convert,
         ):
             # Mock the A2A conversion to avoid validation errors

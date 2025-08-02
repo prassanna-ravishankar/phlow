@@ -79,7 +79,7 @@ async def chat_endpoint(context: PhlowContext = Depends(auth_required)):
 - **🛡️ RLS Helpers** - Generate basic Supabase Row Level Security policies
 - **📊 Basic Audit** - Log authentication events to Supabase
 - **🌐 Python Package** - Pure Python implementation
-- **🔧 Middleware** - FastAPI integration helpers
+- **🔧 FastAPI Integration** - Complete middleware with dependency injection
 
 
 ## How It Works
@@ -173,7 +173,7 @@ async def handle_message(context: PhlowContext = Depends(auth_required)):
 
 | Language | Package | Framework Support |
 |----------|---------|------------------|
-| Python | `phlow` | FastAPI, Flask |
+| Python | `phlow` | FastAPI |
 
 ## 🚀 Roadmap & Vision
 

@@ -40,6 +40,22 @@ class RateLimitingConfig(TypedDict):
     window_ms: int
 
 
+class RateLimitConfigs(BaseModel):
+    """Configuration for different types of rate limiting."""
+
+    # Authentication rate limiting (per token hash)
+    auth_max_requests: int = 60
+    auth_window_ms: int = 60_000  # 1 minute
+
+    # Role request rate limiting (per agent ID)
+    role_request_max_requests: int = 10
+    role_request_window_ms: int = 60_000  # 1 minute
+
+    # Global rate limiting (all requests)
+    global_max_requests: int | None = None
+    global_window_ms: int = 60_000  # 1 minute
+
+
 class PhlowConfig(BaseModel):
     """Phlow configuration."""
 
@@ -55,7 +71,10 @@ class PhlowConfig(BaseModel):
     # Phlow-specific options
     enable_audit_log: bool = False
     enable_rate_limiting: bool = False
-    rate_limit_config: RateLimitingConfig | None = None
+    rate_limit_config: RateLimitingConfig | None = (
+        None  # Legacy, kept for compatibility
+    )
+    rate_limit_configs: RateLimitConfigs = Field(default_factory=RateLimitConfigs)
 
 
 class PhlowContext(BaseModel):

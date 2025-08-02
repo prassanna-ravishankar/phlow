@@ -3,6 +3,7 @@
 import logging
 import secrets
 import string
+import time
 from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -14,14 +15,34 @@ from a2a.types import AgentCard as A2AAgentCard
 from a2a.types import Task
 from supabase import Client, create_client
 
-from .exceptions import AuthenticationError, ConfigurationError
+from .circuit_breaker import (
+    a2a_messaging_circuit_breaker,
+    did_resolution_circuit_breaker,
+    supabase_circuit_breaker,
+)
+from .distributed_rate_limiter import (
+    create_rate_limiter_from_env,
+)
+from .exceptions import (
+    AuthenticationError,
+    CircuitBreakerError,
+    ConfigurationError,
+    RateLimitError,
+)
+from .monitoring import get_logger, get_metrics_collector
 from .rbac import RoleCache, RoleCredentialVerifier
 from .rbac.types import (
     RoleCredentialRequest,
     RoleCredentialResponse,
 )
+from .security import KeyManager, get_key_store
 from .types import AgentCard, PhlowConfig, PhlowContext
 
+# Use structured logger for better observability
+structured_logger = get_logger()
+metrics_collector = get_metrics_collector()
+
+# Keep backwards compatibility
 logger = logging.getLogger(__name__)
 
 
@@ -37,6 +58,31 @@ class PhlowMiddleware:
         self.config = config
         self.supabase = create_client(config.supabase_url, config.supabase_anon_key)
 
+        # Initialize key management
+        self.key_store = get_key_store(config)
+        self.key_manager = KeyManager(self.key_store)
+
+        # Get keys from secure storage if not provided in config
+        # Store as instance variables to avoid mutating the original config
+        self.private_key = config.private_key
+        self.public_key = config.public_key
+
+        if not self.private_key or not self.public_key:
+            agent_id = (config.agent_card.metadata or {}).get("agent_id", "default")
+            stored_private, stored_public = self.key_manager.get_key_pair(agent_id)
+
+            if not self.private_key and stored_private:
+                self.private_key = stored_private
+                logger.info(
+                    f"Loaded private key from secure storage for agent {agent_id}"
+                )
+
+            if not self.public_key and stored_public:
+                self.public_key = stored_public
+                logger.info(
+                    f"Loaded public key from secure storage for agent {agent_id}"
+                )
+
         # Initialize A2A client with httpx client and agent card
         self.httpx_client = httpx.AsyncClient()
         self.a2a_client = A2AClient(
@@ -51,24 +97,88 @@ class PhlowMiddleware:
         # DID document cache for service endpoint resolution: {did: (document, expiry_timestamp)}
         self._did_document_cache: dict[str, tuple[dict, float]] = {}
         self._cache_ttl_seconds = 300  # 5 minutes cache
+        self._max_cache_size = 1000  # Maximum number of cached DIDs
+
+        # Rate limiters for different operations
+        # Use distributed rate limiting if Redis is available
+        rate_configs = config.rate_limit_configs
+        self.auth_rate_limiter = create_rate_limiter_from_env(
+            max_requests=rate_configs.auth_max_requests,
+            window_ms=rate_configs.auth_window_ms,
+        )
+        self.role_request_rate_limiter = create_rate_limiter_from_env(
+            max_requests=rate_configs.role_request_max_requests,
+            window_ms=rate_configs.role_request_window_ms,
+        )
+
+        # Circuit breakers for external dependencies
+        self.supabase_circuit_breaker = supabase_circuit_breaker()
+        self.did_resolution_circuit_breaker = did_resolution_circuit_breaker()
+        self.a2a_messaging_circuit_breaker = a2a_messaging_circuit_breaker()
 
         # Validate configuration
         if not config.supabase_url or not config.supabase_anon_key:
             raise ConfigurationError("Supabase URL and anon key are required")
 
+    async def aclose(self) -> None:
+        """Close all resources and cleanup."""
+        try:
+            if hasattr(self, "httpx_client") and self.httpx_client:
+                await self.httpx_client.aclose()
+        except Exception as e:
+            logger.error(f"Error closing httpx client: {e}")
+
+    async def __aenter__(self):
+        """Async context manager entry."""
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Async context manager exit."""
+        await self.aclose()
+
     def _convert_to_a2a_agent_card(self, agent_card: AgentCard) -> A2AAgentCard:
         """Convert Phlow AgentCard to A2A AgentCard."""
-        return A2AAgentCard(
-            name=agent_card.name,
-            description=agent_card.description,
-            url=agent_card.service_url,  # service_url -> url
-            skills=agent_card.skills,
-            security_schemes=agent_card.security_schemes,
-            capabilities=agent_card.skills,  # Map skills to capabilities
-            defaultInputModes=["text"],  # Default input modes
-            defaultOutputModes=["text"],  # Default output modes
-            # metadata is not a direct field in A2A AgentCard
-        )
+        try:
+            # Convert simple skills list to A2A format if needed
+            a2a_skills = []
+            for skill in agent_card.skills:
+                if isinstance(skill, str):
+                    # Convert string skill to A2A skill object
+                    a2a_skills.append(
+                        {
+                            "name": skill,
+                            "description": f"Skill: {skill}",
+                        }
+                    )
+                else:
+                    # Already in A2A format
+                    a2a_skills.append(skill)
+
+            return A2AAgentCard(
+                name=agent_card.name,
+                description=agent_card.description,
+                url=agent_card.service_url,  # service_url -> url
+                skills=a2a_skills,
+                security_schemes=agent_card.security_schemes,
+                capabilities={},  # Empty capabilities object
+                version="1.0",  # Add required version field
+                defaultInputModes=["text"],  # Default input modes
+                defaultOutputModes=["text"],  # Default output modes
+                # metadata is not a direct field in A2A AgentCard
+            )
+        except Exception as e:
+            logger.error(f"Error converting AgentCard to A2A format: {e}")
+            # Fallback to minimal A2A card
+            return A2AAgentCard(
+                name=agent_card.name,
+                description=agent_card.description,
+                url=agent_card.service_url,
+                skills=[],
+                capabilities={},
+                version="1.0",
+                defaultInputModes=["text"],
+                defaultOutputModes=["text"],
+            )
 
     def verify_token(self, token: str) -> PhlowContext:
         """Verify JWT token and return context.
@@ -82,14 +192,79 @@ class PhlowMiddleware:
         Raises:
             AuthenticationError: If token is invalid
         """
+        start_time = time.time()
+        # Use cryptographically secure hash for token identification
+        import hashlib
+
+        token_hash = (
+            hashlib.sha256(token[:50].encode() if token else b"unknown").hexdigest()[
+                :16
+            ]
+            if token
+            else "unknown"
+        )
+        agent_id = "unknown"
+
         try:
-            # Decode token (in real implementation, use proper key validation)
+            # Input validation
+            if not token or not isinstance(token, str):
+                raise AuthenticationError("Token must be a non-empty string")
+
+            if len(token) > 8192:  # Reasonable token size limit
+                raise AuthenticationError("Token exceeds maximum length")
+
+            # Basic JWT format validation (3 parts separated by dots)
+            parts = token.split(".")
+            if len(parts) != 3:
+                raise AuthenticationError("Invalid token format")
+
+            # Rate limiting based on token (to prevent token replay attacks)
+            self.auth_rate_limiter.check_and_raise(token_hash)
+
+            # Record rate limit check
+            metrics_collector.record_rate_limit_check("auth", False)
+
+            # Decode token with proper signature verification
+            # Use correct key based on algorithm type
+            if not self.private_key:
+                raise AuthenticationError("No key configured for token verification")
+
+            # Determine algorithm from token header but validate against allowed algorithms
+            unverified_header = jwt.get_unverified_header(token)
+            algorithm = unverified_header.get("alg", "HS256")
+
+            # Define allowed algorithms and their required keys
+            allowed_algorithms = {"HS256", "RS256"}
+            if algorithm not in allowed_algorithms:
+                raise AuthenticationError(
+                    f"Algorithm {algorithm} not in allowed list: {allowed_algorithms}"
+                )
+
+            # Use appropriate key for verification based on algorithm
+            if algorithm == "RS256":
+                if not self.public_key:
+                    raise AuthenticationError(
+                        "Public key required for RS256 token verification"
+                    )
+                verification_key = self.public_key
+            elif algorithm == "HS256":
+                verification_key = self.private_key
+            else:
+                # This should never be reached due to the check above, but kept for safety
+                raise AuthenticationError(f"Unsupported algorithm: {algorithm}")
+
             decoded = jwt.decode(
                 token,
-                self.config.private_key,
-                algorithms=["RS256", "HS256"],
-                options={"verify_signature": False},  # For testing only
+                verification_key,
+                algorithms=[algorithm],
+                options={"verify_signature": True, "require": ["exp", "iat"]},
             )
+
+            # Extract agent ID for logging
+            agent_id = decoded.get("sub", "unknown")
+
+            # Set request context for logging
+            structured_logger.set_request_context(ag_id=agent_id)
 
             # Create context with A2A integration
             context = PhlowContext(
@@ -100,10 +275,98 @@ class PhlowMiddleware:
                 a2a_client=self.a2a_client,
             )
 
+            # Log successful authentication
+            duration = time.time() - start_time
+            structured_logger.log_authentication_event(
+                agent_id=agent_id, success=True, token_hash=token_hash
+            )
+            metrics_collector.record_auth_attempt(agent_id, True, duration)
+
             return context
 
+        except RateLimitError:
+            # Rate limit exceeded
+            metrics_collector.record_rate_limit_check("auth", True)
+            structured_logger.log_authentication_event(
+                agent_id=agent_id,
+                success=False,
+                token_hash=token_hash,
+                error="rate_limit_exceeded",
+            )
+            raise
+        except jwt.ExpiredSignatureError:
+            error = AuthenticationError("Token has expired")
+            self._log_auth_error(
+                agent_id, token_hash, "token_expired", error, start_time
+            )
+            raise error
+        except jwt.InvalidSignatureError:
+            error = AuthenticationError("Invalid token signature")
+            self._log_auth_error(
+                agent_id, token_hash, "invalid_signature", error, start_time
+            )
+            raise error
+        except jwt.DecodeError:
+            error = AuthenticationError("Token is malformed and cannot be decoded")
+            self._log_auth_error(
+                agent_id, token_hash, "decode_error", error, start_time
+            )
+            raise error
+        except jwt.InvalidKeyError:
+            error = AuthenticationError("Invalid key for token verification")
+            self._log_auth_error(agent_id, token_hash, "invalid_key", error, start_time)
+            raise error
+        except jwt.InvalidAlgorithmError:
+            error = AuthenticationError("Invalid algorithm specified in token")
+            self._log_auth_error(
+                agent_id, token_hash, "invalid_algorithm", error, start_time
+            )
+            raise error
         except jwt.InvalidTokenError as e:
-            raise AuthenticationError(f"Invalid token: {str(e)}")
+            # Catch any other JWT errors with specific message
+            error_msg = str(e).lower()
+            if "not enough segments" in error_msg:
+                error = AuthenticationError(
+                    "Token format is invalid (wrong number of segments)"
+                )
+                self._log_auth_error(
+                    agent_id, token_hash, "invalid_format", error, start_time
+                )
+                raise error
+            elif "invalid header" in error_msg:
+                raise AuthenticationError("Token header is invalid")
+            elif "invalid payload" in error_msg:
+                raise AuthenticationError("Token payload is invalid")
+            else:
+                error = AuthenticationError(f"Token validation failed: {str(e)}")
+                self._log_auth_error(
+                    agent_id, token_hash, "validation_failed", error, start_time
+                )
+                raise error
+        except Exception:
+            # Catch any unexpected errors during token processing
+            error = AuthenticationError(
+                "Token verification failed due to internal error"
+            )
+            self._log_auth_error(
+                agent_id, token_hash, "unexpected_error", error, start_time
+            )
+            raise error
+
+    def _log_auth_error(
+        self,
+        agent_id: str,
+        token_hash: str,
+        error_type: str,
+        error: Exception,
+        start_time: float,
+    ):
+        """Log authentication error with metrics."""
+        duration = time.time() - start_time
+        structured_logger.log_authentication_event(
+            agent_id=agent_id, success=False, token_hash=token_hash, error=error_type
+        )
+        metrics_collector.record_auth_attempt(agent_id, False, duration)
 
     async def authenticate_with_role(
         self, token: str, required_role: str
@@ -120,6 +383,18 @@ class PhlowMiddleware:
         Raises:
             AuthenticationError: If authentication or role verification fails
         """
+        # Input validation
+        if not required_role or not isinstance(required_role, str):
+            raise AuthenticationError("required_role must be a non-empty string")
+
+        if len(required_role) > 100:  # Reasonable role name limit
+            raise AuthenticationError("Role name exceeds maximum length")
+
+        # Validate role format (alphanumeric, underscore, hyphen only)
+        import re
+
+        if not re.match(r"^[a-zA-Z0-9_-]+$", required_role):
+            raise AuthenticationError("Role name contains invalid characters")
         # 1. Perform standard Phlow authentication first
         context = self.verify_token(token)
 
@@ -129,6 +404,9 @@ class PhlowMiddleware:
         )
         if not agent_id:
             raise AuthenticationError("Agent ID not found in token")
+
+        # Rate limiting for role requests by agent ID
+        self.role_request_rate_limiter.check_and_raise(agent_id)
 
         # 3. Check cache for previously verified role
         cached_role = await self.role_cache.get_cached_role(agent_id, required_role)
@@ -365,7 +643,7 @@ class PhlowMiddleware:
         return None
 
     def _cache_did_document(self, did: str, document: dict) -> None:
-        """Cache a DID document with expiration.
+        """Cache a DID document with expiration and bounded size.
 
         Args:
             did: DID identifier
@@ -373,8 +651,62 @@ class PhlowMiddleware:
         """
         import time
 
+        # Clean up expired entries first
+        self._cleanup_did_cache()
+
+        # Enforce cache size limit using LRU eviction
+        if len(self._did_document_cache) >= self._max_cache_size:
+            # Remove 20% of oldest entries to make room
+            sorted_entries = sorted(
+                self._did_document_cache.items(),
+                key=lambda x: x[1][1],  # Sort by expiry timestamp
+            )
+
+            num_to_remove = max(
+                1, self._max_cache_size // 5
+            )  # Remove at least 1, up to 20%
+            for did_to_remove, _ in sorted_entries[:num_to_remove]:
+                del self._did_document_cache[did_to_remove]
+
         expiry = time.time() + self._cache_ttl_seconds
         self._did_document_cache[did] = (document, expiry)
+
+    def _cleanup_did_cache(self) -> None:
+        """Clean up expired DID document cache entries with error handling."""
+        import time
+
+        now = time.time()
+
+        # Process in batches to avoid memory issues and handle errors gracefully
+        items_to_remove = []
+        try:
+            # Collect expired items in batches
+            for did, (_, expiry) in list(self._did_document_cache.items()):
+                if expiry <= now:
+                    items_to_remove.append(did)
+
+                # Process in batches of 100 to avoid memory issues
+                if len(items_to_remove) >= 100:
+                    self._remove_cache_items(items_to_remove)
+                    items_to_remove = []
+
+            # Process remaining items
+            if items_to_remove:
+                self._remove_cache_items(items_to_remove)
+
+        except Exception as e:
+            logger.error(f"Error during DID cache cleanup: {e}")
+            # Continue with partial cleanup rather than failing completely
+
+    def _remove_cache_items(self, items_to_remove: list[str]) -> None:
+        """Safely remove items from cache with individual error handling."""
+        for did in items_to_remove:
+            try:
+                if did in self._did_document_cache:
+                    del self._did_document_cache[did]
+            except Exception as e:
+                logger.warning(f"Failed to remove DID {did} from cache: {e}")
+                # Continue removing other items
 
     async def _resolve_did_service_endpoint(self, did: str) -> str | None:
         """Resolve service endpoint from DID document with caching.
@@ -388,20 +720,32 @@ class PhlowMiddleware:
         try:
             # Check cache first
             did_doc = self._get_cached_did_document(did)
+            cached = did_doc is not None
 
             if not did_doc:
-                # Cache miss - fetch DID document
+                # Cache miss - fetch DID document with circuit breaker protection
                 if did.startswith("did:web:"):
                     domain = did.replace("did:web:", "")
                     did_doc_url = f"https://{domain}/.well-known/did.json"
 
-                    async with httpx.AsyncClient(timeout=10.0) as client:
-                        response = await client.get(did_doc_url)
-                        response.raise_for_status()
-                        did_doc = response.json()
+                    # Use circuit breaker for external HTTP calls
+                    async def fetch_did_document():
+                        async with httpx.AsyncClient(timeout=10.0) as client:
+                            response = await client.get(did_doc_url)
+                            response.raise_for_status()
+                            return response.json()
+
+                    did_doc = await self.did_resolution_circuit_breaker.acall(
+                        fetch_did_document
+                    )
 
                     # Cache the document
                     self._cache_did_document(did, did_doc)
+
+                    # Log successful DID resolution
+                    structured_logger.log_did_resolution_event(
+                        did=did, success=True, cached=False
+                    )
                 else:
                     logger.warning(
                         f"Unsupported DID method for service endpoint resolution: {did}"
@@ -416,9 +760,24 @@ class PhlowMiddleware:
                     "PhLowService",
                     "AgentService",
                 ]:
-                    return service.get("serviceEndpoint")
+                    endpoint = service.get("serviceEndpoint")
+                    if cached:
+                        structured_logger.log_did_resolution_event(
+                            did=did, success=True, cached=True
+                        )
+                    return endpoint
 
+        except CircuitBreakerError as e:
+            # Circuit breaker is open
+            structured_logger.log_did_resolution_event(
+                did=did, success=False, cached=False, error="circuit_breaker_open"
+            )
+            logger.error(f"DID resolution circuit breaker open for {did}: {e}")
         except Exception as e:
+            # Other errors
+            structured_logger.log_did_resolution_event(
+                did=did, success=False, cached=cached, error=str(e)
+            )
             logger.error(f"Error resolving DID service endpoint for {did}: {e}")
 
         return None
@@ -444,7 +803,7 @@ class PhlowMiddleware:
             "purpose": "role-credential-request",
         }
 
-        token = jwt.encode(payload, self.config.private_key, algorithm="HS256")
+        token = jwt.encode(payload, self.private_key, algorithm="HS256")
         return str(token)
 
     def _generate_nonce(self) -> str:
@@ -505,7 +864,7 @@ class PhlowMiddleware:
             "exp": datetime.now(timezone.utc) + timedelta(hours=1),
         }
 
-        token = jwt.encode(payload, self.config.private_key, algorithm="HS256")
+        token = jwt.encode(payload, self.private_key, algorithm="HS256")
         return str(token)
 
     def send_message(self, target_agent_id: str, message: str) -> Task:
