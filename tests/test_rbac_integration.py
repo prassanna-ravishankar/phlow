@@ -71,12 +71,20 @@ class TestRBACIntegration:
             patch("phlow.middleware.httpx.AsyncClient"),
             patch("phlow.middleware.A2AClient"),
             patch.object(PhlowMiddleware, "_convert_to_a2a_agent_card") as mock_convert,
+            patch("phlow.middleware.supabase_circuit_breaker") as mock_supabase_cb,
+            patch("phlow.middleware.did_resolution_circuit_breaker") as mock_did_cb,
+            patch("phlow.middleware.a2a_messaging_circuit_breaker") as mock_a2a_cb,
         ):
             # Create a mock Supabase client that can work with PhlowContext
             mock_supabase = MagicMock()
             mock_supabase.table = MagicMock()
             mock_create_client.return_value = mock_supabase
             mock_convert.return_value = MagicMock()  # Mock A2A agent card conversion
+
+            # Mock circuit breakers
+            mock_supabase_cb.return_value = MagicMock()
+            mock_did_cb.return_value = MagicMock()
+            mock_a2a_cb.return_value = MagicMock()
 
             # Create middleware - this will use the mocked Supabase client
             middleware = PhlowMiddleware(test_config)
@@ -703,12 +711,20 @@ class TestRBACPerformance:
             patch("phlow.middleware.httpx.AsyncClient"),
             patch("phlow.middleware.A2AClient"),
             patch.object(PhlowMiddleware, "_convert_to_a2a_agent_card") as mock_convert,
+            patch("phlow.middleware.supabase_circuit_breaker") as mock_supabase_cb,
+            patch("phlow.middleware.did_resolution_circuit_breaker") as mock_did_cb,
+            patch("phlow.middleware.a2a_messaging_circuit_breaker") as mock_a2a_cb,
         ):
             # Create a mock Supabase client that can work with PhlowContext
             mock_supabase = MagicMock()
             mock_supabase.table = MagicMock()
             mock_create_client.return_value = mock_supabase
             mock_convert.return_value = MagicMock()  # Mock A2A agent card conversion
+
+            # Mock circuit breakers
+            mock_supabase_cb.return_value = MagicMock()
+            mock_did_cb.return_value = MagicMock()
+            mock_a2a_cb.return_value = MagicMock()
 
             # Create middleware - this will use the mocked Supabase client
             middleware = PhlowMiddleware(test_config)

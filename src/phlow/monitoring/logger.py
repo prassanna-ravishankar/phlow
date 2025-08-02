@@ -94,10 +94,12 @@ class PhlowStructuredLogger:
     def _add_context(logger, method_name, event_dict):
         """Add request context to log events."""
         # Add request ID and agent ID from context
-        if request_id.get():
-            event_dict["request_id"] = request_id.get()
-        if agent_id.get():
-            event_dict["agent_id"] = agent_id.get()
+        req_id = request_id.get(None)
+        if req_id:
+            event_dict["request_id"] = req_id
+        ag_id = agent_id.get(None)
+        if ag_id:
+            event_dict["agent_id"] = ag_id
         return event_dict
 
     def set_request_context(self, req_id: str | None = None, ag_id: str | None = None):
