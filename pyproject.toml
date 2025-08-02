@@ -151,7 +151,7 @@ type-check = "uvx ty check src/ --python-version 3.10 --ignore missing-argument 
 quality = { cmd = "uv run task lint && uv run task format && uv run task type-check", help = "Run all code quality checks" }
 
 # Build and release
-build = "uv run python -m build"
+build = "uv build"
 clean = "rm -rf dist/ build/ *.egg-info .pytest_cache .coverage htmlcov/ .ruff_cache"
 release = { cmd = "uv run task clean && uv run task build && uv run twine upload dist/*", help = "Clean, build and upload to PyPI" }
 
