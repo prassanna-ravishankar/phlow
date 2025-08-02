@@ -137,26 +137,6 @@ class TestFastAPIRBACIntegration:
             "Role authentication failed: Something went wrong" in exc_info.value.detail
         )
 
-    def test_require_role_decorator(self, fastapi_auth):
-        """Test require_role decorator creation."""
-        # Create decorator
-        decorator = fastapi_auth.require_role("admin")
-
-        # Test that it returns a decorator function
-        assert callable(decorator)
-
-        # Test decorator on a sample function
-        async def test_endpoint():
-            return {"message": "success"}
-
-        # Apply decorator
-        decorated_endpoint = decorator(test_endpoint)
-
-        # The decorated function should be callable and have the role hint
-        assert callable(decorated_endpoint)
-        assert hasattr(decorated_endpoint, "__phlow_required_role__")
-        assert decorated_endpoint.__phlow_required_role__ == "admin"
-
     def test_convenience_functions(self):
         """Test convenience functions for creating dependencies."""
         try:

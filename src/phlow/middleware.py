@@ -804,7 +804,7 @@ class PhlowMiddleware:
         }
 
         token = jwt.encode(payload, self.private_key, algorithm="HS256")
-        return str(token)
+        return token
 
     def _generate_nonce(self) -> str:
         """Generate a random nonce for role credential requests.
@@ -865,7 +865,7 @@ class PhlowMiddleware:
         }
 
         token = jwt.encode(payload, self.private_key, algorithm="HS256")
-        return str(token)
+        return token
 
     def send_message(self, target_agent_id: str, message: str) -> Task:
         """Send A2A message to another agent.

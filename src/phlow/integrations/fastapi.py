@@ -171,34 +171,6 @@ class FastAPIPhlowAuth:
 
         return role_auth_dependency
 
-    def require_role(
-        self,
-        required_role: str,
-        allow_expired: bool = False,
-    ) -> Callable:
-        """Decorator for protecting FastAPI routes with role requirements.
-
-        Args:
-            required_role: Role required for access
-            allow_expired: Whether to allow expired tokens
-
-        Returns:
-            Decorator function
-        """
-
-        def decorator(func: Callable) -> Callable:
-            # For FastAPI, decorators are complex. It's better to use the dependency directly.
-            # This decorator just returns the original function with a note that
-            # the user should manually add the dependency to their endpoint.
-
-            # Add a hint to the function for documentation
-            if not hasattr(func, "__phlow_required_role__"):
-                func.__phlow_required_role__ = required_role  # type: ignore
-
-            return func
-
-        return decorator
-
 
 def create_phlow_dependency(
     middleware: PhlowMiddleware,
