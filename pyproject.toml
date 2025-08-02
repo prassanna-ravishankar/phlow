@@ -156,7 +156,11 @@ clean = "rm -rf dist/ build/ *.egg-info .pytest_cache .coverage htmlcov/ .ruff_c
 release = { cmd = "uv run task clean && uv run task build && uv run twine upload dist/*", help = "Clean, build and upload to PyPI" }
 
 # Development server for examples
-dev-example = { cmd = "cd docs/examples/simple && uv sync && uv run python main.py", help = "Run standalone example server" }
+dev-example = { cmd = "cd examples/simple && uv sync && uv run python main.py", help = "Run standalone example server" }
+
+# Example validation
+validate-examples = { cmd = "bash scripts/validate-examples.sh", help = "Validate all examples with full dependencies" }
+validate-examples-ci = { cmd = "echo 'Use GitHub Actions for CI validation (no external dependencies)'", help = "CI validation runs in GitHub Actions" }
 
 [dependency-groups]
 dev = [
@@ -166,19 +170,17 @@ dev = [
     "pytest-cov>=4.0.0",
     "testcontainers>=3.7.0",
     "python-dotenv>=1.0.0",
-
     # Code quality
     "ruff>=0.12.7",
     "ty>=0.0.1a16",
     "pre-commit>=3.8.0",
-
     # Development tools
     "taskipy>=1.14.1",
-
     # Build and release
     "twine>=4.0.0",
-
     # Examples and dev server
     "uvicorn[standard]>=0.23.0",
     "google-genai>=0.1.0",
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.6.16",
 ]

@@ -32,28 +32,16 @@ jobs:
         # Check README links
         readme_exists = os.path.exists('README.md')
         docs_dir_exists = os.path.exists('docs/')
-        docs_examples_exists = os.path.exists('docs/examples/')
+        examples_exists = os.path.exists('examples/')
 
         print(f'✅ README.md exists: {readme_exists}')
         print(f'✅ docs/ exists: {docs_dir_exists}')
-        print(f'✅ docs/examples/ exists: {docs_examples_exists}')
+        print(f'✅ examples/ exists: {examples_exists}')
 
-        if not all([readme_exists, docs_dir_exists, docs_examples_exists]):
+        if not all([readme_exists, docs_dir_exists, examples_exists]):
             exit(1)
         "
 
-    - name: Validate example documentation
+    - name: Validate examples comprehensively
       run: |
-        # Check simple example
-        cd docs/examples/simple
-        test -f README.md
-        test -f main.py
-        test -f requirements.txt
-        echo "✅ Simple example documentation is valid"
-
-        # Check multi-agent example
-        cd ../multi-agent
-        test -f README.md
-        test -f main.py
-        test -f requirements.txt
-        echo "✅ Multi-agent example documentation is valid"
+        uv run python scripts/validate-examples-ci.py

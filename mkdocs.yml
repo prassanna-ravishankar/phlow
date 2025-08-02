@@ -30,8 +30,7 @@ nav:
     - API Documentation: api-reference.md
     - Troubleshooting: troubleshooting.md
   - Examples:
-    - Simple Agent: examples/simple/README.md
-    - Multi-Agent: examples/multi-agent/README.md
+    - Overview: examples.md
 
 markdown_extensions:
   - admonition
