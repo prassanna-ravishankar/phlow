@@ -24,7 +24,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        uv sync --all-extras --dev
+        uv sync --extra fastapi --extra rbac --extra redis --extra monitoring --extra examples --dev
 
     - name: Build package
       run: |
@@ -44,11 +44,10 @@ jobs:
 
     - name: Create GitHub Release
       if: startsWith(github.ref, 'refs/tags/')
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v2
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        tag_name: ${{ github.ref_name }}
+        name: Release ${{ github.ref_name }}
         draft: false
         prerelease: false
+        generate_release_notes: true
