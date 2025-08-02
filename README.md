@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="docs/phlow-logo.png" alt="Phlow Logo" width="400">
+  <img src="https://raw.githubusercontent.com/prassanna-ravishankar/phlow/main/docs/phlow-logo.png" alt="Phlow Logo" width="400">
 
   # Phlow
 
