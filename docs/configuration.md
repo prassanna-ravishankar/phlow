@@ -9,9 +9,16 @@ Configure Phlow for your A2A agent.
 SUPABASE_URL="https://your-project.supabase.co"
 SUPABASE_ANON_KEY="your-anon-key"
 
-# Authentication (required)
+# Authentication - Choose ONE approach:
+
+# Option 1: Environment variables (development only)
 PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----..."
 PUBLIC_KEY="-----BEGIN PUBLIC KEY-----..."
+
+# Option 2: Secure key storage (recommended for production)
+PHLOW_KEY_STORE_TYPE="vault"  # or "aws", "encrypted_file"
+VAULT_URL="https://vault.example.com"
+VAULT_TOKEN="your-vault-token"
 
 # AI Integration (optional)
 GEMINI_API_KEY="your-gemini-api-key"

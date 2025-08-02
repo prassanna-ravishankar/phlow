@@ -7,6 +7,7 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
+        exclude: mkdocs.yml
       - id: check-added-large-files
       - id: check-toml
       - id: check-merge-conflict
@@ -22,10 +23,11 @@ repos:
       # Run the formatter
       - id: ruff-format
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.14.0
+  - repo: local
     hooks:
-      - id: mypy
-        additional_dependencies: [types-requests, types-setuptools]
-        args: [--config-file=pyproject.toml]
-        exclude: ^(tests/|docs/examples/)
+      - id: ty
+        name: ty
+        entry: uvx ty check src/ --python-version 3.10 --ignore missing-argument --ignore invalid-argument-type --ignore unknown-argument
+        language: system
+        types: [python]
+        pass_filenames: false

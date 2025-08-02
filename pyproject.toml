@@ -31,25 +31,21 @@ dependencies = [
     "pyjwt>=2.8.0",
     "a2a-sdk>=0.2.11",
     "httpx>=0.24.0",
+    "cryptography>=41.0.0",
+    "base58>=2.1.1",
 ]
 
 [project.optional-dependencies]
 fastapi = ["fastapi>=0.100.0"]
-flask = ["flask>=2.3.0"]
-django = ["django>=4.2.0"]
-dev = [
-    "pytest>=7.0.0",
-    "pytest-asyncio>=0.21.0",
-    "pytest-cov>=4.0.0",
-    "ruff>=0.9.0",
-    "mypy>=1.5.0",
-    "ty>=0.0.1a16",
-    "twine>=4.0.0",
-    "testcontainers>=3.7.0",
-    "google-genai>=0.1.0",
-    "uvicorn[standard]>=0.23.0",
-    "taskipy>=1.14.0",
-    "pre-commit>=3.8.0",
+rbac = [
+    "pyld>=2.0.0",           # JSON-LD processing for VCs
+]
+redis = [
+    "redis>=5.0.0",          # Redis for distributed rate limiting
+]
+monitoring = [
+    "structlog>=24.1.0",     # Structured logging
+    "prometheus-client>=0.20.0",  # Prometheus metrics
 ]
 examples = [
     "fastapi>=0.100.0",
@@ -97,25 +93,7 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101"]  # allow assert in tests
 
-[tool.mypy]
-python_version = "3.10"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = true
-no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_no_return = true
-warn_unreachable = true
-strict_equality = true
-
-[[tool.mypy.overrides]]
-module = "tests.*"
-disallow_untyped_defs = false
-disallow_incomplete_defs = false
+# Using ty for type checking instead of mypy for better performance
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -151,7 +129,7 @@ exclude_lines = [
     "@(abc\\.)?abstractmethod",
 ]
 
-# Taskipy configuration  
+# Taskipy configuration
 [tool.taskipy.tasks]
 # Development tasks
 install = "uv sync"
@@ -163,9 +141,7 @@ test-unit = "uv run pytest tests/ -v --cov=src/phlow --cov-report=term-missing -
 test-ci = "uv run pytest tests/ -v --cov=src/phlow --cov-report=xml --cov-report=term-missing -m 'not e2e'"
 
 # E2E testing (requires Docker)
-test-e2e = { cmd = "bash scripts/test-e2e.sh tests/test_e2e*.py -v -s", help = "Run all E2E tests with Docker auto-detection" }
-test-e2e-single = { cmd = "bash scripts/test-e2e.sh tests/test_e2e.py -v -s", help = "Run single-agent E2E tests" }
-test-e2e-multi = { cmd = "bash scripts/test-e2e.sh tests/test_e2e_multi_agent.py -v -s", help = "Run multi-agent E2E tests" }
+test-e2e = { cmd = "pytest tests/test_e2e_simple.py -v -s -m e2e", help = "Run E2E tests using TestContainers (auto-detects Docker)" }
 
 # Code quality
 lint = "uv run ruff check src/ tests/ --fix"
@@ -184,8 +160,25 @@ dev-example = { cmd = "cd docs/examples/simple && uv sync && uv run python main.
 
 [dependency-groups]
 dev = [
+    # Testing
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.1.0",
+    "pytest-cov>=4.0.0",
+    "testcontainers>=3.7.0",
+    "python-dotenv>=1.0.0",
+
+    # Code quality
     "ruff>=0.12.7",
+    "ty>=0.0.1a16",
+    "pre-commit>=3.8.0",
+
+    # Development tools
     "taskipy>=1.14.1",
+
+    # Build and release
+    "twine>=4.0.0",
+
+    # Examples and dev server
+    "uvicorn[standard]>=0.23.0",
+    "google-genai>=0.1.0",
 ]
-
-

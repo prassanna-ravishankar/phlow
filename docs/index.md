@@ -23,7 +23,7 @@ from phlow.integrations.fastapi import FastAPIPhlowAuth
 config = PhlowConfig(
     agent_card=AgentCard(
         name="My Agent",
-        description="AI assistant agent", 
+        description="AI assistant agent",
         service_url="https://my-agent.com",
         skills=["chat", "analysis"],
         metadata={"agent_id": "my-agent-id"}
@@ -34,7 +34,7 @@ config = PhlowConfig(
 )
 
 auth = FastAPIPhlowAuth(config)
-    
+
 @app.post("/api/analyze")
 @auth.require_agent_auth
 async def analyze(request: Request):
@@ -45,6 +45,8 @@ async def analyze(request: Request):
 ## Key Features
 
 🔐 **A2A Authentication** - JWT token verification with RSA keys
+
+🛡️ **Role-Based Access Control** - W3C Verifiable Credentials for fine-grained authorization
 
 🤖 **Agent Discovery** - `/.well-known/agent.json` endpoint compliance
 
@@ -64,18 +66,20 @@ graph TB
     B --> C[A2A Protocol]
     B --> D[Supabase Backend]
     B --> E[Gemini AI]
-    
+
     C --> F[JWT Authentication]
     C --> G[Agent Discovery]
     C --> H[Multi-Agent Tasks]
+    C --> I[RBAC & Credentials]
 ```
 
 ## Getting Started
 
 1. **[Quick Start](quickstart.md)** - Build your first A2A agent
-2. **[Installation](installation.md)** - Setup guide  
+2. **[Installation](installation.md)** - Setup guide
 3. **[Configuration](configuration.md)** - Environment variables
-4. **[Example Agent](examples/simple/)** - Working code
+4. **[RBAC Guide](rbac.md)** - Role-based access control
+5. **[Example Agent](examples/simple/)** - Working code
 
 ## Development
 

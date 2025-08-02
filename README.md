@@ -1,8 +1,8 @@
 <div align="center">
   <img src="docs/phlow-logo.png" alt="Phlow Logo" width="400">
-  
+
   # Phlow
-  
+
   **JWT authentication middleware for AI agents with Supabase integration**
 </div>
 
@@ -17,7 +17,7 @@
 
 Phlow is authentication middleware for AI agents that's evolving into the **Agent Marketplace Platform** - enabling agents to discover, authenticate, and monetize their capabilities.
 
-**Current: A2A Protocol + Supabase • JWT Auth • Middleware**  
+**Current: A2A Protocol + Supabase • JWT Auth • Middleware**
 **Vision: The "App Store for AI Agents"**
 
 ### 🌟 Our Evolution Path
@@ -25,7 +25,7 @@ Phlow is authentication middleware for AI agents that's evolving into the **Agen
 ```
 Phase 1: Authentication Middleware (Current)
    ↓
-Phase 2: Agent Discovery & Registry  
+Phase 2: Agent Discovery & Registry
    ↓
 Phase 3: Agent Marketplace Platform
 ```
@@ -62,7 +62,7 @@ phlow = PhlowMiddleware(config)
 ### FastAPI Middleware
 
 ```python
-# Use A2A authentication with Supabase features  
+# Use A2A authentication with Supabase features
 @app.post("/api/chat")
 async def chat_endpoint(context: PhlowContext = Depends(auth_required)):
     # Access agent info and Supabase client
@@ -79,7 +79,7 @@ async def chat_endpoint(context: PhlowContext = Depends(auth_required)):
 - **🛡️ RLS Helpers** - Generate basic Supabase Row Level Security policies
 - **📊 Basic Audit** - Log authentication events to Supabase
 - **🌐 Python Package** - Pure Python implementation
-- **🔧 Middleware** - FastAPI integration helpers
+- **🔧 FastAPI Integration** - Complete middleware with dependency injection
 
 
 ## How It Works
@@ -87,9 +87,9 @@ async def chat_endpoint(context: PhlowContext = Depends(auth_required)):
 ```mermaid
 sequenceDiagram
     participant A as Agent A
-    participant B as Agent B  
+    participant B as Agent B
     participant S as Supabase Registry
-    
+
     A->>A: Generate JWT with private key
     A->>B: Send request + JWT + Agent ID header
     B->>S: Lookup Agent A's public key
@@ -173,13 +173,13 @@ async def handle_message(context: PhlowContext = Depends(auth_required)):
 
 | Language | Package | Framework Support |
 |----------|---------|------------------|
-| Python | `phlow` | FastAPI, Flask |
+| Python | `phlow` | FastAPI |
 
 ## 🚀 Roadmap & Vision
 
 ### Phase 1: Authentication Middleware (Current)
 - ✅ JWT authentication for A2A Protocol
-- ✅ Agent card storage in Supabase  
+- ✅ Agent card storage in Supabase
 - ✅ Basic middleware for FastAPI
 - 🔄 Enhanced security and testing
 
@@ -203,7 +203,7 @@ Pull requests welcome! We're building towards our marketplace vision:
 
 **Current Focus Areas:**
 - Authentication middleware improvements
-- Supabase integration enhancements  
+- Supabase integration enhancements
 - Agent registry and discovery features
 - Developer experience improvements
 

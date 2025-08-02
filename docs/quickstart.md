@@ -76,10 +76,10 @@ async def send_task(request: Request, task: dict):
         for part in task["message"]["parts"]:
             if part.get("type") == "text":
                 message_text += part.get("text", "")
-    
+
     # Process with your AI (integrate Gemini, OpenAI, etc.)
     response_text = f"Hello! I received: {message_text}"
-    
+
     # Return A2A-compliant response
     return {
         "id": task.get("id"),
@@ -105,7 +105,7 @@ async def chat(request: Request):
 # Create .env file
 cat > .env << EOF
 PRIVATE_KEY="your-rsa-private-key"
-PUBLIC_KEY="your-rsa-public-key"  
+PUBLIC_KEY="your-rsa-public-key"
 SUPABASE_URL="https://your-project.supabase.co"
 SUPABASE_ANON_KEY="your-anon-key"
 GEMINI_API_KEY="your-gemini-api-key"  # Optional for AI features
@@ -135,7 +135,7 @@ curl -X POST http://localhost:8000/tasks/send \
   -d '{
     "id": "task-123",
     "message": {
-      "role": "user", 
+      "role": "user",
       "parts": [{"type": "text", "text": "Hello from another agent!"}]
     }
   }'

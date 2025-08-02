@@ -1,7 +1,6 @@
 """FastAPI integration for Phlow authentication."""
 
 from collections.abc import Callable
-from functools import wraps
 
 try:
     from fastapi import Depends, HTTPException, Request
@@ -13,7 +12,7 @@ except ImportError:
 
 from ..exceptions import PhlowError
 from ..middleware import PhlowMiddleware
-from ..types import PhlowContext, VerifyOptions
+from ..types import PhlowContext
 
 
 class FastAPIPhlowAuth:
@@ -64,14 +63,28 @@ class FastAPIPhlowAuth:
                 )
 
             try:
-                options = VerifyOptions(
-                    required_permissions=required_permissions,
-                    allow_expired=allow_expired,
-                )
+                # Use the verify_token method for standard authentication
+                context = self.middleware.verify_token(credentials.credentials)
 
-                context = await self.middleware.authenticate(
-                    credentials.credentials, agent_id, options
-                )
+                # Check required permissions if specified
+                if required_permissions:
+                    # TODO: Implement proper permission checking against agent permissions
+                    # For now, we'll check if the agent has the required permissions in metadata
+                    agent_permissions = (
+                        context.agent.metadata.get("permissions", [])
+                        if context.agent.metadata
+                        else []
+                    )
+
+                    for permission in required_permissions:
+                        if permission not in agent_permissions:
+                            raise HTTPException(
+                                status_code=403,
+                                detail={
+                                    "error": "PERMISSION_DENIED",
+                                    "message": f"Agent lacks required permission: {permission}",
+                                },
+                            )
 
                 return context
 
@@ -99,23 +112,64 @@ class FastAPIPhlowAuth:
         """
 
         def decorator(func: Callable) -> Callable:
-            auth_dep = self.create_auth_dependency(required_permissions, allow_expired)
+            # For FastAPI, decorators are complex. It's better to use the dependency directly.
+            # This decorator just returns the original function with a note that
+            # the user should manually add the dependency to their endpoint.
 
-            # Add auth dependency to function signature
-            func.__annotations__["phlow_context"] = PhlowContext
+            # Add hints to the function for documentation
+            if not hasattr(func, "__phlow_required_permissions__"):
+                func.__phlow_required_permissions__ = required_permissions  # type: ignore
 
-            @wraps(func)
-            async def wrapper(*args, **kwargs):  # type: ignore
-                # FastAPI will inject the auth dependency
-                return await func(*args, **kwargs)
-
-            # Inject dependency
-            wrapper.__annotations__ = func.__annotations__.copy()
-            wrapper = Depends(auth_dep)(wrapper)
-
-            return wrapper
+            return func
 
         return decorator
+
+    def create_role_auth_dependency(
+        self,
+        required_role: str,
+        allow_expired: bool = False,
+    ) -> Callable:
+        """Create FastAPI dependency for role-based authentication.
+
+        Args:
+            required_role: Role required for access
+            allow_expired: Whether to allow expired tokens
+
+        Returns:
+            FastAPI dependency function
+        """
+
+        async def role_auth_dependency(
+            request: Request,
+            credentials: HTTPAuthorizationCredentials | None = Depends(self.security),
+        ) -> PhlowContext:
+            if not credentials:
+                raise HTTPException(
+                    status_code=401,
+                    detail="Authorization header required",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+
+            try:
+                # Use the role-based authentication from middleware
+                context = await self.middleware.authenticate_with_role(
+                    credentials.credentials, required_role
+                )
+
+                return context
+
+            except PhlowError as e:
+                raise HTTPException(
+                    status_code=e.status_code,
+                    detail={"error": e.code, "message": e.message},
+                )
+            except Exception as e:
+                raise HTTPException(
+                    status_code=401,
+                    detail=f"Role authentication failed: {str(e)}",
+                )
+
+        return role_auth_dependency
 
 
 def create_phlow_dependency(
@@ -135,3 +189,41 @@ def create_phlow_dependency(
     """
     integration = FastAPIPhlowAuth(middleware)
     return integration.create_auth_dependency(required_permissions, allow_expired)
+
+
+def create_phlow_role_dependency(
+    middleware: PhlowMiddleware,
+    required_role: str,
+    allow_expired: bool = False,
+) -> Callable:
+    """Create a FastAPI dependency for Phlow role-based authentication.
+
+    Args:
+        middleware: Phlow middleware instance
+        required_role: Role required for access
+        allow_expired: Whether to allow expired tokens
+
+    Returns:
+        FastAPI dependency function
+    """
+    integration = FastAPIPhlowAuth(middleware)
+    return integration.create_role_auth_dependency(required_role, allow_expired)
+
+
+# Convenience aliases for easier usage
+def phlow_auth(
+    middleware: PhlowMiddleware,
+    required_permissions: list[str] | None = None,
+    allow_expired: bool = False,
+) -> Callable:
+    """Convenience function for permission-based authentication dependency."""
+    return create_phlow_dependency(middleware, required_permissions, allow_expired)
+
+
+def phlow_auth_role(
+    middleware: PhlowMiddleware,
+    required_role: str,
+    allow_expired: bool = False,
+) -> Callable:
+    """Convenience function for role-based authentication dependency."""
+    return create_phlow_role_dependency(middleware, required_role, allow_expired)

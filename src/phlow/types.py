@@ -2,8 +2,7 @@
 
 from typing import Any
 
-from pydantic import BaseModel
-from supabase import Client as SupabaseClient
+from pydantic import BaseModel, Field
 from typing_extensions import TypedDict
 
 try:
@@ -41,6 +40,22 @@ class RateLimitingConfig(TypedDict):
     window_ms: int
 
 
+class RateLimitConfigs(BaseModel):
+    """Configuration for different types of rate limiting."""
+
+    # Authentication rate limiting (per token hash)
+    auth_max_requests: int = 60
+    auth_window_ms: int = 60_000  # 1 minute
+
+    # Role request rate limiting (per agent ID)
+    role_request_max_requests: int = 10
+    role_request_window_ms: int = 60_000  # 1 minute
+
+    # Global rate limiting (all requests)
+    global_max_requests: int | None = None
+    global_window_ms: int = 60_000  # 1 minute
+
+
 class PhlowConfig(BaseModel):
     """Phlow configuration."""
 
@@ -56,7 +71,10 @@ class PhlowConfig(BaseModel):
     # Phlow-specific options
     enable_audit_log: bool = False
     enable_rate_limiting: bool = False
-    rate_limit_config: RateLimitingConfig | None = None
+    rate_limit_config: RateLimitingConfig | None = (
+        None  # Legacy, kept for compatibility
+    )
+    rate_limit_configs: RateLimitConfigs = Field(default_factory=RateLimitConfigs)
 
 
 class PhlowContext(BaseModel):
@@ -68,8 +86,9 @@ class PhlowContext(BaseModel):
     claims: dict[str, Any]
 
     # Phlow additions
-    supabase: SupabaseClient
+    supabase: Any  # SupabaseClient in production, mockable for tests
     a2a_client: Any | None = None  # A2AClient when available
+    verified_roles: list[str] = Field(default_factory=list)  # RBAC verified roles
 
     model_config = {"arbitrary_types_allowed": True}
 

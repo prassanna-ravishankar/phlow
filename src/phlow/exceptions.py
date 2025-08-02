@@ -44,3 +44,12 @@ class RateLimitError(PhlowError):
 
     def __init__(self, message: str = "Rate limit exceeded", code: str = "RATE_LIMIT"):
         super().__init__(message, code, 429)
+
+
+class CircuitBreakerError(PhlowError):
+    """Raised when circuit breaker is open."""
+
+    def __init__(
+        self, message: str = "Circuit breaker is open", code: str = "CIRCUIT_BREAKER"
+    ):
+        super().__init__(message, code, 503)
