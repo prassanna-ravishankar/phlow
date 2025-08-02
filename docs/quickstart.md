@@ -99,17 +99,65 @@ async def chat(request: Request):
     return {"message": f"Hello from {agent.name}"}
 ```
 
-## Set Environment Variables
+## Setup Environment
+
+### Step 1: Generate RSA Keys
 
 ```bash
-# Create .env file
+# Generate RSA key pair
+openssl genrsa -out private_key.pem 2048
+openssl rsa -in private_key.pem -pubout -out public_key.pem
+
+# Convert to single-line format for environment variables
+PRIVATE_KEY=$(awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' private_key.pem)
+PUBLIC_KEY=$(awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' public_key.pem)
+```
+
+### Step 2: Setup Supabase
+
+1. **Create Supabase Project**: Go to [supabase.com](https://supabase.com) and create a new project
+
+2. **Get API Keys**: From Settings > API, copy:
+   - Project URL
+   - `anon` key (public)
+   - `service_role` key (secret, for admin operations)
+
+3. **Setup Database Schema**:
+   ```bash
+   # Apply Phlow database schema
+   curl -o schema.sql https://raw.githubusercontent.com/prassanna-ravishankar/phlow/main/docs/database-schema.sql
+
+   # Apply to your Supabase database (replace with your project details)
+   psql "postgresql://postgres:[PASSWORD]@db.[PROJECT-ID].supabase.co:5432/postgres" -f schema.sql
+   ```
+
+### Step 3: Set Environment Variables
+
+```bash
+# Create .env file with your actual values
 cat > .env << EOF
-PRIVATE_KEY="your-rsa-private-key"
-PUBLIC_KEY="your-rsa-public-key"
-SUPABASE_URL="https://your-project.supabase.co"
-SUPABASE_ANON_KEY="your-anon-key"
-GEMINI_API_KEY="your-gemini-api-key"  # Optional for AI features
+# RSA Keys (generated above)
+PRIVATE_KEY="$PRIVATE_KEY"
+PUBLIC_KEY="$PUBLIC_KEY"
+
+# Supabase Configuration
+SUPABASE_URL="https://your-project-id.supabase.co"
+SUPABASE_ANON_KEY="your-anon-key-from-supabase"
+SUPABASE_SERVICE_ROLE_KEY="your-service-role-key-from-supabase"
+
+# Agent Configuration
+AGENT_ID="my-agent-$(date +%s)"
+AGENT_NAME="My AI Agent"
+AGENT_DESCRIPTION="A2A Protocol compliant AI assistant"
+AGENT_PERMISSIONS="read:messages,write:responses"
+
+# Optional: AI Provider Keys
+GEMINI_API_KEY="your-gemini-api-key"
+OPENAI_API_KEY="your-openai-api-key"
 EOF
+
+# Load environment variables
+source .env
 ```
 
 ## Run Your Agent

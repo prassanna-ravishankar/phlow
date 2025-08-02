@@ -15,9 +15,20 @@ theme:
 
 nav:
   - Home: index.md
-  - Quick Start: quickstart.md
-  - Installation: installation.md
-  - Configuration: configuration.md
+  - Getting Started:
+    - Installation: installation.md
+    - Quick Start: quickstart.md
+    - Configuration: configuration.md
+  - Guides:
+    - RBAC & Permissions: rbac.md
+    - Key Management: key-management.md
+    - Rate Limiting: rate-limiting.md
+    - Circuit Breakers: circuit-breakers.md
+    - Monitoring: monitoring.md
+    - Production Deployment: production-deployment.md
+  - Reference:
+    - API Documentation: api-reference.md
+    - Troubleshooting: troubleshooting.md
   - Examples:
     - Simple Agent: examples/simple/README.md
     - Multi-Agent: examples/multi-agent/README.md
