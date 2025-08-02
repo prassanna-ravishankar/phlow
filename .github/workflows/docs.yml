@@ -44,4 +44,4 @@ jobs:
 
     - name: Validate examples comprehensively
       run: |
-        uv run python scripts/validate-examples-ci.py
+        uv run task validate-examples-ci

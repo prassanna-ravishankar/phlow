@@ -160,7 +160,7 @@ dev-example = { cmd = "cd examples/simple && uv sync && uv run python main.py", 
 
 # Example validation
 validate-examples = { cmd = "bash scripts/validate-examples.sh", help = "Validate all examples with full dependencies" }
-validate-examples-ci = { cmd = "echo 'Use GitHub Actions for CI validation (no external dependencies)'", help = "CI validation runs in GitHub Actions" }
+validate-examples-ci = { cmd = "uv run python scripts/validate-examples-ci.py", help = "Validate examples without external dependencies (CI-safe)" }
 
 [dependency-groups]
 dev = [
