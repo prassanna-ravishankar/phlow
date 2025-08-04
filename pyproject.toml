@@ -33,6 +33,9 @@ dependencies = [
     "httpx>=0.24.0",
     "cryptography>=41.0.0",
     "base58>=2.1.1",
+    "textual>=0.47.0",
+    "rich>=13.0.0",
+    "python-dotenv>=1.0.0",
 ]
 
 [project.optional-dependencies]
@@ -46,11 +49,6 @@ redis = [
 monitoring = [
     "structlog>=24.1.0",     # Structured logging
     "prometheus-client>=0.20.0",  # Prometheus metrics
-]
-phlowtop = [
-    "textual>=0.47.0",       # TUI framework
-    "rich>=13.0.0",          # Rich text and formatting
-    "python-dotenv>=1.0.0",  # Environment variables
 ]
 examples = [
     "fastapi>=0.100.0",

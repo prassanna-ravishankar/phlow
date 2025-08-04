@@ -1211,7 +1211,10 @@ dependencies = [
     { name = "httpx" },
     { name = "pydantic" },
     { name = "pyjwt" },
+    { name = "python-dotenv" },
+    { name = "rich" },
     { name = "supabase" },
+    { name = "textual" },
     { name = "typing-extensions" },
 ]
 
@@ -1228,11 +1231,6 @@ fastapi = [
 monitoring = [
     { name = "prometheus-client" },
     { name = "structlog" },
-]
-phlowtop = [
-    { name = "python-dotenv" },
-    { name = "rich" },
-    { name = "textual" },
 ]
 rbac = [
     { name = "pyld" },
@@ -1271,18 +1269,18 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.0.0" },
     { name = "pyjwt", specifier = ">=2.8.0" },
     { name = "pyld", marker = "extra == 'rbac'", specifier = ">=2.0.0" },
+    { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "python-dotenv", marker = "extra == 'examples'", specifier = ">=1.0.0" },
-    { name = "python-dotenv", marker = "extra == 'phlowtop'", specifier = ">=1.0.0" },
     { name = "redis", marker = "extra == 'redis'", specifier = ">=5.0.0" },
     { name = "requests", marker = "extra == 'examples'", specifier = ">=2.31.0" },
-    { name = "rich", marker = "extra == 'phlowtop'", specifier = ">=13.0.0" },
+    { name = "rich", specifier = ">=13.0.0" },
     { name = "structlog", marker = "extra == 'monitoring'", specifier = ">=24.1.0" },
     { name = "supabase", specifier = ">=2.0.0" },
-    { name = "textual", marker = "extra == 'phlowtop'", specifier = ">=0.47.0" },
+    { name = "textual", specifier = ">=0.47.0" },
     { name = "typing-extensions", specifier = ">=4.0.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'examples'", specifier = ">=0.23.0" },
 ]
-provides-extras = ["fastapi", "rbac", "redis", "monitoring", "phlowtop", "examples"]
+provides-extras = ["fastapi", "rbac", "redis", "monitoring", "examples"]
 
 [package.metadata.requires-dev]
 dev = [

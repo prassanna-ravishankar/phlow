@@ -2,19 +2,11 @@
 
 import sys
 
+from .app import PhlowTopApp
+
 
 def main() -> int:
     """Main entry point for phlowtop CLI."""
-    try:
-        from .app import PhlowTopApp
-    except ImportError as e:
-        print(
-            "phlowtop requires additional dependencies. Install with: uv add --group phlowtop phlow[phlowtop]",
-            file=sys.stderr,
-        )
-        print(f"Import error: {e}", file=sys.stderr)
-        return 1
-
     try:
         app = PhlowTopApp()
         app.run()
