@@ -47,12 +47,20 @@ monitoring = [
     "structlog>=24.1.0",     # Structured logging
     "prometheus-client>=0.20.0",  # Prometheus metrics
 ]
+phlowtop = [
+    "textual>=0.47.0",       # TUI framework
+    "rich>=13.0.0",          # Rich text and formatting
+    "python-dotenv>=1.0.0",  # Environment variables
+]
 examples = [
     "fastapi>=0.100.0",
     "uvicorn[standard]>=0.23.0",
     "python-dotenv>=1.0.0",
     "requests>=2.31.0",
 ]
+
+[project.scripts]
+phlowtop = "phlow.phlowtop.__main__:main"
 
 [project.urls]
 Documentation = "https://prassanna.io/phlow/"
