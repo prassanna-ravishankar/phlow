@@ -920,6 +920,241 @@ class PhlowMiddleware:
         # This would use the A2A client to resolve from network
         return None
 
+    async def log_agent_heartbeat(self, agent_id: str) -> None:
+        """Update agent heartbeat timestamp and status.
+
+        Args:
+            agent_id: Agent ID to update
+        """
+        if not self.config.enable_audit_log:
+            return
+
+        try:
+            await (
+                self.supabase.table("agent_cards")
+                .update({"last_heartbeat": "now()", "status": "IDLE"})
+                .eq("agent_id", agent_id)
+                .execute()
+            )
+
+            structured_logger.log_event(
+                "agent_heartbeat",
+                agent_id=agent_id,
+                timestamp=datetime.now(timezone.utc).isoformat(),
+            )
+
+        except Exception as e:
+            structured_logger.log_event(
+                "agent_heartbeat_failed", agent_id=agent_id, error=str(e)
+            )
+
+    async def log_task_received(
+        self, task_id: str, agent_id: str, client_agent_id: str, task_type: str
+    ) -> None:
+        """Log when a task is received and update agent status.
+
+        Args:
+            task_id: Unique task identifier
+            agent_id: Agent receiving the task
+            client_agent_id: Agent requesting the task
+            task_type: Type/category of the task
+        """
+        if not self.config.enable_audit_log:
+            return
+
+        try:
+            # Insert task record
+            await (
+                self.supabase.table("phlow_tasks")
+                .insert(
+                    {
+                        "task_id": task_id,
+                        "agent_id": agent_id,
+                        "client_agent_id": client_agent_id,
+                        "task_type": task_type,
+                        "status": "SUBMITTED",
+                    }
+                )
+                .execute()
+            )
+
+            # Update agent status and increment active tasks
+            await (
+                self.supabase.table("agent_cards")
+                .update({"status": "WORKING", "last_heartbeat": "now()"})
+                .eq("agent_id", agent_id)
+                .execute()
+            )
+
+            # Increment active tasks count using RPC function
+            await self.supabase.rpc(
+                "increment_active_tasks", {"p_agent_id": agent_id}
+            ).execute()
+
+            structured_logger.log_event(
+                "task_received",
+                task_id=task_id,
+                agent_id=agent_id,
+                client_agent_id=client_agent_id,
+                task_type=task_type,
+            )
+
+            metrics_collector.increment_counter(
+                "phlow_tasks_received_total",
+                labels={"agent_id": agent_id, "task_type": task_type},
+            )
+
+        except Exception as e:
+            structured_logger.log_event(
+                "task_received_failed", task_id=task_id, agent_id=agent_id, error=str(e)
+            )
+
+    async def log_task_status(
+        self, task_id: str, status: str, error_message: str | None = None
+    ) -> None:
+        """Update task status and handle agent active task count.
+
+        Args:
+            task_id: Task identifier
+            status: New status (SUBMITTED, WORKING, COMPLETED, FAILED)
+            error_message: Optional error message for failed tasks
+        """
+        if not self.config.enable_audit_log:
+            return
+
+        try:
+            # Prepare update data
+            update_data = {"status": status, "updated_at": "now()"}
+            if error_message:
+                update_data["error_message"] = error_message
+
+            # Update task status
+            await (
+                self.supabase.table("phlow_tasks")
+                .update(update_data)
+                .eq("task_id", task_id)
+                .execute()
+            )
+
+            # If task is completed or failed, decrement active tasks
+            if status in ["COMPLETED", "FAILED"]:
+                # Get the agent_id for this task
+                task_result = await (
+                    self.supabase.table("phlow_tasks")
+                    .select("agent_id")
+                    .eq("task_id", task_id)
+                    .single()
+                    .execute()
+                )
+
+                if task_result.data:
+                    agent_id = task_result.data["agent_id"]
+
+                    # Decrement active tasks count
+                    await self.supabase.rpc(
+                        "decrement_active_tasks", {"p_agent_id": agent_id}
+                    ).execute()
+
+                    # Update agent status to IDLE if no more active tasks
+                    active_tasks_result = await (
+                        self.supabase.table("agent_cards")
+                        .select("active_tasks")
+                        .eq("agent_id", agent_id)
+                        .single()
+                        .execute()
+                    )
+
+                    if (
+                        active_tasks_result.data
+                        and active_tasks_result.data.get("active_tasks", 0) <= 0
+                    ):
+                        await (
+                            self.supabase.table("agent_cards")
+                            .update({"status": "IDLE"})
+                            .eq("agent_id", agent_id)
+                            .execute()
+                        )
+
+            structured_logger.log_event(
+                "task_status_updated",
+                task_id=task_id,
+                status=status,
+                error_message=error_message,
+            )
+
+            metrics_collector.increment_counter(
+                "phlow_task_status_changes_total", labels={"status": status}
+            )
+
+        except Exception as e:
+            structured_logger.log_event(
+                "task_status_update_failed",
+                task_id=task_id,
+                status=status,
+                error=str(e),
+            )
+
+    async def log_message(
+        self,
+        task_id: str,
+        source_agent_id: str,
+        target_agent_id: str,
+        message_type: str,
+        content: dict,
+    ) -> None:
+        """Log inter-agent message for task communication tracking.
+
+        Args:
+            task_id: Task identifier
+            source_agent_id: Agent sending the message
+            target_agent_id: Agent receiving the message
+            message_type: Type of message (request, response, error)
+            content: Message content/payload
+        """
+        if not self.config.enable_audit_log:
+            return
+
+        try:
+            await (
+                self.supabase.table("phlow_messages")
+                .insert(
+                    {
+                        "task_id": task_id,
+                        "source_agent_id": source_agent_id,
+                        "target_agent_id": target_agent_id,
+                        "message_type": message_type,
+                        "content": content,
+                    }
+                )
+                .execute()
+            )
+
+            structured_logger.log_event(
+                "message_logged",
+                task_id=task_id,
+                source_agent_id=source_agent_id,
+                target_agent_id=target_agent_id,
+                message_type=message_type,
+            )
+
+            metrics_collector.increment_counter(
+                "phlow_messages_total",
+                labels={
+                    "source_agent": source_agent_id,
+                    "target_agent": target_agent_id,
+                    "message_type": message_type,
+                },
+            )
+
+        except Exception as e:
+            structured_logger.log_event(
+                "message_logging_failed",
+                task_id=task_id,
+                source_agent_id=source_agent_id,
+                target_agent_id=target_agent_id,
+                error=str(e),
+            )
+
     async def log_auth_event(
         self, agent_id: str, success: bool, metadata: dict | None = None
     ) -> None:
