@@ -1,5 +1,6 @@
 """Supabase client wrapper for phlowtop."""
 
+import asyncio
 from collections.abc import Callable
 from datetime import datetime, timedelta
 from typing import Any
@@ -26,6 +27,10 @@ class SupabaseMonitor:
 
         # Callback registry for real-time events
         self.callbacks: dict[str, list[Callable]] = {}
+
+        # Real-time subscription state
+        self.realtime_channel = None
+        self.subscription_active = False
 
     async def connect(self) -> bool:
         """Connect to Supabase and initialize real-time subscriptions.
@@ -238,25 +243,149 @@ class SupabaseMonitor:
 
     async def start_realtime_subscriptions(self) -> None:
         """Start real-time subscriptions for live updates."""
-        if not self.client:
+        if not self.client or self.subscription_active:
             return
 
         try:
-            # Note: Supabase Python client real-time subscriptions
-            # This is a simplified implementation - in practice you'd use
-            # the realtime-py library or websockets directly
-            self.console.print(
-                "[yellow]Note: Real-time subscriptions not fully implemented yet[/yellow]"
+            # Create a realtime channel
+            self.realtime_channel = self.client.realtime.channel("phlowtop")
+
+            # Subscribe to agent_cards changes
+            self.realtime_channel.on(
+                "postgres_changes",
+                {
+                    "event": "*",
+                    "schema": "public",
+                    "table": "agent_cards",
+                },
+                self._handle_agent_change,
             )
+
+            # Subscribe to phlow_tasks changes
+            self.realtime_channel.on(
+                "postgres_changes",
+                {
+                    "event": "*",
+                    "schema": "public",
+                    "table": "phlow_tasks",
+                },
+                self._handle_task_change,
+            )
+
+            # Subscribe to phlow_messages changes
+            self.realtime_channel.on(
+                "postgres_changes",
+                {
+                    "event": "*",
+                    "schema": "public",
+                    "table": "phlow_messages",
+                },
+                self._handle_message_change,
+            )
+
+            # Start the subscription
+            await self.realtime_channel.subscribe()
+            self.subscription_active = True
+
+            self.console.print("[green]✓[/green] Real-time subscriptions started")
 
         except Exception as e:
             self.console.print(
                 f"[red]Error starting real-time subscriptions: {e}[/red]"
             )
 
+    def _handle_agent_change(self, payload: dict[str, Any]) -> None:
+        """Handle real-time agent changes.
+
+        Args:
+            payload: Realtime payload from Supabase
+        """
+        try:
+            payload.get("eventType", "")
+
+            # Trigger registered callbacks
+            for callback in self.callbacks.get("agent_change", []):
+                try:
+                    # Run callback in background to avoid blocking
+                    asyncio.create_task(self._run_callback(callback, payload))
+                except Exception as e:
+                    self.console.print(f"[red]Error in agent callback: {e}[/red]")
+
+        except Exception as e:
+            self.console.print(f"[red]Error handling agent change: {e}[/red]")
+
+    def _handle_task_change(self, payload: dict[str, Any]) -> None:
+        """Handle real-time task changes.
+
+        Args:
+            payload: Realtime payload from Supabase
+        """
+        try:
+            payload.get("eventType", "")
+
+            # Trigger registered callbacks
+            for callback in self.callbacks.get("task_change", []):
+                try:
+                    # Run callback in background to avoid blocking
+                    asyncio.create_task(self._run_callback(callback, payload))
+                except Exception as e:
+                    self.console.print(f"[red]Error in task callback: {e}[/red]")
+
+        except Exception as e:
+            self.console.print(f"[red]Error handling task change: {e}[/red]")
+
+    def _handle_message_change(self, payload: dict[str, Any]) -> None:
+        """Handle real-time message changes.
+
+        Args:
+            payload: Realtime payload from Supabase
+        """
+        try:
+            payload.get("eventType", "")
+
+            # Trigger registered callbacks
+            for callback in self.callbacks.get("message_change", []):
+                try:
+                    # Run callback in background to avoid blocking
+                    asyncio.create_task(self._run_callback(callback, payload))
+                except Exception as e:
+                    self.console.print(f"[red]Error in message callback: {e}[/red]")
+
+        except Exception as e:
+            self.console.print(f"[red]Error handling message change: {e}[/red]")
+
+    async def _run_callback(self, callback: Callable, payload: dict[str, Any]) -> None:
+        """Run a callback function safely.
+
+        Args:
+            callback: Callback function to run
+            payload: Payload to pass to callback
+        """
+        try:
+            if asyncio.iscoroutinefunction(callback):
+                await callback(payload)
+            else:
+                callback(payload)
+        except Exception as e:
+            self.console.print(f"[red]Error in callback: {e}[/red]")
+
+    async def stop_realtime_subscriptions(self) -> None:
+        """Stop real-time subscriptions."""
+        if self.realtime_channel and self.subscription_active:
+            try:
+                await self.realtime_channel.unsubscribe()
+                self.subscription_active = False
+                self.console.print("[yellow]Real-time subscriptions stopped[/yellow]")
+            except Exception as e:
+                self.console.print(f"[red]Error stopping subscriptions: {e}[/red]")
+
     async def close(self) -> None:
         """Close the Supabase connection and cleanup."""
+        # Stop realtime subscriptions first
+        await self.stop_realtime_subscriptions()
+
         if self.client:
             # Close any open connections
             self.is_connected = False
+            self.client = None
             self.console.print("[yellow]Disconnected from Supabase[/yellow]")

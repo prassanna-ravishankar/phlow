@@ -133,11 +133,14 @@ class PhlowTopApp(App):
 
             self.is_connected = True
 
-            # Start real-time subscriptions
-            await self.supabase.start_realtime_subscriptions()
-
             # Initialize views
             await self._initialize_views()
+
+            # Register real-time callbacks
+            self._register_realtime_callbacks()
+
+            # Start real-time subscriptions
+            await self.supabase.start_realtime_subscriptions()
 
             # Show default view
             await self.action_show_agents()
@@ -154,6 +157,76 @@ class PhlowTopApp(App):
         self.agents_view = AgentsView(self.supabase, self.config)
         self.tasks_view = TasksView(self.supabase, self.config)
         self.messages_view = MessagesView(self.supabase, self.config)
+
+    def _register_realtime_callbacks(self) -> None:
+        """Register callbacks for real-time updates."""
+        # Register agent change callback
+        self.supabase.register_callback("agent_change", self._handle_agent_update)
+
+        # Register task change callback
+        self.supabase.register_callback("task_change", self._handle_task_update)
+
+        # Register message change callback
+        self.supabase.register_callback("message_change", self._handle_message_update)
+
+    async def _handle_agent_update(self, payload: dict) -> None:
+        """Handle real-time agent updates.
+
+        Args:
+            payload: Realtime payload from Supabase
+        """
+        try:
+            # Refresh agents view if it's currently active
+            if self.current_view == "agents" and self.agents_view:
+                await self.agents_view.refresh_data()
+
+            # Update header stats
+            if self.header:
+                await self.header.update_stats(self.supabase)
+
+        except Exception as e:
+            self.console.print(f"[red]Error handling agent update: {e}[/red]")
+
+    async def _handle_task_update(self, payload: dict) -> None:
+        """Handle real-time task updates.
+
+        Args:
+            payload: Realtime payload from Supabase
+        """
+        try:
+            # Refresh tasks view if it's currently active
+            if self.current_view == "tasks" and self.tasks_view:
+                await self.tasks_view.refresh_data(self.selected_agent_id)
+
+            # Update header stats
+            if self.header:
+                await self.header.update_stats(self.supabase)
+
+        except Exception as e:
+            self.console.print(f"[red]Error handling task update: {e}[/red]")
+
+    async def _handle_message_update(self, payload: dict) -> None:
+        """Handle real-time message updates.
+
+        Args:
+            payload: Realtime payload from Supabase
+        """
+        try:
+            # Check if the message is for the currently selected task
+            if (
+                self.current_view == "messages"
+                and self.messages_view
+                and self.selected_task_id
+            ):
+                message_data = payload.get("new") or payload.get("old")
+                if (
+                    message_data
+                    and message_data.get("task_id") == self.selected_task_id
+                ):
+                    await self.messages_view.refresh_data(self.selected_task_id)
+
+        except Exception as e:
+            self.console.print(f"[red]Error handling message update: {e}[/red]")
 
     def _start_refresh_timer(self) -> None:
         """Start the auto-refresh timer."""
