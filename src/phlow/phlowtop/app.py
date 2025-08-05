@@ -7,7 +7,7 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Container
 from textual.reactive import reactive
-from textual.widgets import Footer, LoadingIndicator
+from textual.widgets import Footer, LoadingIndicator, Static
 
 from .config import PhlowTopConfig
 from .supabase_client import SupabaseMonitor
@@ -33,12 +33,12 @@ class PhlowTopApp(App):
     }
 
     .main-content {
-        dock: fill;
+        height: 1fr;
         background: $surface;
     }
 
     .loading {
-        dock: fill;
+        height: 1fr;
         align: center middle;
     }
 
@@ -74,6 +74,14 @@ class PhlowTopApp(App):
         super().__init__()
         self.console = Console()
 
+        # Initialize attributes that are always needed
+        self.supabase = None
+        self.agents_view: AgentsView | None = None
+        self.tasks_view: TasksView | None = None
+        self.messages_view: MessagesView | None = None
+        self.header: PhlowTopHeader | None = None
+        self.refresh_timer: asyncio.Task | None = None
+
         # Load configuration
         try:
             self.config = PhlowTopConfig.from_env()
@@ -86,19 +94,10 @@ class PhlowTopApp(App):
         # Initialize Supabase monitor
         self.supabase = SupabaseMonitor(self.config)
 
-        # Views
-        self.agents_view: AgentsView | None = None
-        self.tasks_view: TasksView | None = None
-        self.messages_view: MessagesView | None = None
-        self.header: PhlowTopHeader | None = None
-
-        # Auto-refresh timer
-        self.refresh_timer: asyncio.Task | None = None
-
     def compose(self) -> ComposeResult:
         """Compose the UI layout."""
         if self.error_message:
-            yield Container(f"Error: {self.error_message}", classes="error")
+            yield Container(Static(f"Error: {self.error_message}"), classes="error")
             yield Footer()
             return
 
@@ -108,7 +107,9 @@ class PhlowTopApp(App):
 
         if not self.is_connected:
             yield Container(
-                LoadingIndicator(), "Connecting to Supabase...", classes="loading"
+                LoadingIndicator(),
+                Static("Connecting to Supabase..."),
+                classes="loading",
             )
         else:
             # Main content area
@@ -160,6 +161,9 @@ class PhlowTopApp(App):
 
     def _register_realtime_callbacks(self) -> None:
         """Register callbacks for real-time updates."""
+        if not self.supabase:
+            return
+
         # Register agent change callback
         self.supabase.register_callback("agent_change", self._handle_agent_update)
 
