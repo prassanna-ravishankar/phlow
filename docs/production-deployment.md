@@ -408,7 +408,7 @@ spec:
 ```python
 config = PhlowConfig(
     # ... basic config
-    enable_audit_logging=True,
+    enable_audit_log=True,
     rate_limiting=RateLimitConfig(requests_per_minute=60),
     log_level="DEBUG"
 )
@@ -418,7 +418,7 @@ config = PhlowConfig(
 ```python
 config = PhlowConfig(
     # ... basic config
-    enable_audit_logging=True,
+    enable_audit_log=True,
     rate_limiting=RateLimitConfig(
         requests_per_minute=500,
         redis_url="redis://staging-redis:6379"
@@ -431,7 +431,7 @@ config = PhlowConfig(
 ```python
 config = PhlowConfig(
     # ... basic config
-    enable_audit_logging=True,
+    enable_audit_log=True,
     rate_limiting=RateLimitConfig(
         requests_per_minute=2000,
         burst_size=100,

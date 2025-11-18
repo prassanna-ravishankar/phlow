@@ -12,19 +12,23 @@ except ImportError:
 
 from ..exceptions import PhlowError
 from ..middleware import PhlowMiddleware
-from ..types import PhlowContext
+from ..types import PhlowConfig, PhlowContext
 
 
 class FastAPIPhlowAuth:
     """FastAPI integration for Phlow authentication."""
 
-    def __init__(self, middleware: PhlowMiddleware):
+    def __init__(self, middleware: PhlowMiddleware | PhlowConfig):
         """Initialize FastAPI integration.
 
         Args:
-            middleware: Phlow middleware instance
+            middleware: Phlow middleware instance or PhlowConfig to create middleware from
         """
-        self.middleware = middleware
+        if isinstance(middleware, PhlowMiddleware):
+            self.middleware = middleware
+        else:
+            # middleware is actually a PhlowConfig
+            self.middleware = PhlowMiddleware(middleware)
         self.security = HTTPBearer(auto_error=False)
 
     def create_auth_dependency(

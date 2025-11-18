@@ -36,7 +36,7 @@ config = PhlowConfig(
 auth = FastAPIPhlowAuth(config)
 
 @app.post("/api/analyze")
-@auth.require_agent_auth
+@auth.require_auth()
 async def analyze(request: Request):
     agent = request.state.agent
     return {"message": f"Hello {agent.name}"}

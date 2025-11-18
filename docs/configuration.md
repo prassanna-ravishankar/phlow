@@ -54,7 +54,7 @@ from phlow.integrations.fastapi import FastAPIPhlowAuth
 auth = FastAPIPhlowAuth(config)
 
 @app.post("/protected")
-@auth.require_agent_auth
+@auth.require_auth()
 async def protected_endpoint(request: Request):
     agent = request.state.agent
     return {"agent": agent.name}
@@ -66,7 +66,7 @@ async def protected_endpoint(request: Request):
 ```python
 config = PhlowConfig(
     # ... other config
-    enable_audit=True  # Logs auth events to Supabase
+    enable_audit_log=True  # Logs auth events to Supabase
 )
 ```
 

@@ -4,11 +4,15 @@ A2A Protocol extension with Supabase integration for enhanced agent authenticati
 """
 
 from .exceptions import (
+    AgentNotFoundError,
     AuthenticationError,
     AuthorizationError,
+    CircuitBreakerError,
+    CircuitBreakerOpenError,
     ConfigurationError,
     PhlowError,
     RateLimitError,
+    RateLimitExceededError,
     TokenError,
 )
 from .middleware import PhlowMiddleware
@@ -22,7 +26,14 @@ from .rbac import (
     VerifiablePresentation,
 )
 from .supabase_helpers import SupabaseHelpers
-from .types import AgentCard, AuditLog, PhlowConfig, PhlowContext, VerifyOptions
+from .types import (
+    AgentCard,
+    AuditLog,
+    PhlowConfig,
+    PhlowContext,
+    RateLimitConfig,
+    VerifyOptions,
+)
 
 
 # Production token operations
@@ -113,7 +124,7 @@ def verify_token(token: str, public_key: str) -> dict:
         raise TokenError(f"Invalid token: {str(e)}")
 
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __all__ = [
     # Core middleware and types
     "PhlowMiddleware",
@@ -122,6 +133,7 @@ __all__ = [
     "VerifyOptions",
     "AuditLog",
     "AgentCard",
+    "RateLimitConfig",
     # Exceptions
     "PhlowError",
     "AuthenticationError",
@@ -129,6 +141,10 @@ __all__ = [
     "ConfigurationError",
     "TokenError",
     "RateLimitError",
+    "RateLimitExceededError",
+    "CircuitBreakerError",
+    "CircuitBreakerOpenError",
+    "AgentNotFoundError",
     # Helpers
     "SupabaseHelpers",
     # RBAC components

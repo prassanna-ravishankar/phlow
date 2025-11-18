@@ -53,3 +53,15 @@ class CircuitBreakerError(PhlowError):
         self, message: str = "Circuit breaker is open", code: str = "CIRCUIT_BREAKER"
     ):
         super().__init__(message, code, 503)
+
+
+class AgentNotFoundError(PhlowError):
+    """Raised when an agent is not found."""
+
+    def __init__(self, message: str = "Agent not found", code: str = "AGENT_NOT_FOUND"):
+        super().__init__(message, code, 404)
+
+
+# Aliases for backward compatibility with documentation
+RateLimitExceededError = RateLimitError
+CircuitBreakerOpenError = CircuitBreakerError

@@ -21,12 +21,8 @@ AuthenticationError: Invalid JWT token
    sudo ntpdate -s time.nist.gov
    ```
 
-2. **Wrong Private/Public Key Pair**: Ensure keys match
-   ```python
-   # Verify key pair matches
-   from phlow.utils import verify_keypair
-   is_valid = verify_keypair(private_key, public_key)
-   ```
+2. **Wrong Private/Public Key Pair**: Ensure your private and public keys are correctly paired
+   - Regenerate keys if needed using the RSA key generation commands in the configuration docs
 
 3. **Malformed Agent ID**: Agent ID in header doesn't match token claims
    ```python

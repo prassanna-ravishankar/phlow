@@ -144,7 +144,7 @@ async def send_task(context: PhlowContext = Depends(auth_required)):
 ### Error Handling
 ```python
 try:
-    context = middleware.verify_jwt(token, agent_id)
+    context = middleware.verify_token(token)
 except AuthenticationError:
     raise HTTPException(401, "Authentication failed")
 ```

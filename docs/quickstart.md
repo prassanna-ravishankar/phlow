@@ -67,7 +67,7 @@ def agent_card():
 
 # 3. A2A Task Endpoint (required by A2A protocol)
 @app.post("/tasks/send")
-@auth.require_agent_auth
+@auth.require_auth()
 async def send_task(request: Request, task: dict):
     """A2A Protocol task endpoint"""
     # Extract message from A2A format
@@ -93,7 +93,7 @@ async def send_task(request: Request, task: dict):
 
 # 4. Protected endpoints
 @app.post("/api/chat")
-@auth.require_agent_auth
+@auth.require_auth()
 async def chat(request: Request):
     agent = request.state.agent
     return {"message": f"Hello from {agent.name}"}

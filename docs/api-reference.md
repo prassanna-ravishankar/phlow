@@ -18,12 +18,11 @@ middleware = PhlowMiddleware(config)
 
 #### Methods
 
-##### `verify_jwt(token: str, agent_id: str) -> PhlowContext`
+##### `verify_token(token: str) -> PhlowContext`
 Verifies a JWT token and returns authentication context.
 
 **Parameters:**
 - `token` - JWT token to verify
-- `agent_id` - ID of the agent making the request
 
 **Returns:** `PhlowContext` object with agent information and Supabase client
 
@@ -50,7 +49,7 @@ config = PhlowConfig(
 - `private_key: str` - RSA private key for signing JWTs
 - `supabase_url: str` - Supabase project URL
 - `supabase_anon_key: str` - Supabase anonymous key
-- `enable_audit_logging: bool = True` - Enable authentication event logging
+- `enable_audit_log: bool = False` - Enable authentication event logging
 - `rate_limiting: Optional[RateLimitConfig] = None` - Rate limiting configuration
 
 ### PhlowContext
@@ -100,16 +99,6 @@ auth_required = create_phlow_dependency(middleware)
 @app.post("/api/endpoint")
 async def endpoint(context: PhlowContext = Depends(auth_required)):
     return {"agent": context.agent.name}
-```
-
-### PhlowFastAPIMiddleware
-
-ASGI middleware for automatic authentication.
-
-```python
-from phlow.integrations.fastapi import PhlowFastAPIMiddleware
-
-app.add_middleware(PhlowFastAPIMiddleware, phlow_middleware=middleware)
 ```
 
 ## RBAC Classes
@@ -190,28 +179,6 @@ monitoring = MonitoringConfig(
 )
 ```
 
-## Utility Functions
-
-### generate_rsa_keypair
-
-Generates RSA key pair for agent authentication.
-
-```python
-from phlow.utils import generate_rsa_keypair
-
-private_key, public_key = generate_rsa_keypair()
-```
-
-### verify_agent_signature
-
-Verifies agent JWT signature.
-
-```python
-from phlow.utils import verify_agent_signature
-
-is_valid = verify_agent_signature(token, public_key)
-```
-
 ## Environment Variables
 
 ### Required
@@ -259,7 +226,7 @@ middleware = PhlowMiddleware(config)
 from phlow.exceptions import AuthenticationError, AgentNotFoundError
 
 try:
-    context = middleware.verify_jwt(token, agent_id)
+    context = middleware.verify_token(token)
 except AuthenticationError:
     return {"error": "Invalid token"}
 except AgentNotFoundError:

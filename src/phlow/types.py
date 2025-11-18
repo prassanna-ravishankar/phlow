@@ -56,6 +56,10 @@ class RateLimitConfigs(BaseModel):
     global_window_ms: int = 60_000  # 1 minute
 
 
+# Alias for better DX (matches documentation)
+RateLimitConfig = RateLimitConfigs
+
+
 class PhlowConfig(BaseModel):
     """Phlow configuration."""
 
