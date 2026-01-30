@@ -1,0 +1,1534 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A2A Protocol Framework for AI Agents">
+      
+      
+      
+        <link rel="canonical" href="https://prassanna.io/phlow/examples/rbac_agent/">
+      
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.16">
+    
+    
+      
+        <title>Phlow RBAC Agent Example - Phlow</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.7e37652d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#phlow-rbac-agent-example" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Phlow" class="md-header__button md-logo" aria-label="Phlow" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Phlow
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Phlow RBAC Agent Example
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/prassanna-ravishankar/phlow" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    prassanna-ravishankar/phlow
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../installation/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../rbac/" class="md-tabs__link">
+          
+  
+  
+  Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api-reference/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+  Examples
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Phlow" class="md-nav__button md-logo" aria-label="Phlow" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Phlow
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/prassanna-ravishankar/phlow" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    prassanna-ravishankar/phlow
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Installation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quick Start
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Guides
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Guides
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rbac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    RBAC & Permissions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../key-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Key Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rate-limiting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Rate Limiting
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../circuit-breakers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Circuit Breakers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Monitoring
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../production-deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Production Deployment
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Documentation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Troubleshooting
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Examples
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Examples
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#features-demonstrated" class="md-nav__link">
+    <span class="md-ellipsis">
+      Features Demonstrated
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick Start
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick Start">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Prerequisites
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Installation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-database-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Database Setup
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-run-the-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Run the Agent
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      API Endpoints
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="API Endpoints">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#public-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      Public Endpoints
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#authenticated-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      Authenticated Endpoints
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#role-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Role Management
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a2a-protocol" class="md-nav__link">
+    <span class="md-ellipsis">
+      A2A Protocol
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage Examples
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-public-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Public Access
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-basic-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Basic Authentication
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-role-based-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Role-Based Access
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-role-credential-request-a2a" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Role Credential Request (A2A)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      How It Works
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How It Works">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-role-credential-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Role Credential Storage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-role-based-route-protection" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Role-Based Route Protection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-role-credential-exchange" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Role Credential Exchange
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-verification-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Verification Process
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      Architecture
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sample-credentials" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sample Credentials
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security Considerations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extending-the-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Extending the Example
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Extending the Example">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adding-new-roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      Adding New Roles
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-verification-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom Verification Logic
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#advanced-a2a-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced A2A Integration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Common Issues
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debug-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Debug Mode
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testing-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing Endpoints
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Next Steps
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#support" class="md-nav__link">
+    <span class="md-ellipsis">
+      Support
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="phlow-rbac-agent-example">Phlow RBAC Agent Example</h1>
+<p>This example demonstrates how to build an agent that uses Phlow's Role-Based Access Control (RBAC) functionality with Verifiable Credentials.</p>
+<h2 id="features-demonstrated">Features Demonstrated</h2>
+<ul>
+<li><strong>Role-Based Authentication</strong>: Protect endpoints with specific role requirements</li>
+<li><strong>Verifiable Credentials</strong>: Use cryptographically verifiable role credentials</li>
+<li><strong>A2A Protocol Integration</strong>: Handle role credential requests from other agents</li>
+<li><strong>Credential Management</strong>: Store and manage role credentials locally</li>
+<li><strong>Multi-Role Support</strong>: Support multiple roles per agent</li>
+</ul>
+<h2 id="quick-start">Quick Start</h2>
+<h3 id="1-prerequisites">1. Prerequisites</h3>
+<ul>
+<li>Python 3.10+</li>
+<li>Supabase project with Phlow schema</li>
+<li>Basic understanding of FastAPI and A2A Protocol</li>
+</ul>
+<h3 id="2-installation">2. Installation</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Install dependencies</span>
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+
+<span class="c1"># Or install Phlow with RBAC support</span>
+pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;phlow[rbac]&quot;</span>
+</code></pre></div>
+<h3 id="3-configuration">3. Configuration</h3>
+<p>Set up your environment variables:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Supabase configuration</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">SUPABASE_URL</span><span class="o">=</span><span class="s2">&quot;https://your-project.supabase.co&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">SUPABASE_ANON_KEY</span><span class="o">=</span><span class="s2">&quot;your-anon-key&quot;</span>
+
+<span class="c1"># Agent configuration</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">AGENT_ID</span><span class="o">=</span><span class="s2">&quot;rbac-demo-agent&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">AGENT_NAME</span><span class="o">=</span><span class="s2">&quot;RBAC Demo Agent&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">PRIVATE_KEY</span><span class="o">=</span><span class="s2">&quot;your-private-key&quot;</span>
+</code></pre></div>
+<p>Or create a <code>.env</code> file:</p>
+<div class="highlight"><pre><span></span><code>SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+AGENT_ID=rbac-demo-agent
+AGENT_NAME=RBAC Demo Agent
+PRIVATE_KEY=your-private-key
+</code></pre></div>
+<h3 id="4-database-setup">4. Database Setup</h3>
+<p>Ensure your Supabase project has the Phlow schema with RBAC tables:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- This should be included in your Phlow schema</span>
+<span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">verified_roles</span><span class="w"> </span><span class="p">(</span>
+<span class="w">  </span><span class="n">id</span><span class="w"> </span><span class="n">UUID</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">gen_random_uuid</span><span class="p">()</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
+<span class="w">  </span><span class="n">agent_id</span><span class="w"> </span><span class="nb">TEXT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<span class="w">  </span><span class="k">role</span><span class="w"> </span><span class="nb">TEXT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<span class="w">  </span><span class="n">verified_at</span><span class="w"> </span><span class="k">TIMESTAMP</span><span class="w"> </span><span class="k">WITH</span><span class="w"> </span><span class="k">TIME</span><span class="w"> </span><span class="k">ZONE</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">(),</span>
+<span class="w">  </span><span class="n">expires_at</span><span class="w"> </span><span class="k">TIMESTAMP</span><span class="w"> </span><span class="k">WITH</span><span class="w"> </span><span class="k">TIME</span><span class="w"> </span><span class="k">ZONE</span><span class="p">,</span>
+<span class="w">  </span><span class="n">credential_hash</span><span class="w"> </span><span class="nb">TEXT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<span class="w">  </span><span class="n">issuer_did</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">,</span>
+<span class="w">  </span><span class="n">metadata</span><span class="w"> </span><span class="n">JSONB</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="s1">&#39;{}&#39;</span><span class="p">,</span>
+<span class="w">  </span><span class="k">UNIQUE</span><span class="p">(</span><span class="n">agent_id</span><span class="p">,</span><span class="w"> </span><span class="k">role</span><span class="p">)</span>
+<span class="p">);</span>
+</code></pre></div>
+<h3 id="5-run-the-agent">5. Run the Agent</h3>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>main.py
+</code></pre></div>
+<p>The agent will be available at:
+- <strong>API</strong>: http://localhost:8000
+- <strong>Documentation</strong>: http://localhost:8000/docs
+- <strong>A2A Discovery</strong>: http://localhost:8000/.well-known/agent.json</p>
+<h2 id="api-endpoints">API Endpoints</h2>
+<h3 id="public-endpoints">Public Endpoints</h3>
+<ul>
+<li><code>GET /public</code> - No authentication required</li>
+<li><code>GET /health</code> - Health check</li>
+<li><code>GET /status</code> - Agent status and configuration</li>
+</ul>
+<h3 id="authenticated-endpoints">Authenticated Endpoints</h3>
+<ul>
+<li><code>GET /basic-auth</code> - Basic Phlow authentication</li>
+<li><code>GET /admin-only</code> - Requires admin role credential</li>
+<li><code>GET /manager-only</code> - Requires manager role credential</li>
+<li><code>POST /secure-operation</code> - Admin-only secure operations</li>
+</ul>
+<h3 id="role-management">Role Management</h3>
+<ul>
+<li><code>GET /roles</code> - List available roles</li>
+<li><code>GET /roles/{role}</code> - Get role information</li>
+</ul>
+<h3 id="a2a-protocol">A2A Protocol</h3>
+<ul>
+<li><code>GET /.well-known/agent.json</code> - Agent discovery</li>
+<li><code>POST /tasks/send</code> - Handle A2A tasks and role credential requests</li>
+</ul>
+<h2 id="usage-examples">Usage Examples</h2>
+<h3 id="1-public-access">1. Public Access</h3>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>http://localhost:8000/public
+</code></pre></div>
+<h3 id="2-basic-authentication">2. Basic Authentication</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Get a JWT token first (implementation-specific)</span>
+curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer YOUR_JWT_TOKEN&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">     </span>http://localhost:8000/basic-auth
+</code></pre></div>
+<h3 id="3-role-based-access">3. Role-Based Access</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Admin-only endpoint (requires admin role credential)</span>
+curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer YOUR_JWT_TOKEN&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">     </span>http://localhost:8000/admin-only
+
+<span class="c1"># Manager-only endpoint (requires manager role credential)</span>
+curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer YOUR_JWT_TOKEN&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">     </span>http://localhost:8000/manager-only
+</code></pre></div>
+<h3 id="4-role-credential-request-a2a">4. Role Credential Request (A2A)</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Request admin role credential from this agent</span>
+curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/tasks/send<span class="w"> </span><span class="se">\</span>
+<span class="w">     </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">     </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
+<span class="s1">       &quot;type&quot;: &quot;role-credential-request&quot;,</span>
+<span class="s1">       &quot;required_role&quot;: &quot;admin&quot;,</span>
+<span class="s1">       &quot;nonce&quot;: &quot;test-nonce-123&quot;,</span>
+<span class="s1">       &quot;context&quot;: &quot;Need admin access for secure operation&quot;</span>
+<span class="s1">     }&#39;</span>
+</code></pre></div>
+<h2 id="how-it-works">How It Works</h2>
+<h3 id="1-role-credential-storage">1. Role Credential Storage</h3>
+<p>The agent stores role credentials locally using <code>RoleCredentialStore</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Sample credential structure</span>
+<span class="p">{</span>
+  <span class="s2">&quot;@context&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;https://www.w3.org/2018/credentials/v1&quot;</span><span class="p">],</span>
+  <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;http://example.org/credentials/admin/123&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;VerifiableCredential&quot;</span><span class="p">,</span> <span class="s2">&quot;RoleCredential&quot;</span><span class="p">],</span>
+  <span class="s2">&quot;issuer&quot;</span><span class="p">:</span> <span class="s2">&quot;did:example:issuer&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;issuanceDate&quot;</span><span class="p">:</span> <span class="s2">&quot;2025-08-01T12:00:00Z&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;credentialSubject&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;did:example:rbac-demo-agent&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;admin&quot;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="2-role-based-route-protection">2. Role-Based Route Protection</h3>
+<p>Routes are protected using FastAPI dependencies:</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/admin-only&quot;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">admin_endpoint</span><span class="p">(</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">PhlowContext</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">auth</span><span class="o">.</span><span class="n">create_role_auth_dependency</span><span class="p">(</span><span class="s2">&quot;admin&quot;</span><span class="p">))</span>
+<span class="p">):</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="s2">&quot;Admin access granted!&quot;</span><span class="p">}</span>
+</code></pre></div>
+<h3 id="3-role-credential-exchange">3. Role Credential Exchange</h3>
+<p>When another agent needs to verify this agent's role:</p>
+<ol>
+<li><strong>Request</strong>: Other agent sends <code>role-credential-request</code></li>
+<li><strong>Lookup</strong>: This agent checks its credential store</li>
+<li><strong>Presentation</strong>: Creates a Verifiable Presentation</li>
+<li><strong>Response</strong>: Returns the presentation or error</li>
+</ol>
+<h3 id="4-verification-process">4. Verification Process</h3>
+<p>When this agent accesses role-protected endpoints:</p>
+<ol>
+<li><strong>Cache Check</strong>: Look for cached role verification</li>
+<li><strong>Request</strong>: If not cached, request credential from agent</li>
+<li><strong>Verify</strong>: Cryptographically verify the credential</li>
+<li><strong>Cache</strong>: Store successful verification</li>
+<li><strong>Access</strong>: Grant access to protected resource</li>
+</ol>
+<h2 id="architecture">Architecture</h2>
+<div class="highlight"><pre><span></span><code>┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Client Agent  │    │  RBAC Demo Agent │    │   Supabase      │
+│                 │    │                  │    │                 │
+│  ┌───────────┐  │    │  ┌─────────────┐ │    │  ┌───────────┐  │
+│  │ JWT Token │  │    │  │ Middleware  │ │    │  │ Agent     │  │
+│  └───────────┘  │    │  └─────────────┘ │    │  │ Cards     │  │
+│                 │    │                  │    │  └───────────┘  │
+│  ┌───────────┐  │───▶│  ┌─────────────┐ │◄──▶│  ┌───────────┐  │
+│  │ Role      │  │    │  │ RBAC        │ │    │  │ Verified  │  │
+│  │ Request   │  │    │  │ Verifier    │ │    │  │ Roles     │  │
+│  └───────────┘  │    │  └─────────────┘ │    │  └───────────┘  │
+│                 │    │                  │    │                 │
+└─────────────────┘    │  ┌─────────────┐ │    └─────────────────┘
+                       │  │ Credential  │ │
+                       │  │ Store       │ │
+                       │  └─────────────┘ │
+                       └──────────────────┘
+</code></pre></div>
+<h2 id="sample-credentials">Sample Credentials</h2>
+<p>The agent comes with sample credentials for demonstration:</p>
+<ul>
+<li><strong>Admin Role</strong>: Full administrative access</li>
+<li><strong>Manager Role</strong>: Management-level access</li>
+</ul>
+<p>In production, these would be:
+- Issued by trusted credential authorities
+- Cryptographically signed
+- Have proper expiration dates
+- Include additional metadata</p>
+<h2 id="security-considerations">Security Considerations</h2>
+<p>⚠️ <strong>This is a demo implementation</strong></p>
+<p>For production use, ensure:</p>
+<ol>
+<li><strong>Proper Key Management</strong>: Use secure key storage</li>
+<li><strong>Credential Verification</strong>: Implement full cryptographic verification</li>
+<li><strong>Issuer Trust</strong>: Only accept credentials from trusted issuers</li>
+<li><strong>Expiration Handling</strong>: Properly handle credential expiration</li>
+<li><strong>Audit Logging</strong>: Log all authentication events</li>
+<li><strong>Network Security</strong>: Use HTTPS in production</li>
+</ol>
+<h2 id="extending-the-example">Extending the Example</h2>
+<h3 id="adding-new-roles">Adding New Roles</h3>
+<ol>
+<li>Create new credentials in <code>setup_sample_credentials()</code></li>
+<li>Add new protected endpoints</li>
+<li>Update role management endpoints</li>
+</ol>
+<h3 id="custom-verification-logic">Custom Verification Logic</h3>
+<p>Extend <code>RoleCredentialVerifier</code> to add:
+- Issuer trust policies
+- Custom verification rules
+- Integration with external PKI</p>
+<h3 id="advanced-a2a-integration">Advanced A2A Integration</h3>
+<p>Implement full A2A protocol support:
+- Agent discovery and resolution
+- Bi-directional messaging
+- Task orchestration</p>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-issues">Common Issues</h3>
+<ol>
+<li><strong>"Authorization header required"</strong></li>
+<li>
+<p>Make sure to include Bearer token in requests</p>
+</li>
+<li>
+<p><strong>"Role not verified"</strong></p>
+</li>
+<li>Check if the agent has the required role credential</li>
+<li>
+<p>Verify credential is not expired</p>
+</li>
+<li>
+<p><strong>"Agent ID not found"</strong></p>
+</li>
+<li>
+<p>Ensure JWT token contains agent_id in metadata</p>
+</li>
+<li>
+<p><strong>Database connection errors</strong></p>
+</li>
+<li>Verify Supabase credentials</li>
+<li>Check network connectivity</li>
+</ol>
+<h3 id="debug-mode">Debug Mode</h3>
+<p>Run with debug logging:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Set log level</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">LOG_LEVEL</span><span class="o">=</span>DEBUG
+python<span class="w"> </span>main.py
+</code></pre></div>
+<h3 id="testing-endpoints">Testing Endpoints</h3>
+<p>Use the built-in FastAPI docs at http://localhost:8000/docs to test endpoints interactively.</p>
+<h2 id="next-steps">Next Steps</h2>
+<ul>
+<li>Integrate with real credential issuers</li>
+<li>Implement full cryptographic verification</li>
+<li>Add more sophisticated role hierarchies</li>
+<li>Deploy to production environment</li>
+<li>Integrate with agent marketplace</li>
+</ul>
+<h2 id="support">Support</h2>
+<p>For issues and questions:
+- Check the main Phlow documentation
+- Review the RBAC specification
+- Open issues on the Phlow GitHub repository</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "content.code.copy"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.50899def.min.js"></script>
+      
+    
+  </body>
+</html>

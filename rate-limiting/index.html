@@ -1,0 +1,1752 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A2A Protocol Framework for AI Agents">
+      
+      
+      
+        <link rel="canonical" href="https://prassanna.io/phlow/rate-limiting/">
+      
+      
+        <link rel="prev" href="../key-management/">
+      
+      
+        <link rel="next" href="../circuit-breakers/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.16">
+    
+    
+      
+        <title>Rate Limiting - Phlow</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.7e37652d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#distributed-rate-limiting-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Phlow" class="md-header__button md-logo" aria-label="Phlow" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Phlow
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Rate Limiting
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/prassanna-ravishankar/phlow" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    prassanna-ravishankar/phlow
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../installation/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../rbac/" class="md-tabs__link">
+          
+  
+  
+  Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../api-reference/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../examples/" class="md-tabs__link">
+          
+  
+  
+  Examples
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Phlow" class="md-nav__button md-logo" aria-label="Phlow" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Phlow
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/prassanna-ravishankar/phlow" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    prassanna-ravishankar/phlow
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Installation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quick Start
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Guides
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Guides
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rbac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    RBAC & Permissions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../key-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Key Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Rate Limiting
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Rate Limiting
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-setup-in-memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basic Setup (In-Memory)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#distributed-setup-redis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Distributed Setup (Redis)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#redis-deployment-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Redis Deployment Options
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Redis Deployment Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-local-redis" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Local Redis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-redis-cloud" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Redis Cloud
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-aws-elasticache" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. AWS ElastiCache
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rate-limit-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rate Limit Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Rate Limit Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#default-limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      Default Limits
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-rate-limiters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom Rate Limiters
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      How It Works
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How It Works">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sliding-window-algorithm" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sliding Window Algorithm
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#redis-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Redis Implementation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fallback-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fallback Behavior
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      Monitoring
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Monitoring">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rate-limit-headers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rate Limit Headers
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#redis-monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      Redis Monitoring
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best Practices
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#redis-connection-failed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Redis Connection Failed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rate-limits-not-working-across-instances" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rate Limits Not Working Across Instances
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance Issues
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Usage
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#custom-storage-backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom Storage Backend
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rate-limit-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rate Limit Strategies
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../circuit-breakers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Circuit Breakers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Monitoring
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../production-deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Production Deployment
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Documentation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Troubleshooting
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Examples
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Examples
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-setup-in-memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basic Setup (In-Memory)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#distributed-setup-redis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Distributed Setup (Redis)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#redis-deployment-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Redis Deployment Options
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Redis Deployment Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-local-redis" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Local Redis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-redis-cloud" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Redis Cloud
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-aws-elasticache" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. AWS ElastiCache
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rate-limit-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rate Limit Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Rate Limit Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#default-limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      Default Limits
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-rate-limiters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom Rate Limiters
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      How It Works
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How It Works">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sliding-window-algorithm" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sliding Window Algorithm
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#redis-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Redis Implementation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fallback-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fallback Behavior
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      Monitoring
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Monitoring">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rate-limit-headers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rate Limit Headers
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#redis-monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      Redis Monitoring
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best Practices
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#redis-connection-failed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Redis Connection Failed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rate-limits-not-working-across-instances" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rate Limits Not Working Across Instances
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance Issues
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Usage
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#custom-storage-backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom Storage Backend
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rate-limit-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rate Limit Strategies
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="distributed-rate-limiting-guide">Distributed Rate Limiting Guide</h1>
+<p>Phlow includes distributed rate limiting to protect your agents from abuse and ensure fair resource usage across multiple instances.</p>
+<h2 id="overview">Overview</h2>
+<p>The rate limiting system provides:
+- <strong>Distributed limiting</strong> - Works across multiple instances using Redis
+- <strong>Automatic fallback</strong> - Falls back to in-memory limiting if Redis is unavailable
+- <strong>Sliding window algorithm</strong> - Accurate request counting over time
+- <strong>Multiple limit types</strong> - Different limits for authentication and role requests</p>
+<h2 id="configuration">Configuration</h2>
+<h3 id="basic-setup-in-memory">Basic Setup (In-Memory)</h3>
+<p>By default, Phlow uses in-memory rate limiting which works for single instances:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">phlow</span><span class="w"> </span><span class="kn">import</span> <span class="n">PhlowMiddleware</span><span class="p">,</span> <span class="n">PhlowConfig</span>
+
+<span class="c1"># Rate limits are configured automatically:</span>
+<span class="c1"># - Authentication: 60 requests per minute</span>
+<span class="c1"># - Role requests: 10 requests per minute</span>
+<span class="n">middleware</span> <span class="o">=</span> <span class="n">PhlowMiddleware</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="distributed-setup-redis">Distributed Setup (Redis)</h3>
+<p>For production deployments with multiple instances, enable Redis:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Set Redis URL in environment</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">REDIS_URL</span><span class="o">=</span><span class="s2">&quot;redis://localhost:6379/0&quot;</span>
+
+<span class="c1"># Or with authentication</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">REDIS_URL</span><span class="o">=</span><span class="s2">&quot;redis://:password@redis-server:6379/0&quot;</span>
+</code></pre></div>
+<p>Phlow will automatically detect and use Redis when available.</p>
+<h3 id="redis-deployment-options">Redis Deployment Options</h3>
+<h4 id="1-local-redis">1. Local Redis</h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Start Redis locally</span>
+docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>-p<span class="w"> </span><span class="m">6379</span>:6379<span class="w"> </span>redis:alpine
+
+<span class="c1"># Configure Phlow</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">REDIS_URL</span><span class="o">=</span><span class="s2">&quot;redis://localhost:6379/0&quot;</span>
+</code></pre></div>
+<h4 id="2-redis-cloud">2. Redis Cloud</h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Use Redis Cloud connection string</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">REDIS_URL</span><span class="o">=</span><span class="s2">&quot;redis://:password@redis-cloud-endpoint:16379/0&quot;</span>
+</code></pre></div>
+<h4 id="3-aws-elasticache">3. AWS ElastiCache</h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Use ElastiCache endpoint</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">REDIS_URL</span><span class="o">=</span><span class="s2">&quot;redis://my-cache-cluster.abc123.cache.amazonaws.com:6379/0&quot;</span>
+</code></pre></div>
+<h2 id="rate-limit-configuration">Rate Limit Configuration</h2>
+<h3 id="default-limits">Default Limits</h3>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Limit</th>
+<th>Window</th>
+<th>Identifier</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Authentication</td>
+<td>60/min</td>
+<td>1 minute</td>
+<td>Token hash</td>
+</tr>
+<tr>
+<td>Role Requests</td>
+<td>10/min</td>
+<td>1 minute</td>
+<td>Agent ID</td>
+</tr>
+</tbody>
+</table>
+<h3 id="custom-rate-limiters">Custom Rate Limiters</h3>
+<p>Create custom rate limiters for your endpoints:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">phlow.distributed_rate_limiter</span><span class="w"> </span><span class="kn">import</span> <span class="n">DistributedRateLimiter</span>
+
+<span class="c1"># Create a custom rate limiter</span>
+<span class="n">api_limiter</span> <span class="o">=</span> <span class="n">DistributedRateLimiter</span><span class="p">(</span>
+    <span class="n">max_requests</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>      <span class="c1"># 100 requests</span>
+    <span class="n">window_ms</span><span class="o">=</span><span class="mi">60_000</span><span class="p">,</span>      <span class="c1"># per minute</span>
+    <span class="n">redis_url</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;REDIS_URL&quot;</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># Use in your endpoint</span>
+<span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/api/generate&quot;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">generate</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">):</span>
+    <span class="c1"># Rate limit by IP address</span>
+    <span class="n">client_ip</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">host</span>
+    <span class="n">api_limiter</span><span class="o">.</span><span class="n">check_and_raise</span><span class="p">(</span><span class="n">client_ip</span><span class="p">)</span>
+
+    <span class="c1"># Process request...</span>
+</code></pre></div>
+<h2 id="how-it-works">How It Works</h2>
+<h3 id="sliding-window-algorithm">Sliding Window Algorithm</h3>
+<p>The rate limiter uses a sliding window algorithm for accurate counting:</p>
+<ol>
+<li>Each request is timestamped and stored</li>
+<li>Old requests outside the window are removed</li>
+<li>Current window requests are counted</li>
+<li>New request is allowed if under limit</li>
+</ol>
+<p>This provides smooth rate limiting without sudden resets.</p>
+<h3 id="redis-implementation">Redis Implementation</h3>
+<p>When Redis is available:
+- Uses sorted sets for efficient storage
+- Atomic operations prevent race conditions
+- Automatic key expiration for cleanup
+- Handles Redis failures gracefully</p>
+<h3 id="fallback-behavior">Fallback Behavior</h3>
+<p>If Redis is unavailable:
+- Automatically falls back to in-memory limiting
+- Logs warning about degraded functionality
+- Continues protecting your service
+- No code changes required</p>
+<h2 id="monitoring">Monitoring</h2>
+<h3 id="rate-limit-headers">Rate Limit Headers</h3>
+<p>Add rate limit headers to responses:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">phlow.distributed_rate_limiter</span><span class="w"> </span><span class="kn">import</span> <span class="n">DistributedRateLimiter</span>
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/api/endpoint&quot;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">endpoint</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">):</span>
+    <span class="n">limiter</span> <span class="o">=</span> <span class="n">DistributedRateLimiter</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">60_000</span><span class="p">)</span>
+
+    <span class="c1"># Check if allowed</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">limiter</span><span class="o">.</span><span class="n">is_allowed</span><span class="p">(</span><span class="n">client_id</span><span class="p">):</span>
+        <span class="c1"># Return rate limit headers</span>
+        <span class="k">return</span> <span class="n">JSONResponse</span><span class="p">(</span>
+            <span class="n">status_code</span><span class="o">=</span><span class="mi">429</span><span class="p">,</span>
+            <span class="n">content</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;Rate limit exceeded&quot;</span><span class="p">},</span>
+            <span class="n">headers</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;X-RateLimit-Limit&quot;</span><span class="p">:</span> <span class="s2">&quot;100&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;X-RateLimit-Remaining&quot;</span><span class="p">:</span> <span class="s2">&quot;0&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;X-RateLimit-Reset&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span> <span class="o">+</span> <span class="mi">60</span><span class="p">)</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Process request...</span>
+</code></pre></div>
+<h3 id="redis-monitoring">Redis Monitoring</h3>
+<p>Monitor Redis rate limiting:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Connect to Redis</span>
+redis-cli
+
+<span class="c1"># Monitor rate limit keys</span>
+KEYS<span class="w"> </span>phlow:ratelimit:*
+
+<span class="c1"># Check specific rate limit</span>
+ZRANGE<span class="w"> </span>phlow:ratelimit:auth:abc123<span class="w"> </span><span class="m">0</span><span class="w"> </span>-1<span class="w"> </span>WITHSCORES
+
+<span class="c1"># Monitor in real-time</span>
+MONITOR
+</code></pre></div>
+<h2 id="best-practices">Best Practices</h2>
+<ol>
+<li><strong>Use Redis in Production</strong> - In-memory limiting doesn't work across instances</li>
+<li><strong>Set Reasonable Limits</strong> - Balance security with user experience</li>
+<li><strong>Monitor Usage</strong> - Track rate limit hits to adjust limits</li>
+<li><strong>Use Different Identifiers</strong> - Rate limit by user ID, IP, or API key as appropriate</li>
+<li><strong>Handle 429 Responses</strong> - Implement exponential backoff in clients</li>
+<li><strong>Configure Redis Persistence</strong> - Ensure rate limits survive Redis restarts</li>
+</ol>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="redis-connection-failed">Redis Connection Failed</h3>
+<p>If you see "Failed to connect to Redis, falling back to in-memory rate limiting":</p>
+<ol>
+<li>Check Redis is running: <code>redis-cli ping</code></li>
+<li>Verify connection string: <code>redis-cli -u $REDIS_URL ping</code></li>
+<li>Check network/firewall rules</li>
+<li>Verify Redis version &gt;= 5.0</li>
+</ol>
+<h3 id="rate-limits-not-working-across-instances">Rate Limits Not Working Across Instances</h3>
+<ol>
+<li>Ensure all instances use the same Redis</li>
+<li>Check Redis connectivity from each instance</li>
+<li>Verify REDIS_URL is set correctly</li>
+<li>Monitor Redis keys to confirm usage</li>
+</ol>
+<h3 id="performance-issues">Performance Issues</h3>
+<ol>
+<li>Use Redis connection pooling (automatic)</li>
+<li>Consider Redis cluster for high load</li>
+<li>Tune Redis memory settings</li>
+<li>Use local Redis replicas for read-heavy workloads</li>
+</ol>
+<h2 id="advanced-usage">Advanced Usage</h2>
+<h3 id="custom-storage-backend">Custom Storage Backend</h3>
+<p>Implement custom storage for rate limiting:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">phlow.distributed_rate_limiter</span><span class="w"> </span><span class="kn">import</span> <span class="n">RateLimitBackend</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DynamoDBRateLimitBackend</span><span class="p">(</span><span class="n">RateLimitBackend</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">table</span> <span class="o">=</span> <span class="n">boto3</span><span class="o">.</span><span class="n">resource</span><span class="p">(</span><span class="s1">&#39;dynamodb&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">Table</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_allowed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">max_requests</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">window_ms</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="c1"># Implement using DynamoDB</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Clear rate limit for key</span>
+        <span class="k">pass</span>
+
+<span class="c1"># Use custom backend</span>
+<span class="n">limiter</span> <span class="o">=</span> <span class="n">DistributedRateLimiter</span><span class="p">(</span>
+    <span class="n">max_requests</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+    <span class="n">window_ms</span><span class="o">=</span><span class="mi">60_000</span><span class="p">,</span>
+    <span class="n">backend</span><span class="o">=</span><span class="n">DynamoDBRateLimitBackend</span><span class="p">(</span><span class="s2">&quot;rate-limits&quot;</span><span class="p">)</span>
+<span class="p">)</span>
+</code></pre></div>
+<h3 id="rate-limit-strategies">Rate Limit Strategies</h3>
+<p>Different strategies for different use cases:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Per-user limiting</span>
+<span class="n">user_limiter</span> <span class="o">=</span> <span class="n">DistributedRateLimiter</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">3600_000</span><span class="p">)</span>  <span class="c1"># 1000/hour</span>
+<span class="n">user_limiter</span><span class="o">.</span><span class="n">check_and_raise</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;user:</span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Per-IP limiting</span>
+<span class="n">ip_limiter</span> <span class="o">=</span> <span class="n">DistributedRateLimiter</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">60_000</span><span class="p">)</span>  <span class="c1"># 100/min</span>
+<span class="n">ip_limiter</span><span class="o">.</span><span class="n">check_and_raise</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ip:</span><span class="si">{</span><span class="n">client_ip</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Per-API key limiting</span>
+<span class="n">key_limiter</span> <span class="o">=</span> <span class="n">DistributedRateLimiter</span><span class="p">(</span><span class="mi">10000</span><span class="p">,</span> <span class="mi">86400_000</span><span class="p">)</span>  <span class="c1"># 10k/day</span>
+<span class="n">key_limiter</span><span class="o">.</span><span class="n">check_and_raise</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;key:</span><span class="si">{</span><span class="n">api_key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Combined limiting (most restrictive wins)</span>
+<span class="k">for</span> <span class="n">limiter</span><span class="p">,</span> <span class="n">identifier</span> <span class="ow">in</span> <span class="p">[</span>
+    <span class="p">(</span><span class="n">user_limiter</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;user:</span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="n">ip_limiter</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;ip:</span><span class="si">{</span><span class="n">client_ip</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="n">key_limiter</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;key:</span><span class="si">{</span><span class="n">api_key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="p">]:</span>
+    <span class="n">limiter</span><span class="o">.</span><span class="n">check_and_raise</span><span class="p">(</span><span class="n">identifier</span><span class="p">)</span>
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "content.code.copy"], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.50899def.min.js"></script>
+      
+    
+  </body>
+</html>
