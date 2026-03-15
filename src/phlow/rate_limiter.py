@@ -3,6 +3,8 @@
 import time
 from threading import Lock
 
+from .exceptions import RateLimitError
+
 
 class RateLimiter:
     """In-memory rate limiter using sliding window algorithm."""
@@ -66,6 +68,21 @@ class RateLimiter:
                 self.requests.pop(identifier, None)
             else:
                 self.requests.clear()
+
+    def check_and_raise(self, identifier: str) -> None:
+        """Check rate limit and raise exception if exceeded.
+
+        Args:
+            identifier: Unique identifier for rate limiting
+
+        Raises:
+            RateLimitError: If rate limit is exceeded
+        """
+        if not self.is_allowed(identifier):
+            raise RateLimitError(
+                f"Rate limit exceeded: {self.max_requests} requests per "
+                f"{self.window_ms / 1000:.1f} seconds"
+            )
 
     def _cleanup(self) -> None:
         """Remove entries with no recent requests."""

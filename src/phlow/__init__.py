@@ -113,7 +113,7 @@ def verify_token(token: str, public_key: str) -> dict:
         raise TokenError(f"Invalid token: {str(e)}")
 
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __all__ = [
     # Core middleware and types
     "PhlowMiddleware",
