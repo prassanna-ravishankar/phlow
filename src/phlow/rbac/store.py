@@ -60,7 +60,7 @@ class RoleCredentialStore:
         try:
             data = {}
             for role, credential in self._credentials.items():
-                data[role] = credential.dict(by_alias=True, exclude_none=True)
+                data[role] = credential.model_dump(by_alias=True, exclude_none=True)
 
             with open(self.credentials_file, "w") as f:
                 json.dump(data, f, indent=2)
@@ -367,7 +367,7 @@ class RoleCredentialStore:
             return False
 
         try:
-            data = credential.dict(by_alias=True, exclude_none=True)
+            data = credential.model_dump(by_alias=True, exclude_none=True)
 
             with open(file_path, "w") as f:
                 json.dump(data, f, indent=2)
