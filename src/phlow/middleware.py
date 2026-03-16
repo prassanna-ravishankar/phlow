@@ -343,6 +343,9 @@ class PhlowMiddleware:
                     agent_id, token_hash, "validation_failed", error, start_time
                 )
                 raise error
+        except AuthenticationError:
+            # Re-raise our own errors without wrapping
+            raise
         except Exception:
             # Catch any unexpected errors during token processing
             error = AuthenticationError(
@@ -828,12 +831,26 @@ class PhlowMiddleware:
         """Generate RLS policy for Supabase.
 
         Args:
-            agent_id: Agent ID
+            agent_id: Agent ID (must be alphanumeric/hyphens/underscores)
             permissions: List of required permissions
 
         Returns:
             SQL policy string
+
+        Raises:
+            ValueError: If agent_id or permissions contain invalid characters
         """
+        import re
+
+        # Validate inputs to prevent SQL injection
+        if not re.match(r"^[a-zA-Z0-9_-]+$", agent_id):
+            raise ValueError(
+                "agent_id must contain only alphanumeric characters, hyphens, and underscores"
+            )
+        for p in permissions:
+            if not re.match(r"^[a-zA-Z0-9_:-]+$", p):
+                raise ValueError(f"Permission '{p}' contains invalid characters")
+
         permission_checks = " OR ".join(
             [f"auth.jwt() ->> 'permissions' ? '{p}'" for p in permissions]
         )
@@ -857,12 +874,16 @@ class PhlowMiddleware:
         Returns:
             JWT token string
         """
-        payload = {
-            "sub": agent_card.metadata.get("agent_id") if agent_card.metadata else None,
+        payload: dict[str, Any] = {
             "name": agent_card.name,
             "iat": datetime.now(timezone.utc),
             "exp": datetime.now(timezone.utc) + timedelta(hours=1),
         }
+
+        # Only include sub if agent_id is available
+        agent_id = agent_card.metadata.get("agent_id") if agent_card.metadata else None
+        if agent_id is not None:
+            payload["sub"] = agent_id
 
         token = jwt.encode(payload, self.private_key, algorithm="HS256")
         return token
@@ -908,10 +929,12 @@ class PhlowMiddleware:
                 return A2AAgentCard(
                     name=data["name"],
                     description=data.get("description", ""),
-                    service_url=data.get("service_url", ""),
+                    url=data.get("service_url", ""),
                     skills=data.get("skills", []),
-                    security_schemes=data.get("security_schemes", {}),
-                    metadata=data.get("metadata", {}),
+                    capabilities={},
+                    version="1.0",
+                    defaultInputModes=["text"],
+                    defaultOutputModes=["text"],
                 )
         except Exception:
             pass
@@ -949,7 +972,7 @@ class PhlowMiddleware:
             )
         except Exception as e:
             # Log error but don't fail authentication
-            print(f"Failed to log auth event: {e}")
+            logger.error(f"Failed to log auth event: {e}")
 
     def register_agent_with_supabase(self, agent_card: AgentCard) -> None:
         """Register agent card with Supabase for local resolution.
