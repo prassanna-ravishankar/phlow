@@ -794,10 +794,7 @@ class PhlowMiddleware:
         Returns:
             JWT token for authentication
         """
-        payload = {
-            "sub": self.config.agent_card.metadata.get("agent_id")
-            if self.config.agent_card.metadata
-            else None,
+        payload: dict[str, Any] = {
             "aud": target_agent_id,
             "iss": self.config.agent_card.name,
             "iat": datetime.now(timezone.utc),
@@ -805,6 +802,15 @@ class PhlowMiddleware:
             + timedelta(minutes=5),  # Short-lived token
             "purpose": "role-credential-request",
         }
+
+        # Only include sub if agent_id is available
+        agent_id = (
+            self.config.agent_card.metadata.get("agent_id")
+            if self.config.agent_card.metadata
+            else None
+        )
+        if agent_id is not None:
+            payload["sub"] = agent_id
 
         token = jwt.encode(payload, self.private_key, algorithm="HS256")
         return token
