@@ -106,3 +106,65 @@ class TestInMemoryRateLimitBackend:
         backend.is_allowed("k", 1, 10_000)
         backend.reset("k")
         assert backend.is_allowed("k", 1, 10_000) is True
+
+
+class TestRedisRateLimitBackend:
+    def _make_redis_mock(self):
+        from unittest.mock import MagicMock
+
+        mock = MagicMock()
+        pipe = MagicMock()
+        mock.pipeline.return_value = pipe
+        pipe.execute.return_value = [None, 0]  # zremrangebyscore result, zcard result
+        return mock
+
+    def test_allows_under_limit(self):
+        from phlow.distributed_rate_limiter import RedisRateLimitBackend
+
+        redis_mock = self._make_redis_mock()
+        backend = RedisRateLimitBackend(redis_mock)
+        assert backend.is_allowed("user1", 10, 60_000) is True
+        redis_mock.zadd.assert_called_once()
+        redis_mock.expire.assert_called_once()
+
+    def test_blocks_over_limit(self):
+        from phlow.distributed_rate_limiter import RedisRateLimitBackend
+
+        redis_mock = self._make_redis_mock()
+        pipe = redis_mock.pipeline.return_value
+        pipe.execute.return_value = [None, 10]  # Already at limit
+        backend = RedisRateLimitBackend(redis_mock)
+        assert backend.is_allowed("user1", 10, 60_000) is False
+
+    def test_fails_open_on_redis_error(self):
+        from phlow.distributed_rate_limiter import RedisError, RedisRateLimitBackend
+
+        redis_mock = self._make_redis_mock()
+        pipe = redis_mock.pipeline.return_value
+        pipe.execute.side_effect = RedisError("connection lost")
+        backend = RedisRateLimitBackend(redis_mock)
+        # Should fail open (allow request)
+        assert backend.is_allowed("user1", 10, 60_000) is True
+
+    def test_make_key(self):
+        from phlow.distributed_rate_limiter import RedisRateLimitBackend
+
+        redis_mock = self._make_redis_mock()
+        backend = RedisRateLimitBackend(redis_mock, key_prefix="test:")
+        assert backend._make_key("user1") == "test:user1"
+
+    def test_reset(self):
+        from phlow.distributed_rate_limiter import RedisRateLimitBackend
+
+        redis_mock = self._make_redis_mock()
+        backend = RedisRateLimitBackend(redis_mock)
+        backend.reset("user1")
+        redis_mock.delete.assert_called_once()
+
+    def test_reset_ignores_errors(self):
+        from phlow.distributed_rate_limiter import RedisError, RedisRateLimitBackend
+
+        redis_mock = self._make_redis_mock()
+        redis_mock.delete.side_effect = RedisError("connection lost")
+        backend = RedisRateLimitBackend(redis_mock)
+        backend.reset("user1")  # Should not raise

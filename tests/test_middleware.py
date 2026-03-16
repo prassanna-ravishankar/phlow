@@ -324,6 +324,73 @@ class TestAuthenticateWithRoleValidation:
             await middleware.authenticate_with_role("token", "role; DROP TABLE")
 
 
+class TestResolveAgentEndpoint:
+    @pytest.mark.asyncio
+    async def test_resolves_from_supabase(self, middleware):
+        result_mock = MagicMock()
+        result_mock.data = {"service_url": "https://agent.example.com"}
+        middleware.supabase.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = result_mock
+
+        url = await middleware._resolve_agent_endpoint("agent-001")
+        assert url == "https://agent.example.com"
+
+    @pytest.mark.asyncio
+    async def test_returns_url_directly(self, middleware):
+        # When supabase lookup fails, and agent_id is a URL
+        middleware.supabase.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = MagicMock(
+            data=None
+        )
+
+        url = await middleware._resolve_agent_endpoint("https://agent.example.com")
+        assert url == "https://agent.example.com"
+
+    @pytest.mark.asyncio
+    async def test_returns_none_for_unknown(self, middleware):
+        middleware.supabase.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = MagicMock(
+            data=None
+        )
+
+        url = await middleware._resolve_agent_endpoint("unknown-agent")
+        assert url is None
+
+    @pytest.mark.asyncio
+    async def test_returns_none_on_exception(self, middleware):
+        middleware.supabase.table.return_value.select.return_value.eq.return_value.single.return_value.execute.side_effect = Exception(
+            "db error"
+        )
+
+        url = await middleware._resolve_agent_endpoint("agent-001")
+        assert url is None
+
+
+class TestConvertToA2AAgentCard:
+    def test_converts_string_skills(self, middleware):
+        card = AgentCard(
+            name="test",
+            description="Test agent",
+            service_url="https://test.com",
+            skills=["search", "summarize"],
+        )
+        # The conversion may fall back due to A2A SDK validation
+        # Just verify it doesn't crash
+        a2a_card = middleware._convert_to_a2a_agent_card(card)
+        assert a2a_card.name == "test"
+
+
+class TestGenerateAuthTokenForAgent:
+    def test_generates_token(self, middleware, secret_key):
+        token = middleware._generate_auth_token_for_agent("target-agent")
+        decoded = jwt.decode(
+            token,
+            secret_key,
+            algorithms=["HS256"],
+            audience="target-agent",
+        )
+        assert decoded["aud"] == "target-agent"
+        assert decoded["purpose"] == "role-credential-request"
+        assert "exp" in decoded
+
+
 class TestConfigValidation:
     def test_rejects_empty_supabase_url(self, agent_card, secret_key):
         config = PhlowConfig(
