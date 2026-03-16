@@ -6,7 +6,8 @@ from unittest.mock import MagicMock, patch
 import jwt
 import pytest
 
-from phlow.exceptions import AuthenticationError, ConfigurationError
+from phlow.distributed_rate_limiter import DistributedRateLimiter
+from phlow.exceptions import AuthenticationError, ConfigurationError, RateLimitError
 from phlow.middleware import PhlowMiddleware
 from phlow.types import AgentCard, PhlowConfig
 
@@ -132,6 +133,29 @@ class TestVerifyToken:
 
         with pytest.raises(AuthenticationError, match="not in allowed list"):
             middleware.verify_token(fake_token)
+
+    def test_rate_limit_exceeded(self, middleware, secret_key):
+        """Verify rate limiting fires when many requests hit the same token hash."""
+        # Set a very low rate limit
+        middleware.auth_rate_limiter = DistributedRateLimiter(
+            max_requests=1, window_ms=60_000
+        )
+        token = _make_token(secret_key)
+        middleware.verify_token(token)  # First call succeeds
+        with pytest.raises(RateLimitError):
+            middleware.verify_token(token)  # Second call rate limited
+
+    def test_decode_error(self, middleware):
+        """Malformed base64 in JWT segments triggers DecodeError."""
+        with pytest.raises(AuthenticationError, match="malformed"):
+            middleware.verify_token("a.b.c")
+
+    def test_missing_required_claims(self, middleware, secret_key):
+        """Token without exp/iat should be rejected."""
+        payload = {"sub": "agent-001"}
+        token = jwt.encode(payload, secret_key, algorithm="HS256")
+        with pytest.raises(AuthenticationError):
+            middleware.verify_token(token)
 
     def test_rejects_token_without_key(self, config):
         """Middleware with no private key should reject verification."""
