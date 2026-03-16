@@ -16,8 +16,12 @@ Phlow is a complete A2A Protocol implementation that enables autonomous AI agent
 ## Simple Integration
 
 ```python
-from phlow import AgentCard, PhlowConfig
+import os
+from fastapi import Depends, FastAPI
+from phlow import AgentCard, PhlowConfig, PhlowContext, PhlowMiddleware
 from phlow.integrations.fastapi import FastAPIPhlowAuth
+
+app = FastAPI()
 
 # Configure your A2A agent
 config = PhlowConfig(
@@ -33,13 +37,14 @@ config = PhlowConfig(
     supabase_anon_key=os.getenv("SUPABASE_ANON_KEY")
 )
 
-auth = FastAPIPhlowAuth(config)
+middleware = PhlowMiddleware(config)
+auth = FastAPIPhlowAuth(middleware)
+auth.setup_agent_card_route(app)  # adds /.well-known/agent.json
+auth_required = auth.create_auth_dependency()
 
 @app.post("/api/analyze")
-@auth.require_agent_auth
-async def analyze(request: Request):
-    agent = request.state.agent
-    return {"message": f"Hello {agent.name}"}
+async def analyze(ctx: PhlowContext = Depends(auth_required)):
+    return {"message": f"Hello {ctx.agent.name}"}
 ```
 
 ## Key Features

@@ -28,6 +28,9 @@ def _make_middleware():
         supabase_anon_key="fake-key",
         agent_card=AgentCard(
             name="test-agent",
+            description="A test agent for CI",
+            service_url="https://test-agent.example.com",
+            skills=["search", "summarize"],
             metadata={"agent_id": "agent-001"},
         ),
         private_key=SECRET_KEY,
@@ -81,24 +84,16 @@ def client(app):
 
 class TestFastAPIPhlowAuth:
     def test_missing_auth_header(self, client):
-        resp = client.get("/protected", headers={"X-Phlow-Agent-Id": "agent-001"})
+        resp = client.get("/protected")
         assert resp.status_code == 401
         assert "Authorization" in resp.json().get("detail", "")
 
-    def test_missing_agent_id_header(self, client):
-        token = _make_token()
-        resp = client.get("/protected", headers={"Authorization": f"Bearer {token}"})
-        assert resp.status_code == 401
-        assert "Agent-Id" in resp.json().get("detail", "")
-
-    def test_valid_auth(self, client):
+    def test_valid_auth_with_bearer_only(self, client):
+        """Auth works with just a Bearer token — no extra headers needed."""
         token = _make_token()
         resp = client.get(
             "/protected",
-            headers={
-                "Authorization": f"Bearer {token}",
-                "X-Phlow-Agent-Id": "agent-001",
-            },
+            headers={"Authorization": f"Bearer {token}"},
         )
         assert resp.status_code == 200
         assert resp.json()["agent"] == "agent-001"
@@ -106,10 +101,7 @@ class TestFastAPIPhlowAuth:
     def test_invalid_token(self, client):
         resp = client.get(
             "/protected",
-            headers={
-                "Authorization": "Bearer invalid.token.here",
-                "X-Phlow-Agent-Id": "agent-001",
-            },
+            headers={"Authorization": "Bearer invalid.token.here"},
         )
         assert resp.status_code == 401
 
@@ -120,10 +112,7 @@ class TestFastAPIPhlowAuth:
         )
         resp = client.get(
             "/protected",
-            headers={
-                "Authorization": f"Bearer {token}",
-                "X-Phlow-Agent-Id": "agent-001",
-            },
+            headers={"Authorization": f"Bearer {token}"},
         )
         assert resp.status_code == 401
 
@@ -142,24 +131,47 @@ class TestPermissionChecking:
         token = _make_token()
         resp = client.get(
             "/admin",
-            headers={
-                "Authorization": f"Bearer {token}",
-                "X-Phlow-Agent-Id": "agent-001",
-            },
+            headers={"Authorization": f"Bearer {token}"},
         )
         assert resp.status_code == 403
 
-
-class TestRequireAuthDecorator:
-    def test_decorator_adds_attribute(self, mw):
+    def test_allows_permission_from_claims(self, mw):
+        """Permissions can come from JWT claims, not just agent metadata."""
+        app = FastAPI()
         auth = FastAPIPhlowAuth(mw)
-        decorator = auth.require_auth(required_permissions=["read"])
+        dep = auth.create_auth_dependency(required_permissions=["read:data"])
 
-        @decorator
-        def my_endpoint():
-            pass
+        @app.get("/data")
+        async def data(ctx: PhlowContext = Depends(dep)):
+            return {"ok": True}
 
-        assert my_endpoint.__phlow_required_permissions__ == ["read"]
+        client = TestClient(app)
+        token = _make_token(permissions=["read:data", "write:data"])
+        resp = client.get(
+            "/data",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert resp.status_code == 200
+
+
+class TestAgentCardRoute:
+    def test_serves_agent_card(self, mw):
+        app = FastAPI()
+        auth = FastAPIPhlowAuth(mw)
+        auth.setup_agent_card_route(app)
+
+        client = TestClient(app)
+        resp = client.get("/.well-known/agent.json")
+        assert resp.status_code == 200
+
+        card = resp.json()
+        assert card["name"] == "test-agent"
+        assert card["description"] == "A test agent for CI"
+        assert card["url"] == "https://test-agent.example.com"
+        assert card["id"] == "agent-001"
+        assert card["endpoints"]["task"] == "/tasks/send"
+        assert card["capabilities"]["search"] is True
+        assert card["capabilities"]["summarize"] is True
 
 
 class TestConvenienceFunctions:
