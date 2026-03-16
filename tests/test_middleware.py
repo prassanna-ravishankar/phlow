@@ -423,15 +423,16 @@ class TestConfigValidation:
             agent_card=agent_card,
             private_key=secret_key,
         )
-        with (
-            patch("phlow.middleware.create_client"),
-            patch("phlow.middleware.get_key_store") as mock_ks,
-            patch("phlow.middleware.A2AClient"),
-        ):
-            mock_store = MagicMock()
-            mock_store.get_private_key.return_value = None
-            mock_store.get_public_key.return_value = None
-            mock_ks.return_value = mock_store
+        # Validation now happens before create_client, so no mocking needed
+        with pytest.raises(ConfigurationError, match="required"):
+            PhlowMiddleware(config)
 
-            with pytest.raises(ConfigurationError, match="required"):
-                PhlowMiddleware(config)
+    def test_rejects_empty_supabase_anon_key(self, agent_card, secret_key):
+        config = PhlowConfig(
+            supabase_url="https://x.supabase.co",
+            supabase_anon_key="",
+            agent_card=agent_card,
+            private_key=secret_key,
+        )
+        with pytest.raises(ConfigurationError, match="required"):
+            PhlowMiddleware(config)

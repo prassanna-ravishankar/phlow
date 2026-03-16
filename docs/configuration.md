@@ -49,15 +49,17 @@ config = PhlowConfig(
 ## FastAPI Integration
 
 ```python
+from fastapi import Depends
+from phlow import PhlowMiddleware, PhlowContext
 from phlow.integrations.fastapi import FastAPIPhlowAuth
 
-auth = FastAPIPhlowAuth(config)
+middleware = PhlowMiddleware(config)
+auth = FastAPIPhlowAuth(middleware)
+auth_required = auth.create_auth_dependency()
 
 @app.post("/protected")
-@auth.require_agent_auth
-async def protected_endpoint(request: Request):
-    agent = request.state.agent
-    return {"agent": agent.name}
+async def protected_endpoint(ctx: PhlowContext = Depends(auth_required)):
+    return {"agent": ctx.agent.name}
 ```
 
 ## Optional Features
@@ -66,17 +68,17 @@ async def protected_endpoint(request: Request):
 ```python
 config = PhlowConfig(
     # ... other config
-    enable_audit=True  # Logs auth events to Supabase
+    enable_audit_log=True  # Logs auth events to Supabase
 )
 ```
 
 ### Rate Limiting
 ```python
-from phlow import RateLimiter
+from phlow.rate_limiter import RateLimiter
 
 rate_limiter = RateLimiter(
     max_requests=100,
-    window_seconds=60
+    window_ms=60_000  # 1 minute in milliseconds
 )
 ```
 

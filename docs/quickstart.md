@@ -21,8 +21,8 @@ pip install phlow
 ## Create Your A2A Agent
 
 ```python
-from fastapi import FastAPI, Request
-from phlow import AgentCard, PhlowConfig
+from fastapi import Depends, FastAPI
+from phlow import AgentCard, PhlowConfig, PhlowContext, PhlowMiddleware
 from phlow.integrations.fastapi import FastAPIPhlowAuth
 import os
 
@@ -46,7 +46,9 @@ config = PhlowConfig(
     supabase_anon_key=os.getenv("SUPABASE_ANON_KEY")
 )
 
-auth = FastAPIPhlowAuth(config)
+middleware = PhlowMiddleware(config)
+auth = FastAPIPhlowAuth(middleware)
+auth_required = auth.create_auth_dependency()
 
 # 2. A2A Agent Card Discovery (required by A2A protocol)
 @app.get("/.well-known/agent.json")
@@ -67,8 +69,7 @@ def agent_card():
 
 # 3. A2A Task Endpoint (required by A2A protocol)
 @app.post("/tasks/send")
-@auth.require_agent_auth
-async def send_task(request: Request, task: dict):
+async def send_task(task: dict, ctx: PhlowContext = Depends(auth_required)):
     """A2A Protocol task endpoint"""
     # Extract message from A2A format
     message_text = ""
@@ -93,10 +94,8 @@ async def send_task(request: Request, task: dict):
 
 # 4. Protected endpoints
 @app.post("/api/chat")
-@auth.require_agent_auth
-async def chat(request: Request):
-    agent = request.state.agent
-    return {"message": f"Hello from {agent.name}"}
+async def chat(ctx: PhlowContext = Depends(auth_required)):
+    return {"message": f"Hello from {ctx.agent.name}"}
 ```
 
 ## Setup Environment

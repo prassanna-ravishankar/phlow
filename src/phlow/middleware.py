@@ -55,6 +55,10 @@ class PhlowMiddleware:
         Args:
             config: Phlow configuration
         """
+        # Validate configuration early, before using values
+        if not config.supabase_url or not config.supabase_anon_key:
+            raise ConfigurationError("Supabase URL and anon key are required")
+
         self.config = config
         self.supabase = create_client(config.supabase_url, config.supabase_anon_key)
 
@@ -115,10 +119,6 @@ class PhlowMiddleware:
         self.supabase_circuit_breaker = supabase_circuit_breaker()
         self.did_resolution_circuit_breaker = did_resolution_circuit_breaker()
         self.a2a_messaging_circuit_breaker = a2a_messaging_circuit_breaker()
-
-        # Validate configuration
-        if not config.supabase_url or not config.supabase_anon_key:
-            raise ConfigurationError("Supabase URL and anon key are required")
 
     async def aclose(self) -> None:
         """Close all resources and cleanup."""

@@ -59,18 +59,23 @@ config = PhlowConfig(
 phlow = PhlowMiddleware(config)
 ```
 
-### FastAPI Middleware
+### FastAPI Integration
 
 ```python
-# Use A2A authentication with Supabase features
+from fastapi import Depends
+from phlow import PhlowMiddleware, PhlowContext
+from phlow.integrations.fastapi import FastAPIPhlowAuth
+
+middleware = PhlowMiddleware(config)
+auth = FastAPIPhlowAuth(middleware)
+auth_required = auth.create_auth_dependency()
+
 @app.post("/api/chat")
-async def chat_endpoint(context: PhlowContext = Depends(auth_required)):
-    # Access agent info and Supabase client
-    agent = context.agent
-    return {"message": f"Hello from {agent.name}"}
+async def chat_endpoint(ctx: PhlowContext = Depends(auth_required)):
+    return {"message": f"Hello from {ctx.agent.name}"}
 ```
 
-[Full Setup Guide →](docs/getting-started.md)
+[Full Setup Guide →](docs/quickstart.md)
 
 ## 🚀 Features
 
@@ -135,8 +140,12 @@ See [Getting Started](docs/getting-started.md) for setup instructions.
 ## 💡 Example: A2A Agent with Phlow Auth
 
 ```python
-# A2A + Phlow Integration
-from phlow import PhlowMiddleware, AgentCard, PhlowConfig
+import os
+from fastapi import Depends, FastAPI
+from phlow import PhlowMiddleware, AgentCard, PhlowConfig, PhlowContext
+from phlow.integrations.fastapi import create_phlow_dependency
+
+app = FastAPI()
 
 config = PhlowConfig(
     agent_card=AgentCard(
@@ -151,16 +160,12 @@ config = PhlowConfig(
     supabase_anon_key=os.environ["SUPABASE_ANON_KEY"]
 )
 
-phlow = PhlowMiddleware(config)
-
-# Use with FastAPI
-from phlow.integrations.fastapi import create_phlow_dependency
-auth_required = create_phlow_dependency(phlow)
+middleware = PhlowMiddleware(config)
+auth_required = create_phlow_dependency(middleware)
 
 @app.post("/api/a2a/message")
-async def handle_message(context: PhlowContext = Depends(auth_required)):
-    # Process A2A message using phlow context
-    return {"status": "received"}
+async def handle_message(ctx: PhlowContext = Depends(auth_required)):
+    return {"status": "received", "agent": ctx.agent.name}
 ```
 
 ## 📚 Documentation
