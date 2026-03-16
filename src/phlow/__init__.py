@@ -47,6 +47,11 @@ def generate_token(agent_card: AgentCard, private_key: str) -> str:
     if not agent_card or not private_key:
         raise ValueError("agent_card and private_key are required")
 
+    if not isinstance(agent_card, AgentCard):
+        raise TypeError(
+            f"agent_card must be an AgentCard instance, got {type(agent_card).__name__}"
+        )
+
     # Generate payload with required and optional claims
     payload = {
         "sub": agent_card.metadata.get("agent_id") if agent_card.metadata else None,
@@ -113,6 +118,34 @@ def verify_token(token: str, public_key: str) -> dict:
         raise TokenError(f"Invalid token: {str(e)}")
 
 
+def decode_token(token: str) -> dict:
+    """Decode a JWT token without verification. Useful for debugging and logging.
+
+    Returns the payload claims without checking the signature or expiry.
+    Do NOT use this for authentication — use verify_token() instead.
+
+    Args:
+        token: JWT token to decode
+
+    Returns:
+        Decoded token payload (unverified)
+
+    Raises:
+        TokenError: If token is malformed
+    """
+    import jwt
+
+    if not token or not isinstance(token, str):
+        raise TokenError("token must be a non-empty string")
+
+    try:
+        return jwt.decode(
+            token, options={"verify_signature": False}, algorithms=["HS256", "RS256"]
+        )
+    except jwt.InvalidTokenError as e:
+        raise TokenError(f"Cannot decode token: {str(e)}")
+
+
 __version__ = "0.1.1"
 __all__ = [
     # Core middleware and types
@@ -140,4 +173,5 @@ __all__ = [
     # Utility functions
     "generate_token",
     "verify_token",
+    "decode_token",
 ]

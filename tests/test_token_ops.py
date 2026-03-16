@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 import jwt
 import pytest
 
-from phlow import generate_token, verify_token
+from phlow import decode_token, generate_token, verify_token
 from phlow.exceptions import TokenError
 from phlow.types import AgentCard
 
@@ -65,6 +65,14 @@ class TestGenerateToken:
     def test_raises_on_missing_private_key(self, agent_card):
         with pytest.raises(ValueError, match="agent_card and private_key are required"):
             generate_token(agent_card, "")
+
+    def test_raises_on_wrong_type(self, secret_key):
+        with pytest.raises(TypeError, match="AgentCard instance"):
+            generate_token("not-an-agent-card", secret_key)
+
+    def test_raises_on_dict_instead_of_agent_card(self, secret_key):
+        with pytest.raises(TypeError, match="AgentCard instance"):
+            generate_token({"name": "test"}, secret_key)
 
     def test_rs256_detection(self, agent_card):
         from cryptography.hazmat.primitives import serialization
@@ -137,3 +145,40 @@ class TestVerifyToken:
         )
         with pytest.raises(TokenError, match="Invalid token"):
             verify_token(token, secret_key)
+
+
+class TestDecodeToken:
+    def test_decodes_without_verification(self, agent_card, secret_key):
+        token = generate_token(agent_card, secret_key)
+        decoded = decode_token(token)
+        assert decoded["sub"] == "agent-123"
+        assert decoded["name"] == "test-agent"
+
+    def test_decodes_expired_token(self, secret_key):
+        """Unlike verify_token, decode_token should work on expired tokens."""
+        payload = {
+            "sub": "agent-1",
+            "iat": datetime.now(timezone.utc) - timedelta(hours=2),
+            "exp": datetime.now(timezone.utc) - timedelta(hours=1),
+        }
+        token = jwt.encode(payload, secret_key, algorithm="HS256")
+        decoded = decode_token(token)
+        assert decoded["sub"] == "agent-1"
+
+    def test_decodes_with_wrong_key(self, agent_card, secret_key):
+        """decode_token doesn't check signatures."""
+        token = generate_token(agent_card, secret_key)
+        decoded = decode_token(token)  # No key needed
+        assert decoded["name"] == "test-agent"
+
+    def test_raises_on_empty_token(self):
+        with pytest.raises(TokenError, match="non-empty string"):
+            decode_token("")
+
+    def test_raises_on_none(self):
+        with pytest.raises(TokenError, match="non-empty string"):
+            decode_token(None)
+
+    def test_raises_on_garbage(self):
+        with pytest.raises(TokenError, match="Cannot decode"):
+            decode_token("totally-not-a-jwt")

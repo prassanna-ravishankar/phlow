@@ -263,7 +263,7 @@ class CircuitBreakerRegistry:
         """
         if name not in self._breakers:
             self._breakers[name] = CircuitBreaker(name, config)
-            self.logger.info(f"Created circuit breaker: {name}")
+            self.logger.debug(f"Created circuit breaker: {name}")
 
         return self._breakers[name]
 
