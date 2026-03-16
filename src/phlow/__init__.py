@@ -3,6 +3,7 @@
 A2A Protocol extension with Supabase integration for enhanced agent authentication.
 """
 
+from .auth import PhlowAuth
 from .exceptions import (
     AuthenticationError,
     AuthorizationError,
@@ -148,7 +149,8 @@ def decode_token(token: str) -> dict:
 
 __version__ = "0.1.1"
 __all__ = [
-    # Core middleware and types
+    # Core
+    "PhlowAuth",
     "PhlowMiddleware",
     "PhlowConfig",
     "PhlowContext",

@@ -54,6 +54,9 @@ examples = [
     "requests>=2.31.0",
 ]
 
+[project.scripts]
+phlow = "phlow.cli:main"
+
 [project.urls]
 Documentation = "https://prassanna.io/phlow/"
 Issues = "https://github.com/prassanna-ravishankar/phlow/issues"
