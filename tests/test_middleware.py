@@ -272,6 +272,58 @@ class TestAsyncContextManager:
                 assert mw is not None
 
 
+class TestDidDocumentCache:
+    def test_cache_and_retrieve(self, middleware):
+        middleware._cache_did_document("did:web:example.com", {"service": []})
+        doc = middleware._get_cached_did_document("did:web:example.com")
+        assert doc is not None
+        assert doc == {"service": []}
+
+    def test_returns_none_for_uncached(self, middleware):
+        assert middleware._get_cached_did_document("did:web:missing.com") is None
+
+    def test_evicts_expired_entries(self, middleware):
+        import time
+
+        middleware._cache_ttl_seconds = 0.01
+        middleware._cache_did_document("did:web:old.com", {"service": []})
+        time.sleep(0.02)
+        assert middleware._get_cached_did_document("did:web:old.com") is None
+
+    def test_evicts_when_cache_full(self, middleware):
+        middleware._max_cache_size = 3
+        for i in range(5):
+            middleware._cache_did_document(f"did:web:agent{i}.com", {"id": i})
+        assert len(middleware._did_document_cache) <= 3
+
+    def test_cleanup_removes_expired(self, middleware):
+        import time
+
+        middleware._cache_ttl_seconds = 0.01
+        middleware._cache_did_document("did:web:a.com", {})
+        middleware._cache_did_document("did:web:b.com", {})
+        time.sleep(0.02)
+        middleware._cleanup_did_cache()
+        assert len(middleware._did_document_cache) == 0
+
+
+class TestAuthenticateWithRoleValidation:
+    @pytest.mark.asyncio
+    async def test_rejects_empty_role(self, middleware):
+        with pytest.raises(AuthenticationError, match="non-empty string"):
+            await middleware.authenticate_with_role("token", "")
+
+    @pytest.mark.asyncio
+    async def test_rejects_oversized_role(self, middleware):
+        with pytest.raises(AuthenticationError, match="maximum length"):
+            await middleware.authenticate_with_role("token", "x" * 101)
+
+    @pytest.mark.asyncio
+    async def test_rejects_invalid_role_chars(self, middleware):
+        with pytest.raises(AuthenticationError, match="invalid characters"):
+            await middleware.authenticate_with_role("token", "role; DROP TABLE")
+
+
 class TestConfigValidation:
     def test_rejects_empty_supabase_url(self, agent_card, secret_key):
         config = PhlowConfig(
