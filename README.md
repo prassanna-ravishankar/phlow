@@ -38,7 +38,24 @@ We're building the foundational trust layer that will enable agents to securely 
 pip install phlow
 ```
 
-### Python Example
+### JWT Auth (No Supabase Required)
+
+```python
+from phlow import PhlowAuth
+
+auth = PhlowAuth(private_key="your-secret")
+token = auth.create_token(agent_id="my-agent", name="My Agent")
+claims = auth.verify(token)
+```
+
+Or from the CLI:
+
+```bash
+phlow generate-token --key your-secret --agent-id my-agent
+phlow decode-token <token>
+```
+
+### Full Setup (With Supabase)
 
 ```python
 from phlow import PhlowMiddleware, AgentCard, PhlowConfig
@@ -49,14 +66,14 @@ config = PhlowConfig(
         description="Agent description",
         service_url="https://my-agent.com",
         skills=["chat", "analysis"],
-        metadata={"agent_id": "my-agent-id", "public_key": "public-key-here"}
+        metadata={"agent_id": "my-agent-id"}
     ),
     private_key=os.environ["PRIVATE_KEY"],
     supabase_url=os.environ["SUPABASE_URL"],
     supabase_anon_key=os.environ["SUPABASE_ANON_KEY"]
 )
 
-phlow = PhlowMiddleware(config)
+middleware = PhlowMiddleware(config)
 ```
 
 ### FastAPI Integration

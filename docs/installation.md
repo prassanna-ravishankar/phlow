@@ -69,9 +69,9 @@ For E2E testing and multi-agent development:
 # Phlow auto-detects Rancher Desktop socket at ~/.rd/docker.sock
 ```
 
-## Supabase Setup
+## Supabase Setup (Optional)
 
-Phlow requires a Supabase project for agent registry and audit logs.
+Supabase is needed for `PhlowMiddleware` features (agent registry, audit logs, RBAC caching). For JWT-only auth, use `PhlowAuth` instead — no Supabase required.
 
 ### 1. Create Supabase Project
 - Go to [supabase.com](https://supabase.com)
@@ -104,7 +104,7 @@ export GEMINI_API_KEY="your-gemini-api-key"
 
 ```bash
 # Test Phlow imports
-python -c "from phlow import AgentCard, PhlowConfig; print('✅ Phlow installed')"
+python -c "from phlow import PhlowAuth, AgentCard; print('Phlow installed')"
 
 # Test development setup (if you cloned repo)
 uv run task test-unit

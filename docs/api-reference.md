@@ -1,10 +1,65 @@
 # API Reference
 
+## Quick Start (No Supabase)
+
+```python
+from phlow import PhlowAuth
+
+auth = PhlowAuth(private_key="your-secret")
+token = auth.create_token(agent_id="my-agent", name="My Agent")
+claims = auth.verify(token)
+```
+
+## Full Setup (With Supabase)
+
+```python
+from phlow import PhlowMiddleware, PhlowConfig, AgentCard
+
+config = PhlowConfig(
+    agent_card=AgentCard(
+        name="My Agent",
+        service_url="https://my-agent.com",
+        skills=["chat"],
+        metadata={"agent_id": "my-agent-id"}
+    ),
+    private_key="your-secret",
+    supabase_url="https://your-project.supabase.co",
+    supabase_anon_key="your-anon-key"
+)
+
+middleware = PhlowMiddleware(config)
+```
+
+---
+
 ## Core Classes
+
+### PhlowAuth
+
+Lightweight JWT authentication. No Supabase required.
+
+```python
+from phlow import PhlowAuth
+
+auth = PhlowAuth(
+    private_key="secret",       # Required. HS256 string or RS256 PEM key
+    public_key=None,            # Required for RS256 verification
+    algorithm=None,             # Auto-detected from key format ("HS256" or "RS256")
+    token_expiry_hours=1.0,     # Default token lifetime
+)
+```
+
+#### Methods
+
+| Method | Description |
+|--------|-------------|
+| `create_token(agent_id, name, permissions, extra_claims, expiry_hours)` | Create a signed JWT |
+| `create_token_for_agent(agent_card)` | Create a JWT from an AgentCard |
+| `verify(token)` | Verify a JWT and return claims |
 
 ### PhlowMiddleware
 
-The main middleware class that handles authentication and A2A Protocol integration.
+Full middleware with Supabase integration, RBAC, rate limiting, and circuit breakers.
 
 ```python
 from phlow import PhlowMiddleware, PhlowConfig
@@ -12,273 +67,188 @@ from phlow import PhlowMiddleware, PhlowConfig
 middleware = PhlowMiddleware(config)
 ```
 
-#### Constructor Parameters
-
-- `config: PhlowConfig` - Configuration object containing agent card, keys, and Supabase settings
-
 #### Methods
 
-##### `verify_jwt(token: str, agent_id: str) -> PhlowContext`
-Verifies a JWT token and returns authentication context.
+| Method | Description |
+|--------|-------------|
+| `verify_token(token)` | Verify JWT, return `PhlowContext` |
+| `generate_token(agent_card)` | Generate JWT for an agent |
+| `authenticate_with_role(token, role)` | Verify JWT + RBAC role (async) |
+| `get_a2a_client()` | Get the A2A client instance |
+| `get_supabase_client()` | Get the Supabase client |
+| `authenticate()` | Get a generic auth middleware function |
+| `aclose()` | Close resources (async) |
 
-**Parameters:**
-- `token` - JWT token to verify
-- `agent_id` - ID of the agent making the request
-
-**Returns:** `PhlowContext` object with agent information and Supabase client
-
-**Raises:**
-- `AuthenticationError` - Invalid or expired token
-- `AgentNotFoundError` - Agent not found in registry
+Supports async context manager: `async with PhlowMiddleware(config) as mw:`
 
 ### PhlowConfig
 
-Configuration object for Phlow middleware.
-
 ```python
+from phlow import PhlowConfig
+
 config = PhlowConfig(
-    agent_card=agent_card,
-    private_key=private_key,
-    supabase_url=supabase_url,
-    supabase_anon_key=supabase_anon_key
+    supabase_url="...",                    # Required
+    supabase_anon_key="...",               # Required
+    agent_card=AgentCard(...),             # Required
+    private_key="...",                     # Required
+    public_key=None,                       # For RS256
+    enable_audit_log=False,                # Log auth events to Supabase
+    rate_limit_configs=RateLimitConfigs(), # Rate limiting settings
 )
 ```
-
-#### Parameters
-
-- `agent_card: AgentCard` - Agent information and capabilities
-- `private_key: str` - RSA private key for signing JWTs
-- `supabase_url: str` - Supabase project URL
-- `supabase_anon_key: str` - Supabase anonymous key
-- `enable_audit_logging: bool = True` - Enable authentication event logging
-- `rate_limiting: Optional[RateLimitConfig] = None` - Rate limiting configuration
-
-### PhlowContext
-
-Authentication context object passed to authenticated endpoints.
-
-#### Attributes
-
-- `agent: AgentCard` - Information about the authenticated agent
-- `supabase: Client` - Authenticated Supabase client
-- `request_id: str` - Unique request identifier for logging
-- `authenticated_at: datetime` - When authentication occurred
 
 ### AgentCard
 
-Agent information and capabilities.
-
 ```python
-agent_card = AgentCard(
-    name="My Agent",
-    description="Agent description",
-    service_url="https://my-agent.com",
-    skills=["chat", "analysis"],
-    metadata={"agent_id": "my-agent-id", "public_key": "..."}
+from phlow import AgentCard
+
+card = AgentCard(
+    name="My Agent",              # Required
+    description="...",            # Agent description
+    service_url="...",            # Agent's URL
+    skills=["chat", "search"],    # Capabilities
+    metadata={"agent_id": "..."}  # Must include agent_id for JWT sub claim
 )
 ```
 
-#### Parameters
+### PhlowContext
 
-- `name: str` - Human-readable agent name
-- `description: str` - Agent description and purpose
-- `service_url: str` - Agent's service endpoint URL
-- `skills: List[str]` - List of agent capabilities
-- `metadata: Dict[str, Any]` - Additional agent metadata including public key
+Returned by `verify_token()` and FastAPI auth dependencies.
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `agent` | `AgentCard` | The middleware's agent card |
+| `token` | `str` | The raw JWT token |
+| `claims` | `dict` | Decoded JWT claims |
+| `supabase` | `Client` | Supabase client instance |
+| `a2a_client` | `A2AClient` | A2A Protocol client |
+| `verified_roles` | `list[str]` | RBAC-verified roles |
+
+---
 
 ## FastAPI Integration
 
-### create_phlow_dependency
-
-Creates a FastAPI dependency for authentication.
+### FastAPIPhlowAuth
 
 ```python
-from phlow.integrations.fastapi import create_phlow_dependency
+from fastapi import Depends, FastAPI
+from phlow import PhlowMiddleware, PhlowContext
+from phlow.integrations.fastapi import FastAPIPhlowAuth
 
-auth_required = create_phlow_dependency(middleware)
+app = FastAPI()
+middleware = PhlowMiddleware(config)
+auth = FastAPIPhlowAuth(middleware)
+
+# Auto-register /.well-known/agent.json
+auth.setup_agent_card_route(app)
+
+# Create auth dependency
+auth_required = auth.create_auth_dependency()
 
 @app.post("/api/endpoint")
-async def endpoint(context: PhlowContext = Depends(auth_required)):
-    return {"agent": context.agent.name}
-```
-
-### PhlowFastAPIMiddleware
-
-ASGI middleware for automatic authentication.
-
-```python
-from phlow.integrations.fastapi import PhlowFastAPIMiddleware
-
-app.add_middleware(PhlowFastAPIMiddleware, phlow_middleware=middleware)
-```
-
-## RBAC Classes
-
-### RoleCredentialStore
-
-Manages role credential storage and verification.
-
-```python
-from phlow.rbac import RoleCredentialStore
-
-store = RoleCredentialStore(supabase_client)
+async def endpoint(ctx: PhlowContext = Depends(auth_required)):
+    return {"agent": ctx.agent.name, "sub": ctx.claims["sub"]}
 ```
 
 #### Methods
 
-##### `store_credential(agent_id: str, credential: dict) -> None`
-Stores a verifiable credential for an agent.
+| Method | Description |
+|--------|-------------|
+| `create_auth_dependency(required_permissions=None)` | Create FastAPI `Depends()` for JWT auth |
+| `create_role_auth_dependency(required_role)` | Create FastAPI `Depends()` for RBAC auth |
+| `setup_agent_card_route(app)` | Register `/.well-known/agent.json` endpoint |
 
-##### `get_credentials(agent_id: str) -> List[dict]`
-Retrieves all credentials for an agent.
-
-##### `verify_role(agent_id: str, required_role: str) -> bool`
-Verifies if an agent has the required role.
-
-### RoleCredentialVerifier
-
-Verifies W3C Verifiable Credentials.
+### Convenience Functions
 
 ```python
-from phlow.rbac import RoleCredentialVerifier
+from phlow.integrations.fastapi import create_phlow_dependency, create_phlow_role_dependency
 
-verifier = RoleCredentialVerifier()
-is_valid = await verifier.verify_credential(credential)
+auth_dep = create_phlow_dependency(middleware, required_permissions=["read"])
+role_dep = create_phlow_role_dependency(middleware, required_role="admin")
 ```
 
-## Error Classes
+---
 
-### AuthenticationError
-Raised when JWT verification fails.
-
-### AgentNotFoundError
-Raised when agent is not found in registry.
-
-### RateLimitExceededError
-Raised when rate limits are exceeded.
-
-### CircuitBreakerOpenError
-Raised when circuit breaker is open.
-
-## Configuration Classes
-
-### RateLimitConfig
-
-Rate limiting configuration.
+## Token Utilities
 
 ```python
-from phlow.types import RateLimitConfig
+from phlow import generate_token, verify_token, decode_token
 
-rate_config = RateLimitConfig(
-    requests_per_minute=60,
-    burst_size=10,
-    redis_url="redis://localhost:6379"
+# Generate (standalone, without middleware)
+token = generate_token(agent_card, private_key)
+
+# Verify (checks signature + expiry)
+claims = verify_token(token, public_key)
+
+# Decode (no verification — for debugging)
+claims = decode_token(token)
+```
+
+## CLI
+
+```bash
+# Generate a test token
+phlow generate-token --key SECRET --agent-id my-agent --name "My Agent"
+
+# Inspect a token (no key needed)
+phlow decode-token TOKEN
+
+# Verify a token
+phlow verify-token TOKEN --key SECRET
+```
+
+---
+
+## Exceptions
+
+| Exception | HTTP Status | Description |
+|-----------|-------------|-------------|
+| `PhlowError` | 500 | Base exception |
+| `AuthenticationError` | 401 | Token verification failed |
+| `AuthorizationError` | 403 | Insufficient permissions |
+| `ConfigurationError` | 500 | Invalid configuration |
+| `TokenError` | 401 | Token operation failed |
+| `RateLimitError` | 429 | Rate limit exceeded |
+| `CircuitBreakerError` | 503 | Circuit breaker open |
+
+All exceptions include `.message`, `.code`, and `.status_code` attributes.
+
+---
+
+## Rate Limiting
+
+```python
+from phlow.rate_limiter import RateLimiter
+
+limiter = RateLimiter(max_requests=100, window_ms=60_000)
+
+if limiter.is_allowed("user-id"):
+    # process request
+    pass
+
+# Or raise on limit exceeded
+limiter.check_and_raise("user-id")
+```
+
+For distributed rate limiting with Redis:
+
+```python
+from phlow.distributed_rate_limiter import DistributedRateLimiter
+
+limiter = DistributedRateLimiter(
+    max_requests=100,
+    window_ms=60_000,
+    redis_url="redis://localhost:6379",  # Falls back to in-memory if unavailable
 )
 ```
 
-### MonitoringConfig
-
-Monitoring and logging configuration.
-
-```python
-from phlow.monitoring import MonitoringConfig
-
-monitoring = MonitoringConfig(
-    enable_prometheus=True,
-    enable_structured_logging=True,
-    log_level="INFO"
-)
-```
-
-## Utility Functions
-
-### generate_rsa_keypair
-
-Generates RSA key pair for agent authentication.
-
-```python
-from phlow.utils import generate_rsa_keypair
-
-private_key, public_key = generate_rsa_keypair()
-```
-
-### verify_agent_signature
-
-Verifies agent JWT signature.
-
-```python
-from phlow.utils import verify_agent_signature
-
-is_valid = verify_agent_signature(token, public_key)
-```
+---
 
 ## Environment Variables
 
-### Required
-
-- `SUPABASE_URL` - Supabase project URL
-- `SUPABASE_ANON_KEY` - Supabase anonymous key
-- `AGENT_ID` - Unique agent identifier
-- `AGENT_PRIVATE_KEY` - RSA private key for JWT signing
-
-### Optional
-
-- `PHLOW_ENABLE_AUDIT_LOGGING` - Enable audit logging (default: true)
-- `PHLOW_RATE_LIMIT_REQUESTS` - Requests per minute (default: 60)
-- `PHLOW_REDIS_URL` - Redis URL for distributed rate limiting
-- `PHLOW_LOG_LEVEL` - Logging level (default: INFO)
-- `PHLOW_ENABLE_PROMETHEUS` - Enable Prometheus metrics (default: false)
-
-## Common Patterns
-
-### Basic Authentication Setup
-
-```python
-from phlow import PhlowMiddleware, PhlowConfig, AgentCard
-
-# Configure agent
-config = PhlowConfig(
-    agent_card=AgentCard(
-        name="My Agent",
-        description="My AI agent",
-        service_url="https://my-agent.com",
-        skills=["chat"],
-        metadata={"agent_id": "my-agent", "public_key": public_key}
-    ),
-    private_key=private_key,
-    supabase_url=os.environ["SUPABASE_URL"],
-    supabase_anon_key=os.environ["SUPABASE_ANON_KEY"]
-)
-
-middleware = PhlowMiddleware(config)
-```
-
-### Error Handling
-
-```python
-from phlow.exceptions import AuthenticationError, AgentNotFoundError
-
-try:
-    context = middleware.verify_jwt(token, agent_id)
-except AuthenticationError:
-    return {"error": "Invalid token"}
-except AgentNotFoundError:
-    return {"error": "Agent not found"}
-```
-
-### Rate Limiting
-
-```python
-from phlow.types import RateLimitConfig
-
-rate_config = RateLimitConfig(
-    requests_per_minute=100,
-    burst_size=20,
-    redis_url="redis://localhost:6379"
-)
-
-config = PhlowConfig(
-    # ... other config
-    rate_limiting=rate_config
-)
-```
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `SUPABASE_URL` | For PhlowMiddleware | Supabase project URL |
+| `SUPABASE_ANON_KEY` | For PhlowMiddleware | Supabase anonymous key |
+| `REDIS_URL` | No | Redis URL for distributed rate limiting |
+| `PHLOW_KEY_STORE_TYPE` | No | Key storage backend: `environment`, `encrypted_file`, `vault`, `aws` |

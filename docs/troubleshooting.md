@@ -1,369 +1,157 @@
 # Troubleshooting
 
-Common issues and solutions when working with Phlow.
-
 ## Authentication Issues
 
-### "Invalid JWT token" Error
+### "Token must be a non-empty string"
 
-**Symptoms:**
-```
-AuthenticationError: Invalid JWT token
-```
+The token passed to `verify_token()` is empty or None. Check that you're extracting the Bearer token correctly:
 
-**Common Causes:**
-
-1. **Clock Skew**: JWT tokens have timestamps that must be within acceptable time windows
-   ```bash
-   # Check system time is correct
-   date
-   # Sync system clock if needed
-   sudo ntpdate -s time.nist.gov
-   ```
-
-2. **Wrong Private/Public Key Pair**: Ensure keys match
-   ```python
-   # Verify key pair matches
-   from phlow.utils import verify_keypair
-   is_valid = verify_keypair(private_key, public_key)
-   ```
-
-3. **Malformed Agent ID**: Agent ID in header doesn't match token claims
-   ```python
-   # Ensure agent_id matches between token and request header
-   headers = {"X-Agent-ID": "same-agent-id-as-in-token"}
-   ```
-
-### "Agent not found in registry" Error
-
-**Symptoms:**
-```
-AgentNotFoundError: Agent my-agent-id not found
+```python
+# The token is the part after "Bearer "
+auth_header = request.headers.get("authorization", "")
+token = auth_header.removeprefix("Bearer ").strip()
 ```
 
-**Solutions:**
+### "Token has expired"
 
-1. **Check Supabase Registration**: Verify agent is in database
-   ```sql
-   SELECT * FROM agents WHERE agent_id = 'your-agent-id';
-   ```
+JWT tokens have a limited lifetime (default: 1 hour). Generate a fresh token:
 
-2. **Register Agent**: If not found, register first
-   ```python
-   await middleware.register_agent(agent_card)
-   ```
+```bash
+phlow generate-token --key YOUR_SECRET --agent-id my-agent
+```
 
-3. **Check Agent ID Format**: Ensure consistent naming
-   ```python
-   # Agent ID should be URL-safe and consistent
-   agent_id = "my-agent-2024"  # Good
-   agent_id = "my agent!"      # Bad - spaces and special chars
-   ```
+For testing, use a longer expiry:
+
+```python
+auth = PhlowAuth(private_key="secret", token_expiry_hours=24.0)
+```
+
+### "Invalid token signature"
+
+The token was signed with a different key than the one used for verification. Ensure both sides use the same secret (HS256) or matching key pair (RS256).
+
+```python
+# Decode without verification to inspect the token
+from phlow import decode_token
+claims = decode_token(token)
+print(claims)  # Check sub, iss, exp to debug
+```
+
+### "No key configured for token verification"
+
+PhlowMiddleware was created with an empty `private_key`. Check your config:
+
+```python
+config = PhlowConfig(
+    private_key=os.getenv("PRIVATE_KEY"),  # Is this set?
+    ...
+)
+```
 
 ## Supabase Connection Issues
 
-### "Could not connect to Supabase" Error
+### "Supabase URL and anon key are required"
 
-**Symptoms:**
-```
-ConnectionError: Could not connect to Supabase
-```
+`PhlowMiddleware` requires Supabase credentials. If you just need JWT auth without Supabase, use `PhlowAuth` instead:
 
-**Debugging Steps:**
+```python
+from phlow import PhlowAuth
 
-1. **Verify Environment Variables**:
-   ```bash
-   echo $SUPABASE_URL
-   echo $SUPABASE_ANON_KEY
-   ```
-
-2. **Test Connection**:
-   ```python
-   from supabase import create_client
-   supabase = create_client(url, key)
-   response = supabase.table('agents').select('*').limit(1).execute()
-   print(response)
-   ```
-
-3. **Check Network Access**:
-   ```bash
-   curl -H "apikey: YOUR_ANON_KEY" "YOUR_SUPABASE_URL/rest/v1/"
-   ```
-
-### "RLS Policy Violation" Error
-
-**Symptoms:**
-```
-PostgrestAPIError: new row violates row-level security policy
+auth = PhlowAuth(private_key="your-secret")
 ```
 
-**Solutions:**
+### RLS Policy Violations
 
-1. **Apply Database Schema**: Ensure RLS policies are set up
-   ```bash
-   psql -h db.xxx.supabase.co -U postgres -d postgres -f docs/database-schema.sql
-   ```
+If you get `PostgrestAPIError: new row violates row-level security policy`:
 
-2. **Check Service Role**: For admin operations, use service role key
-   ```python
-   # Use service role for admin operations
-   supabase_admin = create_client(url, service_role_key)
-   ```
+1. Apply the database schema with proper RLS policies
+2. For admin operations, use the Supabase service role key
 
-## Performance Issues
+```python
+from phlow.supabase_helpers import SupabaseHelpers
+sql = SupabaseHelpers.generate_rls_policy("my_table", "my_policy")
+# Run this SQL in your Supabase SQL editor
+```
 
-### Slow Authentication
+## Rate Limiting
 
-**Symptoms:**
-- Authentication takes >2 seconds
-- High CPU usage during JWT verification
+### "Rate limit exceeded"
 
-**Solutions:**
+Default limits: 60 auth requests per minute per token hash.
 
-1. **Enable Key Caching**: Use encrypted key store
-   ```python
-   from phlow.security import EncryptedFileKeyStore
-   key_store = EncryptedFileKeyStore("/secure/path")
-   ```
+Configure higher limits:
 
-2. **Add Redis for Rate Limiting**: Reduce database load
-   ```python
-   rate_config = RateLimitConfig(
-       redis_url="redis://localhost:6379"
-   )
-   ```
+```python
+from phlow.types import RateLimitConfigs
 
-3. **Monitor Circuit Breakers**: Check if external calls are timing out
-   ```python
-   # Check circuit breaker status
-   from phlow.monitoring import get_circuit_breaker_status
-   status = get_circuit_breaker_status()
-   ```
+config = PhlowConfig(
+    rate_limit_configs=RateLimitConfigs(
+        auth_max_requests=120,
+        auth_window_ms=60_000,
+    ),
+    ...
+)
+```
 
-### Memory Leaks
+Reset rate limits programmatically:
 
-**Symptoms:**
-- Memory usage grows over time
-- Application becomes slow after extended use
+```python
+middleware.auth_rate_limiter.reset("identifier")
+```
 
-**Solutions:**
+## Circuit Breaker Issues
 
-1. **Check HTTP Client Cleanup**: Ensure proper resource cleanup
-   ```python
-   # Always close HTTP clients
-   async with httpx.AsyncClient() as client:
-       # Use client here
-       pass
-   ```
+### "Circuit breaker is OPEN"
 
-2. **Monitor Cache Size**: DID document cache may grow large
-   ```python
-   # Configure cache size limits
-   from phlow.rbac import configure_did_cache
-   configure_did_cache(max_size=1000, ttl=3600)
-   ```
+External dependencies (Supabase, DID resolution) are failing repeatedly. The circuit breaker prevents cascading failures.
+
+Check circuit breaker status:
+
+```python
+print(middleware.supabase_circuit_breaker.stats)
+# {'state': 'open', 'failure_count': 5, ...}
+```
+
+The circuit breaker will automatically try recovery after its timeout period (default: 30-60 seconds).
 
 ## Development Issues
 
 ### Import Errors
 
-**Symptoms:**
-```
-ImportError: cannot import name 'PhlowMiddleware'
-```
+```bash
+# Check phlow is installed
+python -c "from phlow import PhlowAuth; print('OK')"
 
-**Solutions:**
-
-1. **Check Installation**: Ensure Phlow is properly installed
-   ```bash
-   pip list | grep phlow
-   uv pip install phlow[fastapi]  # With FastAPI support
-   ```
-
-2. **Virtual Environment**: Ensure you're in the correct environment
-   ```bash
-   which python
-   pip show phlow
-   ```
-
-### Testing Issues
-
-**Symptoms:**
-- Tests fail with authentication errors
-- Supabase connections in tests
-
-**Solutions:**
-
-1. **Use Test Configuration**: Mock Supabase for unit tests
-   ```python
-   from unittest.mock import Mock
-
-   # Mock Supabase client
-   mock_supabase = Mock()
-   config.supabase_client = mock_supabase
-   ```
-
-2. **Environment Variables**: Set test environment
-   ```bash
-   export SUPABASE_URL="http://localhost:54321"
-   export SUPABASE_ANON_KEY="test-key"
-   ```
-
-## Production Issues
-
-### Rate Limiting Errors
-
-**Symptoms:**
-```
-RateLimitExceededError: Rate limit exceeded for agent
+# Install with extras
+uv add "phlow[fastapi]"    # For FastAPI integration
+uv add "phlow[monitoring]"  # For Prometheus metrics
 ```
 
-**Solutions:**
+### Testing Without Supabase
 
-1. **Increase Rate Limits**: Adjust configuration
-   ```python
-   rate_config = RateLimitConfig(
-       requests_per_minute=120,  # Increase limit
-       burst_size=30
-   )
-   ```
-
-2. **Implement Backoff**: Add retry logic with exponential backoff
-   ```python
-   import asyncio
-
-   async def retry_with_backoff(func, max_retries=3):
-       for attempt in range(max_retries):
-           try:
-               return await func()
-           except RateLimitExceededError:
-               if attempt < max_retries - 1:
-                   await asyncio.sleep(2 ** attempt)
-               else:
-                   raise
-   ```
-
-### Circuit Breaker Trips
-
-**Symptoms:**
-```
-CircuitBreakerOpenError: Circuit breaker is open
-```
-
-**Solutions:**
-
-1. **Check External Dependencies**: Verify Supabase/Redis health
-   ```bash
-   curl -f $SUPABASE_URL/health
-   redis-cli ping
-   ```
-
-2. **Adjust Circuit Breaker Settings**: Tune thresholds
-   ```python
-   from phlow.monitoring import configure_circuit_breaker
-   configure_circuit_breaker(
-       failure_threshold=10,
-       timeout_seconds=60
-   )
-   ```
-
-## Monitoring and Debugging
-
-### Enable Debug Logging
+Use `PhlowAuth` for unit tests — no mocking needed:
 
 ```python
-import logging
-logging.basicConfig(level=logging.DEBUG)
+from phlow import PhlowAuth
 
-# Or use structured logging
-from phlow.monitoring import configure_logging
-configure_logging(level="DEBUG", format="json")
+auth = PhlowAuth(private_key="test-secret")
+token = auth.create_token(agent_id="test-agent")
+claims = auth.verify(token)
+assert claims["sub"] == "test-agent"
 ```
 
-### Health Check Endpoints
+### Debug Logging
 
 ```python
-@app.get("/health")
-async def health_check():
-    try:
-        # Test Supabase connection
-        supabase.table('agents').select('agent_id').limit(1).execute()
-        return {"status": "healthy", "timestamp": datetime.utcnow()}
-    except Exception as e:
-        return {"status": "unhealthy", "error": str(e)}
-```
-
-### Prometheus Metrics
-
-```python
-from phlow.monitoring import enable_prometheus_metrics
-enable_prometheus_metrics(port=9090)
-
-# Monitor these metrics:
-# - phlow_auth_requests_total
-# - phlow_auth_duration_seconds
-# - phlow_rate_limit_hits_total
-# - phlow_circuit_breaker_state
+from phlow.monitoring.logger import configure_logging
+configure_logging(log_level="DEBUG")
 ```
 
 ## Getting Help
 
-### Enable Verbose Logging
+Check [GitHub Issues](https://github.com/prassanna-ravishankar/phlow/issues) or create a new issue with:
 
-```python
-import os
-os.environ["PHLOW_LOG_LEVEL"] = "DEBUG"
-os.environ["PHLOW_ENABLE_AUDIT_LOGGING"] = "true"
-```
-
-### Collect Diagnostic Information
-
-```python
-from phlow.diagnostics import collect_diagnostics
-
-# Generates diagnostic report
-diagnostics = collect_diagnostics()
-print(diagnostics)
-```
-
-### Common Log Patterns
-
-**Successful Authentication:**
-```json
-{
-  "level": "info",
-  "message": "Agent authenticated successfully",
-  "agent_id": "my-agent",
-  "request_id": "req-123"
-}
-```
-
-**Failed Authentication:**
-```json
-{
-  "level": "warning",
-  "message": "JWT verification failed",
-  "agent_id": "my-agent",
-  "error": "Token expired",
-  "request_id": "req-124"
-}
-```
-
-**Rate Limit Hit:**
-```json
-{
-  "level": "warning",
-  "message": "Rate limit exceeded",
-  "agent_id": "my-agent",
-  "current_rate": "65/min",
-  "limit": "60/min"
-}
-```
-
-Still having issues? Check the [GitHub Issues](https://github.com/prassanna-ravishankar/phlow/issues) or create a new issue with:
-
-1. Phlow version (`pip show phlow`)
-2. Python version (`python --version`)
-3. Environment (development/production)
-4. Complete error traceback
-5. Minimal reproduction code
+1. Phlow version: `python -c "import phlow; print(phlow.__version__)"`
+2. Python version: `python --version`
+3. Complete error traceback
+4. Minimal reproduction code
