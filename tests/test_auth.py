@@ -165,6 +165,88 @@ class TestVerify:
             auth.verify(token)
 
 
+class TestFastAPIDependency:
+    def test_valid_auth(self):
+        from fastapi import Depends, FastAPI
+        from fastapi.testclient import TestClient
+
+        auth = PhlowAuth(private_key=SECRET)
+        dep = auth.create_fastapi_dependency()
+
+        app = FastAPI()
+
+        @app.get("/protected")
+        async def protected(claims: dict = Depends(dep)):
+            return {"sub": claims.get("sub")}
+
+        client = TestClient(app)
+        token = auth.create_token(agent_id="agent-1")
+        resp = client.get("/protected", headers={"Authorization": f"Bearer {token}"})
+        assert resp.status_code == 200
+        assert resp.json()["sub"] == "agent-1"
+
+    def test_missing_header(self):
+        from fastapi import Depends, FastAPI
+        from fastapi.testclient import TestClient
+
+        auth = PhlowAuth(private_key=SECRET)
+        dep = auth.create_fastapi_dependency()
+
+        app = FastAPI()
+
+        @app.get("/protected")
+        async def protected(claims: dict = Depends(dep)):
+            return {"ok": True}
+
+        client = TestClient(app)
+        resp = client.get("/protected")
+        assert resp.status_code == 401
+
+    def test_invalid_token(self):
+        from fastapi import Depends, FastAPI
+        from fastapi.testclient import TestClient
+
+        auth = PhlowAuth(private_key=SECRET)
+        dep = auth.create_fastapi_dependency()
+
+        app = FastAPI()
+
+        @app.get("/protected")
+        async def protected(claims: dict = Depends(dep)):
+            return {"ok": True}
+
+        client = TestClient(app)
+        resp = client.get(
+            "/protected", headers={"Authorization": "Bearer bad.token.here"}
+        )
+        assert resp.status_code == 401
+
+    def test_permission_enforcement(self):
+        from fastapi import Depends, FastAPI
+        from fastapi.testclient import TestClient
+
+        auth = PhlowAuth(private_key=SECRET)
+        dep = auth.create_fastapi_dependency(required_permissions=["admin:write"])
+
+        app = FastAPI()
+
+        @app.get("/admin")
+        async def admin(claims: dict = Depends(dep)):
+            return {"ok": True}
+
+        client = TestClient(app)
+
+        # Token without permissions — rejected
+        token = auth.create_token(agent_id="agent-1")
+        resp = client.get("/admin", headers={"Authorization": f"Bearer {token}"})
+        assert resp.status_code == 403
+
+        # Token with permissions — accepted
+        token = auth.create_token(agent_id="agent-1", permissions=["admin:write"])
+        resp = client.get("/admin", headers={"Authorization": f"Bearer {token}"})
+        assert resp.status_code == 200
+
+
 class TestRoundTrip:
     """End-to-end: create token, verify it, decode it."""
 

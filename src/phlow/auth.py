@@ -150,6 +150,66 @@ class PhlowAuth:
         except jwt.InvalidTokenError as e:
             raise AuthenticationError(f"Invalid token: {e}")
 
+    def create_fastapi_dependency(
+        self,
+        required_permissions: list[str] | None = None,
+    ):
+        """Create a FastAPI dependency for JWT authentication.
+
+        No Supabase required. Returns decoded claims dict (not PhlowContext).
+
+        Usage:
+            auth = PhlowAuth(private_key="secret")
+            auth_required = auth.create_fastapi_dependency()
+
+            @app.get("/protected")
+            async def protected(claims: dict = Depends(auth_required)):
+                return {"agent": claims.get("sub")}
+
+        Args:
+            required_permissions: Permissions the token must contain
+
+        Returns:
+            FastAPI dependency function
+        """
+        try:
+            from fastapi import Depends, HTTPException
+            from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+        except ImportError:
+            raise ImportError(
+                "FastAPI is required for this feature. Install with: pip install phlow[fastapi]"
+            )
+
+        security = HTTPBearer(auto_error=False)
+
+        async def dependency(
+            credentials: HTTPAuthorizationCredentials | None = Depends(security),
+        ) -> dict[str, Any]:
+            if not credentials:
+                raise HTTPException(
+                    status_code=401,
+                    detail="Authorization header required",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+
+            try:
+                claims = self.verify(credentials.credentials)
+            except AuthenticationError as e:
+                raise HTTPException(status_code=401, detail=str(e))
+
+            if required_permissions:
+                token_permissions = set(claims.get("permissions", []))
+                for perm in required_permissions:
+                    if perm not in token_permissions:
+                        raise HTTPException(
+                            status_code=403,
+                            detail=f"Missing required permission: {perm}",
+                        )
+
+            return claims
+
+        return dependency
+
     def _get_verification_key(self, token: str) -> str:
         """Get the appropriate key for verification."""
         if self.algorithm == "RS256":
